@@ -14,6 +14,9 @@ import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Data
@@ -29,10 +32,12 @@ public class SynergyGrade {
 
     @ManyToOne
     @JoinColumn(name="assignment_id", nullable=false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Assignment assignment;
 
     @ManyToOne
     @JoinColumn(name="student_id", nullable=false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Person student;
 
     public SynergyGrade(Double grade, Assignment assignment, Person student) {

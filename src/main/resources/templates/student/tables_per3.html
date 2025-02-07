@@ -237,7 +237,7 @@
                         trimester: data.trimester,
                         period: data.period
                     });
-                    window.location.href = '/student-info?' + params.toString();
+                    window.location.href = '/mvc/student/studentinfo?' + params.toString();
                 })
                 .catch(error => {
                     console.error("There was a problem with the fetch operation:", error);

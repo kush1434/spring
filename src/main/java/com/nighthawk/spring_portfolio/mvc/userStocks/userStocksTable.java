@@ -55,26 +55,30 @@ public class userStocksTable {
     @Column
     private String balance; // Balance for the associated person
 
+    @Column
+    private boolean hasSimulated;
+
     public double getBalanceDouble() {
         var balance_tmp = getBalance();
         return Double.parseDouble(balance_tmp);
     }
 
     // Constructor for initializing a userStocksTable object
-    public userStocksTable(String stonks, String crypto, String balance, String email, Person person) {
+    public userStocksTable(String stonks, String crypto, String balance, String email, Person person, boolean hasSimulated) {
         this.person_name = person.getName();
         this.stonks = stonks;
         this.crypto = crypto;
         this.balance = balance;
         this.email = email;
         this.person = person;
+        this.hasSimulated = hasSimulated;
     }
 
     // Method to initialize an array of userStocksTable objects for a list of Person entities
     public static userStocksTable[] init(Person[] persons) {
         ArrayList<userStocksTable> stocks = new ArrayList<>();
         for (Person person : persons) {
-            stocks.add(new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", startingBalance, person.getEmail(), person));
+            stocks.add(new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", startingBalance, person.getEmail(), person, false));
         }
         return stocks.toArray(new userStocksTable[0]);
     }

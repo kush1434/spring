@@ -14,20 +14,14 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.security.core.GrantedAuthority;
 import jakarta.validation.Valid;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import org.springframework.web.bind.annotation.RequestParam;
-
-
 
 
 import jakarta.persistence.Convert;
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -40,6 +34,12 @@ public class PersonViewController {
     // Autowired enables Control to connect HTML and POJO Object to database easily for CRUD
     @Autowired
     private PersonDetailsService repository;
+
+    //@Autowired
+    //private PersonJpaRepository find;
+
+///////////////////////////////////////////////////////////////////////////////////////////
+/// "Read" Get and Post mappings
 
     @GetMapping("/read")
     public String person(Authentication authentication, Model model) {
@@ -64,14 +64,32 @@ public class PersonViewController {
         return "person/read";  // Return the template for displaying persons
     }
 
-    /*  The HTML template Forms and PersonForm attributes are bound
-        @return - template for person form
-        @param - Person Class
-    */
-    @GetMapping("/create")
-    public String personAdd(Person person) {
-        return "person/create";
+    @GetMapping("/read/{id}")
+    public String person(Authentication authentication, @PathVariable("id") int id, Model model) {
+        //check user authority
+        UserDetails userDetails = (UserDetails)authentication.getPrincipal(); 
+        boolean isAdmin = false;
+        for (GrantedAuthority authority : userDetails.getAuthorities()) {
+            if(String.valueOf("ROLE_ADMIN").equals(authority.getAuthority())){
+                isAdmin = true;
+                break;
+            }
+        }
+        if (isAdmin == true){
+            Person person = repository.get(id);  // Fetch the person by ID
+            List<Person> list = Arrays.asList(person);  // Convert the single person into a list for consistency
+            model.addAttribute("list", list);  // Add the list to the model for the view 
+        }
+        else if(repository.getByUid(userDetails.getUsername()).getId() == id){
+            Person person = repository.getByUid(userDetails.getUsername());  // Fetch the person by email
+            List<Person> list = Collections.singletonList(person);  // Create a single element list
+            model.addAttribute("list", list);  // Add the list to the model for the view 
+        }
+        return "person/read";  // Return the template for displaying the person
     }
+
+///////////////////////////////////////////////////////////////////////////////////////////
+/// "" Get and Post mappings
 
     /* Gathers the attributes filled out in the form, tests for and retrieves validation error
     @param - Person object with @Valid
@@ -89,24 +107,54 @@ public class PersonViewController {
         return "redirect:/mvc/person/read";
     }
 
-    @GetMapping("/update/{id}")
-    public String personUpdate(@PathVariable("id") int id, Model model) {
-        model.addAttribute("person", repository.get(id));
-        return "person/update";
+    /*  The HTML template Forms and PersonForm attributes are bound
+        @return - template for person form
+        @param - Person Class
+    */
+    @GetMapping("/create")
+    public String personAdd(Person person) {
+        return "person/create";
     }
 
-    @GetMapping("/update/user")
-    public String personUpdate(Authentication authentication, Model model) {
+///////////////////////////////////////////////////////////////////////////////////////////
+/// "Update" Get and Post mappings
+
+    @PostMapping("/update")
+    public String personUpdateSave(Authentication authentication, @Valid Person person, BindingResult bindingResult) {
+        // Check if the user has admin authority
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        model.addAttribute("person", repository.getByUid(userDetails.getUsername()));  // Add the person to the model
-        return "person/update";  // Return the template for the update form
+        boolean isAdmin = userDetails.getAuthorities().stream()
+            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+        Person personToUpdate = repository.getByUid(person.getUid());
+        // If the user is not an admin, they can only update their own details
+        if (!isAdmin && !personToUpdate.getId().equals(repository.getByUid(userDetails.getUsername()).getId())) {
+            return "redirect:/e#Unauthorized";  // Redirect if user tries to update another person's details
+        }
+        boolean samePassword = true;
+        // Update fields if the new values are provided
+        if (person.getPassword() != null && !person.getPassword().isBlank()) {
+            personToUpdate.setPassword(person.getPassword());
+            samePassword = false;
+        }
+        if (person.getName() != null && !person.getName().isBlank() && !person.getName().equals(personToUpdate.getName())) {
+            personToUpdate.setName(person.getName());
+        }
+        if (person.getKasmServerNeeded() != null && !person.getKasmServerNeeded().equals(personToUpdate.getKasmServerNeeded())) {
+            personToUpdate.setKasmServerNeeded(person.getKasmServerNeeded());
+        }
+
+        // Save the updated person and ensure the roles are correctly maintained
+        repository.save(personToUpdate, samePassword);
+        repository.addRoleToPerson(person.getUid(), "ROLE_USER");
+        repository.addRoleToPerson(person.getUid(), "ROLE_STUDENT");
+        return "redirect:/mvc/person/read";  // Redirect to the read page after updating
     }
+
     @Getter
     public static class PersonRoleDto {
         private String uid;
         private String roleName;
     }
-
 
     /**
      * Updates a specific role for a person via a RESTful request.
@@ -153,12 +201,31 @@ public class PersonViewController {
         return new ResponseEntity<>(personToUpdate, HttpStatus.OK);  // Return success response
     }
 
+    @GetMapping("/update/{id}")
+    public String personUpdate(@PathVariable("id") int id, Model model) {
+        model.addAttribute("person", repository.get(id));
+        return "person/update";
+    }
+
+    @GetMapping("/update/user")
+    public String personUpdate(Authentication authentication, Model model) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        model.addAttribute("person", repository.getByUid(userDetails.getUsername()));  // Add the person to the model
+        return "person/update";  // Return the template for the update form
+    }
+
+///////////////////////////////////////////////////////////////////////////////////////////
+/// "Person-Quiz" Get mappings
+
     @GetMapping("/person-quiz")
     public String personQuiz(Model model){
         List<Person> list = repository.listAll();  // Fetch all persons
         model.addAttribute("person", list.get((int)(Math.random()*list.size())));  // Add the list to the model for the view
         return "person/person-quiz";
     }
+
+///////////////////////////////////////////////////////////////////////////////////////////
+/// "Delete" Get mappings
 
     @GetMapping("/delete/user")
     public String personDelete(Authentication authentication) {
@@ -189,102 +256,8 @@ public class PersonViewController {
         return "person/read";  // Redirect to the read page after deletion
     }
 
-@PostMapping("/update")
-public String personUpdateSave(Authentication authentication, @Valid Person person, BindingResult bindingResult,
-                                @RequestParam(value = "pfpBase64", required = false) String pfpBase64) {
-    // Check authentication and user details
-    if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
-        return "redirect:/e#unauthorized"; // Redirect if authentication is null or invalid
-    }
-
-    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-    boolean isAdmin = userDetails.getAuthorities().stream()
-            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
-
-    // Retrieve the person to update by email
-    Person personToUpdate = repository.getByUid(person.getUid());
-    if (personToUpdate == null) {
-        return "redirect:/e#email_does_not_exist"; // Redirect if the person does not exist
-    }
-
-    // If the user is not an admin, ensure they are updating their own record
-    if (!isAdmin) {
-        Person currentUser = repository.getByUid(userDetails.getUsername());
-        if (currentUser == null || !currentUser.getId().equals(personToUpdate.getId())) {
-            return "redirect:/e#unauthorized"; // Redirect if not authorized
-        }
-    }
-
-    // Update fields only if the new values are provided
-    boolean updated = false;
-
-    if (pfpBase64 != null && !pfpBase64.isEmpty()) {
-        personToUpdate.setPfp(pfpBase64); // Update the profile picture with Base64 value
-        updated = true;
-    }
-
-    if (person.getPassword() != null && !person.getPassword().isEmpty()) {
-        personToUpdate.setPassword(person.getPassword());
-        updated = true;
-    }
-
-    if (person.getName() != null && !person.getName().isEmpty()) {
-        personToUpdate.setName(person.getName());
-        updated = true;
-    }
-
-
-    if (person.getDob() != null) {
-        personToUpdate.setDob(person.getDob());
-        updated = true;
-    }
-
-    if (updated) {
-        repository.save(personToUpdate); // Save the updated person object
-    }
-
-    return "redirect:/mvc/person/read"; // Redirect to the profile page or another appropriate page
-}
-
-
-@GetMapping("/read/{id}")
-public String person(Authentication authentication, @PathVariable("id") int id, Model model) {
-    //check user authority
-    UserDetails userDetails = (UserDetails)authentication.getPrincipal(); 
-    boolean isAdmin = false;
-    for (GrantedAuthority authority : userDetails.getAuthorities()) {
-        if(String.valueOf("ROLE_ADMIN").equals(authority.getAuthority())){
-            isAdmin = true;
-            break;
-        }
-    }
-    if (isAdmin == true){
-        Person person = repository.get(id);  // Fetch the person by ID
-        List<Person> list = Arrays.asList(person);  // Convert the single person into a list for consistency
-        model.addAttribute("list", list);  // Add the list to the model for the view 
-    }
-    else if(repository.getByUid(userDetails.getUsername()).getId() == id){
-        Person person = repository.getByUid(userDetails.getUsername());  // Fetch the person by email
-        @Data
-        @AllArgsConstructor
-        @Convert(attributeName = "person", converter = JsonType.class)
-        class PersonAdjacent{ //equilvalent class to Person, but id is replaced by a string
-            private String id;        
-            private String email;
-            private String uid;
-            private String password;
-            private String name;
-            private boolean kasmServerNeeded;
-            private String pfp;
-        }
-        //populate personAdajacent, id is replaced by "user"
-        PersonAdjacent personAdjacent = new PersonAdjacent("user",person.getEmail(), person.getUid(), person.getPassword(),person.getName(),person.getKasmServerNeeded(),person.getPfp()); 
-        List<PersonAdjacent> list = Arrays.asList(personAdjacent);  // Convert the single person into a list for consistency
-        model.addAttribute("list", list);  // Add the list to the model for the view 
-    }
-    return "person/read";  // Return the template for displaying the person
-}
-
+///////////////////////////////////////////////////////////////////////////////////////////
+/// "Search" Get mapping
 
  @GetMapping("/search")
     public String person() {

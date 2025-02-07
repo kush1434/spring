@@ -141,11 +141,44 @@
                 </div>
             </div>
 
+            <div class="collapse navbar-collapse" id="navbarNavDarkDropdown0" sec:authorize="isAuthenticated()">
+                <ul class="navbar-nav">
+                    <a id="approvalAlert" sec:authorize="hasRole('ROLE_TEACHER') or hasRole('ROLE_ADMIN')"></a>
+                </ul>
+            </div>
+
             <!-- Navigation bar JavaScript support -->
             <script>
                 const search = document.getElementById('search');
                 const google = 'https://www.google.com/search?q=site%3A+';
                 const site = 'https://nighthawkcodingsociety.com';
+
+                function appendApprovalAlert(data) {
+                    let approvalAlert = document.getElementById('approvalAlert');
+            
+                    if (data.length > 0) {
+                        // Show alert with the number of pending approvals
+                        approvalAlert.innerHTML = `🔔 ${data.length} students need approval!`;
+                        approvalAlert.style.color = "red";
+                        approvalAlert.style.fontWeight = "bold";
+                    } else {
+                        approvalAlert.innerHTML = ""; // Clear alert if no pending requests
+                    }
+                }
+            
+                function fetchApprovalRequests() {
+                    fetch('http://127.0.0.1:8085/api/approval/pendingRequests')
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Pending approval requests:", data);
+                            appendApprovalAlert(data);
+                        })
+                        .catch(error => console.log('Error fetching approval requests:', error));
+                }
+            
+                window.addEventListener('load', function () {
+                    setInterval(fetchApprovalRequests, 5000); // Fetch every 5 seconds
+                });
 
                 function submitted(event) {
                     if (event.key === 'Enter') {

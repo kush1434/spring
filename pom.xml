@@ -34,16 +34,18 @@
         </dependency>
 
         <dependency>
-			<groupId>com.corundumstudio.socketio</groupId>
-			<artifactId>netty-socketio</artifactId>
-			<version>1.7.16</version>
-		</dependency>
+            <groupId>com.corundumstudio.socketio</groupId>
+            <artifactId>netty-socketio</artifactId>
+            <version>2.0.3</version>
+        </dependency>
 
+<!--
            <dependency>
             <groupId>dev.onvoid.webrtc</groupId>
             <artifactId>webrtc-java</artifactId>
             <version>0.8.0</version>
         </dependency>
+        -->
         
         <!-- Spring -->
         <dependency>
@@ -140,6 +142,12 @@
             <artifactId>json-simple</artifactId>
             <version>1.1.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>5.8</version>
+        </dependency>
+
 
         <!-- HTTP client dependencies -->
         <dependency>

@@ -56,6 +56,10 @@
             <form th:action="@{/mvc/bathroom/requestPass}" method="post">
                 <input type="hidden" name="teacherId" th:value="${teacher.id}"/>
                 <div class="form-group">
+                    <label for="teacherName">Teacher's Name:</label>
+                    <input type="text" id="teacherName" name="teacherName" class="form-control" placeholder="Enter teacher's name" required/>
+                </div>
+                <div class="form-group">
                     <label for="period">Period:</label>
                     <select id="period" name="period" class="form-control" required>
                         <option value="1">1</option>

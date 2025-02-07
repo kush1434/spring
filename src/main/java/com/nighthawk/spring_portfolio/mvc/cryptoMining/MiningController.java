@@ -30,25 +30,25 @@ public class MiningController {
     private MiningUser getOrCreateMiningUser() {
         // Get authentication details
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
+        String uid = auth.getName();
         
         System.out.println("DEBUG - Auth Details:");
-        System.out.println("  Email: " + email);
+        System.out.println("  UID: " + uid);
         System.out.println("  Principal: " + auth.getPrincipal());
         System.out.println("  Authorities: " + auth.getAuthorities());
 
-        if ("anonymousUser".equals(email)) {
+        if ("anonymousUser".equals(uid)) {
             throw new RuntimeException("Not authenticated");
         }
 
-        // Find person by email
-        Person person = personRepository.findByEmail(email);
+        // Find person by UID instead of email
+        Person person = personRepository.findByUid(uid);
         if (person == null) {
-            System.out.println("DEBUG - No person found for email: " + email);
-            throw new RuntimeException("User not found: " + email);
+            System.out.println("DEBUG - No person found for UID: " + uid);
+            throw new RuntimeException("User not found: " + uid);
         }        
 
-        System.out.println("DEBUG - Found person: " + person.getEmail());
+        System.out.println("DEBUG - Found person with UID: " + person.getUid());
 
         // Find existing mining user
         Optional<MiningUser> existingUser = miningUserRepository.findByPerson(person);
@@ -207,29 +207,60 @@ public class MiningController {
             MiningUser user = getOrCreateMiningUser();
             GPU gpu = gpuRepository.findById(gpuId)
                 .orElseThrow(() -> new RuntimeException("GPU not found"));
-            
+    
             // Check if user owns this GPU
             if (!user.ownsGPUById(gpuId)) {
                 return ResponseEntity.badRequest()
-                    .body(Map.of(
-                        "success", false,
-                        "message", "You don't own this GPU"
-                    ));
+                    .body(Map.of("success", false, "message", "You don't own this GPU"));
             }
-
+    
             boolean isActive = user.toggleGPU(gpu);
             miningUserRepository.save(user);
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", isActive ? "GPU activated" : "GPU deactivated",
-                "isActive", isActive
-            ));
+    
+            return ResponseEntity.ok(Map.of("success", true, "message", isActive ? "GPU activated" : "GPU deactivated", "isActive", isActive));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/state")
+        public ResponseEntity<?> getMiningState() {
+            try {
+                MiningUser user = getOrCreateMiningUser(); // Get or create the mining user
+
+                // Prepare the mining state response
+                Map<String, Object> state = new HashMap<>();
+                state.put("isMining", user.isMining());
+                state.put("btcBalance", String.format("%.8f", user.getBtcBalance()));
+                state.put("pendingBalance", String.format("%.8f", user.getPendingBalance()));
+                state.put("hashrate", String.format("%.2f", user.getCurrentHashrate()));
+                state.put("shares", user.getShares());
+                state.put("currentPool", user.getCurrentPool());
+                state.put("powerConsumption", user.getPowerConsumption());
+                state.put("averageTemperature", user.getAverageTemperature());
+
+                // Add active GPUs info
+                List<Map<String, Object>> activeGpus = user.getActiveGPUs().stream()
+                    .map(gpu -> {
+                        Map<String, Object> gpuInfo = new HashMap<>();
+                        gpuInfo.put("id", gpu.getId());
+                        gpuInfo.put("name", gpu.getName());
+                        gpuInfo.put("hashrate", gpu.getHashRate());
+                        gpuInfo.put("power", gpu.getPowerConsumption());
+                        gpuInfo.put("temp", gpu.getTemp());
+                        return gpuInfo;
+                    })
+                    .collect(Collectors.toList());
+                state.put("activeGPUs", activeGpus);
+
+                return ResponseEntity.ok(state);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+            }
+        }
 
     @PostMapping("/testMining")
         public ResponseEntity<?> testMining() {

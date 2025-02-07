@@ -22,6 +22,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Convert;
 import static jakarta.persistence.FetchType.EAGER;
@@ -40,8 +41,10 @@ import com.vladmihalcea.hibernate.type.json.JsonType;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
+import com.nighthawk.spring_portfolio.mvc.assignments.AssignmentSubmission;
 import com.nighthawk.spring_portfolio.mvc.bathroom.Tinkle;
 import com.nighthawk.spring_portfolio.mvc.student.StudentInfo;
+import com.nighthawk.spring_portfolio.mvc.synergy.SynergyGrade;
 
 import jakarta.persistence.FetchType;
 import lombok.AllArgsConstructor;
@@ -84,8 +87,13 @@ public class Person implements Comparable<Person> {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    // @OneToMany(mappedBy="student")
-    // private List<SynergyGrade> grades;
+    @OneToMany(mappedBy="student", cascade=CascadeType.ALL, orphanRemoval=true)
+    @JsonIgnore
+    private List<SynergyGrade> grades;
+    
+    @OneToMany(mappedBy="student", cascade=CascadeType.ALL, orphanRemoval=true)
+    @JsonIgnore
+    private List<AssignmentSubmission> submissions;
     
     @ManyToMany(fetch = EAGER)
     @JoinTable(
@@ -313,12 +321,13 @@ public class Person implements Comparable<Person> {
         people.add(createPerson("Alexander Graham Bell", "lex", "lexb@gmail.com", defaultPassword, "1", "/images/lex.png", true, startingBalance, "01-01-1847", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
         people.add(createPerson("Nikola Tesla", "niko",  "niko@gmail.com",  defaultPassword, "1", "/images/niko.png", true, startingBalance, "01-01-1850", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
         people.add(createPerson("Madam Curie", "madam", "madam@gmail.com", defaultPassword, "1", "/images/madam.png", true, startingBalance, "01-01-1860", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
-        people.add(createPerson("Grace Hopper", "hop",  "hop@gmail.com", defaultPassword, "1", "/images/hop.png", true, startingBalance, "12-09-1906", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
+        people.add(createPerson("Grace Hopper", "hop",  "hop@gmail.com", defaultPassword, "123", "/images/hop.png", true, startingBalance, "12-09-1906", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
         people.add(createPerson("John Mortensen","jm1021",  "jmort1021@gmail.com", defaultPassword, "1", "/images/jm1021.png", true, startingBalance, "10-21-1959", Arrays.asList("ROLE_ADMIN", "ROLE_TEACHER")));
+        people.add(createPerson("Alan Turing","alan",  "turing@gmail.com", defaultPassword, "2", "/images/alan.png", false, startingBalance, "06-23-1912", Arrays.asList("ROLE_USER", "ROLE_TESTER","ROLE_STUDENT")));
         
         Collections.sort(people);
         for (Person person : people) {
-            userStocksTable stock = new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", startingBalance, person.getEmail(), person);
+            userStocksTable stock = new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", startingBalance, person.getEmail(), person, false);
             person.setUser_stocks(stock);
         }
 
@@ -339,5 +348,17 @@ public class Person implements Comparable<Person> {
             System.out.println(person);  // print object
             System.out.println();
         }
+    }
+
+    public Date getDob() {
+        return this.dob;
+    }
+    
+    public String getPfp() {
+        return this.pfp;
+    }
+    
+    public Collection<PersonRole> getRoles() {
+        return this.roles;
     }
 }

@@ -1,8 +1,10 @@
 package com.nighthawk.spring_portfolio.mvc.assignments;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -10,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.synergy.SynergyGrade;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -27,6 +30,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+
 
 @Data
 @NoArgsConstructor
@@ -59,8 +64,8 @@ public class Assignment {
     @NotEmpty
     private String timestamp;
 
-    @OneToMany(mappedBy = "assignment")
-    @JsonIgnore 
+    @OneToMany(mappedBy="assignment", cascade=CascadeType.ALL, orphanRemoval=true)
+    @JsonIgnore
     private List<AssignmentSubmission> submissions;
 
     @ManyToMany
@@ -73,7 +78,7 @@ public class Assignment {
 
 
 
-    @OneToMany(mappedBy="assignment")
+    @OneToMany(mappedBy="assignment", cascade=CascadeType.ALL, orphanRemoval=true)
     private List<SynergyGrade> grades;
 
     @NotNull
@@ -147,4 +152,55 @@ public class Assignment {
     public String toString(){
         return this.name;
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    
+    public String getName() {
+        return name;
+    }
+    
+    public String getType() {
+        return type;
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+    
+    public String getDueDate() {
+        return dueDate;
+    }
+    
+    public String getTimestamp() {
+        return timestamp;
+    }
+    
+    public List<AssignmentSubmission> getSubmissions() {
+        return submissions;
+    }
+    
+    public List<SynergyGrade> getGrades() {
+        return grades;
+    }
+    
+    public Double getPoints() {
+        return points;
+    }
+    
+    public Long getPresentationLength() {
+        return presentationLength;
+    }
+    
+    public AssignmentQueue getAssignmentQueue() {
+        return assignmentQueue;
+    }
+
+    public String formatTimestamp(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return sdf.format(date);
+    }
+    
 }

@@ -20,10 +20,10 @@ import jakarta.persistence.*;
 @Data  // Annotations to simplify writing code (ie constructors, setters)
 @NoArgsConstructor
 @AllArgsConstructor
-public class saigaiMessage implements Comparable<saigaiMessage> {
+public class SaigaiMessage implements Comparable<SaigaiMessage> {
 
     
-    private static final Logger logger = LoggerFactory.getLogger(saigaiMessage.class);
+    private static final Logger logger = LoggerFactory.getLogger(SaigaiMessage.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -35,10 +35,10 @@ public class saigaiMessage implements Comparable<saigaiMessage> {
 
     @JsonManagedReference
     @OneToMany(mappedBy = "message", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
-    private List<saigaiComment> comments = new ArrayList<>();
+    private List<SaigaiComment> comments = new ArrayList<>();
 
     // Additional constructor if you want to set content only
-    public saigaiMessage(String content) {
+    public SaigaiMessage(String content) {
         this.content = content;
         this.comments = new ArrayList<>(); // Ensure comments is initialized
     }
@@ -53,7 +53,7 @@ public class saigaiMessage implements Comparable<saigaiMessage> {
     }
 
     @Override
-    public int compareTo(saigaiMessage other){
+    public int compareTo(SaigaiMessage other){
         String prompt = createPrompt(this.content, other.content);
         return callGroqAPI(prompt);
        //return this.content.compareTo(other.content);
@@ -108,12 +108,12 @@ public class saigaiMessage implements Comparable<saigaiMessage> {
      /** 2nd telescoping method to create a Message object with parameterized comments
      * @param comments 
      */
-    public static saigaiMessage createMessage(String content, String reply) {
-        saigaiMessage message = new saigaiMessage();
+    public static SaigaiMessage createMessage(String content, String reply) {
+        SaigaiMessage message = new SaigaiMessage();
         message.setContent(content);
     
-        List<saigaiComment> comments = new ArrayList<>();
-        saigaiComment comment = new saigaiComment();
+        List<SaigaiComment> comments = new ArrayList<>();
+        SaigaiComment comment = new SaigaiComment();
         comment.setContent(reply);
         comments.add(comment);
         message.setComments(comments);
@@ -126,11 +126,11 @@ public class saigaiMessage implements Comparable<saigaiMessage> {
     /** Static method to initialize an array list of Message objects 
      * @return Message[], an array of Message objects
      */
-    public static saigaiMessage[] init() {
-        ArrayList<saigaiMessage> messages = new ArrayList<>();
+    public static SaigaiMessage[] init() {
+        ArrayList<SaigaiMessage> messages = new ArrayList<>();
         messages.add(createMessage("whats your favorite color", "red"));
         messages.add(createMessage("What is an object in java", "String"));
-        return messages.toArray(new saigaiMessage[0]);
+        return messages.toArray(new SaigaiMessage[0]);
     }
 
       /** Static method to print Message objects from an array
@@ -138,10 +138,10 @@ public class saigaiMessage implements Comparable<saigaiMessage> {
      */
     public static void main(String[] args) {
         // obtain Message from initializer
-        saigaiMessage messages[] = init();
+        SaigaiMessage messages[] = init();
 
         // iterate using "enhanced for loop"
-        for( saigaiMessage message : messages) {
+        for( SaigaiMessage message : messages) {
             System.out.println(message);  // print object
         }
     }

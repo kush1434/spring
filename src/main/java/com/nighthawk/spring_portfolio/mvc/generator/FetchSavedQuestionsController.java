@@ -4,24 +4,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-// REST controller to handle saved questions API
 @RestController
 @RequestMapping("/saved-questions")
 public class FetchSavedQuestionsController {
 
-    // Repository for interacting with the database
     @Autowired
     private GeneratedQuestionRepository questionRepository;
 
-    // Endpoint to retrieve all saved questions
+    // Modified: Return full GeneratedQuestion objects instead of just question strings
     @GetMapping
-    public List<String> getSavedQuestions() {
-        // Fetch all questions from the repository
-        List<GeneratedQuestion> questions = questionRepository.findAll();
+    public List<GeneratedQuestion> getSavedQuestions() {
+        return questionRepository.findAll();
+    }
 
-        // Convert the list of GeneratedQuestion objects to a list of question strings
-        return questions.stream()
-                        .map(GeneratedQuestion::getQuestion)
-                        .toList();
+    // New: Fetch questions filtered by a specific tag
+    @GetMapping("/by-tag")
+    public List<GeneratedQuestion> getQuestionsByTag(@RequestParam String tag) {
+        return questionRepository.findByTagsContaining(tag);
     }
 }

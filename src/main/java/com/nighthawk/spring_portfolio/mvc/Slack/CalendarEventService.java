@@ -33,12 +33,17 @@ public class CalendarEventService {
     public boolean updateEventByTitle(String title, String newTitle, String description) {
         CalendarEvent event = getEventByTitle(title);
         if (event != null) {
-            // Send Slack message before updating
-            String oldEventDetails = "Old Event: " + event.getTitle() + " on " + event.getDate();
-            String newEventDetails = "New Event: " + newTitle + " on " + event.getDate();
-            slackService.sendMessage("Event Updated: " + oldEventDetails + " -> " + newEventDetails);
-            
-            // Perform the update
+            try {
+                // Attempt to send the Slack notification
+                String oldEventDetails = "Old Event: " + event.getTitle() + " on " + event.getDate();
+                String newEventDetails = "New Event: " + newTitle + " on " + event.getDate();
+                slackService.sendMessage("Event Updated: " + oldEventDetails + " -> " + newEventDetails);
+            } catch (Exception e) {
+                // Log the Slack error and continue with the update
+                System.err.println("Slack notification failed: " + e.getMessage());
+            }
+
+            // Perform the event update
             event.setTitle(newTitle);
             event.setDescription(description);
             calendarEventRepository.save(event);
@@ -46,14 +51,12 @@ public class CalendarEventService {
         }
         return false;
     }
-
+    
     // Delete event by title
     public boolean deleteEventByTitle(String title) {
         CalendarEvent event = getEventByTitle(title);
         if (event != null) {
-            // Send Slack message before deleting
-            slackService.sendMessage("Event Deleted: " + event.getTitle() + " on " + event.getDate());
-            
+
             // Perform the delete
             calendarEventRepository.delete(event);
             return true;
@@ -73,14 +76,10 @@ public class CalendarEventService {
 
     // Get event by title
     public CalendarEvent getEventByTitle(String title) {
-        return calendarEventRepository.findAll()
-            .stream()
-            .filter(event -> event.getTitle().equals(title)) // Exact match
-            .findFirst()
-            .orElse(null);
+        return calendarEventRepository.findByTitle(title).orElse(null);
     }
 
-    // Method to parse a Slack message and create calendar events
+    // Parse Slack message and create events
     public void parseSlackMessage(Map<String, String> jsonMap, LocalDate weekStartDate) {
         String text = jsonMap.get("text");
         List<CalendarEvent> events = extractEventsFromText(text, weekStartDate);
@@ -92,55 +91,60 @@ public class CalendarEventService {
     // Extract events and calculate date for each day of the week
     private List<CalendarEvent> extractEventsFromText(String text, LocalDate weekStartDate) {
         List<CalendarEvent> events = new ArrayList<>();
-        // Regex pattern filtering for keywords that mark the days of the week
         Pattern dayPattern = Pattern.compile("\\[(Mon|Tue|Wed|Thu|Fri|Sat|Sun)(?: - (Mon|Tue|Wed|Thu|Fri|Sat|Sun))?\\]:\\s*(\\*\\*|\\*)?\\s*(.+)");
-        Pattern descriptionPattern = Pattern.compile("(\\*\\*|\\*)?\\s*-\\s*(.+)");
-
+        Pattern descriptionPattern = Pattern.compile("(\\*\\*|\\*)?\\s*\\u2022\\s*(.+)");
+    
+        boolean hasPeriod1 = text.toLowerCase().contains("period 1");
+        boolean hasPeriod3 = text.toLowerCase().contains("period 3");
+    
         String[] lines = text.split("\\n");
-
+        CalendarEvent lastEvent = null;
+        
         for (String line : lines) {
             Matcher dayMatcher = dayPattern.matcher(line);
-
+    
             if (dayMatcher.find()) {
                 String startDay = dayMatcher.group(1);
                 String endDay = dayMatcher.group(2) != null ? dayMatcher.group(2) : startDay;
-                String asterisks = dayMatcher.group(3); // Extract asterisks (* or **)
+                String asterisks = dayMatcher.group(3);
                 String currentTitle = dayMatcher.group(4).trim();
-
-                String type = "daily plan"; // Default type
+                String period;
+                // Append period info if found anywhere in the text
+                if (hasPeriod1) {
+                    period = "1";
+                } 
+                else if (hasPeriod3) {
+                    period = "3";
+                }
+                else {period = "0";}
+                
+    
+                String type = "daily plan";
                 if ("*".equals(asterisks)) {
                     type = "check-in";
                 } else if ("**".equals(asterisks)) {
                     type = "grade";
                 }
-
-                // Generate events for the date range
+    
                 for (LocalDate date : getDatesInRange(startDay, endDay, weekStartDate)) {
-                    events.add(new CalendarEvent(date, currentTitle, "", type));
+                    lastEvent = new CalendarEvent(date, currentTitle, "", type, period);
+                    events.add(lastEvent);
                 }
             } else {
                 Matcher descMatcher = descriptionPattern.matcher(line);
-                if (descMatcher.find() && !events.isEmpty()) {
+                if (descMatcher.find() && lastEvent != null) {
                     String description = descMatcher.group(2).trim();
-                    String asterisks = descMatcher.group(1); // Extract asterisks (* or **)
-
-                    String type = events.get(events.size() - 1).getType(); // Default to previous event type
+                    String asterisks = descMatcher.group(1);
+    
+                    String type = lastEvent.getType();
                     if ("*".equals(asterisks)) {
                         type = "check-in";
                     } else if ("**".equals(asterisks)) {
                         type = "grade";
                     }
-
-                    // Update all events of the current day range with the description and type
-                    for (int i = events.size() - 1; i >= 0; i--) {
-                        CalendarEvent event = events.get(i);
-                        if (event.getDescription().isEmpty()) {
-                            event.setDescription(description);
-                            event.setType(type);
-                        } else {
-                            break;
-                        }
-                    }
+    
+                    lastEvent.setDescription(lastEvent.getDescription() + (lastEvent.getDescription().isEmpty() ? "" : ", ") + description);
+                    lastEvent.setType(type);
                 }
             }
         }
@@ -162,3 +166,5 @@ public class CalendarEventService {
         return dateRange;
     }
 }
+
+

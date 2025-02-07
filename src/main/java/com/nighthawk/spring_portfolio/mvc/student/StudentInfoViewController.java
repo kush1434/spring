@@ -4,10 +4,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("/mvc/student")
@@ -27,7 +25,8 @@ public class StudentInfoViewController {
     }
 
     @GetMapping("/tabledetails")
-    public String viewTableDetails(@RequestParam int table, @RequestParam int period, Model model) {
+    public String viewTableDetails() {
+        /* 
         // Retrieve students by table and period
         List<StudentInfo> students = studentService.findTeam("CSA", 2, period, table);
 
@@ -40,20 +39,13 @@ public class StudentInfoViewController {
         // for (StudentInfo student : students) {
 
         // }
-        // model.addAttribute("tasks", tasks);
+        // model.addAttribute("tasks", tasks);*/
 
         return "student/table-details.html";
     }
 
     @GetMapping("/studentinfo")
-    public String viewStudentInfo(@RequestParam String username, Model model) {
-        // Fetch student by username
-        StudentInfo student = studentService.findByUsername(username)
-                                            .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        // Add student details to the model
-        model.addAttribute("student", student);
-
+    public String viewStudentInfo() {
         return "student/student-info.html";
     }
 

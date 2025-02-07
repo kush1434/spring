@@ -20,21 +20,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
-import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.server.ResponseStatusException;
-import com.nighthawk.spring_portfolio.mvc.person.Person;
+
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.person.Person;
-import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -42,6 +30,7 @@ import lombok.NoArgsConstructor;
 /**
  * Controller class for handling the user stock-related API endpoints.
  */
+// http://127.0.0.1:8085/stocks/table/addStock
 @Controller
 @RequestMapping("/stocks/table")
 public class userStocksTableApiController {
@@ -122,6 +111,26 @@ public class userStocksTableApiController {
                                  .body(null);
         }
     }
+    /**
+     * API endpoint to simulate stock value changes based on 5-year-old prices,
+     * update the user's balance, clear stocks, and set hasSimulated to true.
+     *
+     * @param request Contains username and stock symbols with quantities.
+     * @return ResponseEntity with success or error message.
+     */
+    @PostMapping("/simulateStocks")
+    @ResponseBody
+    public ResponseEntity<String> simulateStocks(@RequestBody SimulationRequest request) {
+        try {
+            userService.simulateStockValueChange(request.getUsername(), request.getStocks());
+            return ResponseEntity.ok("Stock simulation completed successfully!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body("An error occurred during simulation: " + e.getMessage());
+        }
+    }
+
+
 }
 
 /**
@@ -134,6 +143,17 @@ class UserStockInfo {
     private String stockSymbol;
     private int quantity;
 }
+/**
+ * DTO to represent the simulation request with a username and stock details.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class SimulationRequest {
+    private String username;
+    private List<UserStockInfo> stocks; // List of stocks with quantity and symbol
+}
+
 
 /**
  * DTO to represent the details for adding/removing stocks (username, quantity, stock symbol, balance).
@@ -397,4 +417,76 @@ class UserStocksTableService implements UserDetailsService {
         }
         return stockList;
     }
+/**
+ * Simulates the change in stock value based on the price 5 years ago,
+ * updates the user's balance accordingly, clears all stocks, and sets hasSimulated to true.
+ * 
+ * @param username The username of the user initiating the simulation.
+ * @param stocks List of stocks with quantities and symbols sent from the request.
+ */
+public void simulateStockValueChange(String username, List<UserStockInfo> stocks) {
+    // Force fetch the latest user data to avoid caching issues
+    userStocksTable user = userRepository.findByEmail(username);
+    if (user == null) {
+        throw new RuntimeException("User not found");
+    }
+
+    // Debugging: Print hasSimulated value
+    System.out.println("Checking hasSimulated for user " + username + ": " + user.isHasSimulated());
+
+    // Ensure simulation cannot be re-run
+    if (user.isHasSimulated()) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Simulation has already been completed.");
+    }
+
+    double updatedBalance = Double.parseDouble(user.getBalance());
+    RestTemplate restTemplate = new RestTemplate();
+
+    for (UserStockInfo stock : stocks) {
+        String stockSymbol = stock.getStockSymbol();
+        int quantity = stock.getQuantity();
+
+        try {
+            // Fetch price 5 years ago (initial purchase price)
+            String apiUrl = "https://nitdpython.stu.nighthawkcodingsociety.com/api/stocks/price_five_years_ago/" + stockSymbol;
+            ResponseEntity<String> oldPriceResponse = restTemplate.getForEntity(apiUrl, String.class);
+
+            if (oldPriceResponse.getStatusCode() == HttpStatus.OK) {
+                JSONObject jsonResponse = new JSONObject(oldPriceResponse.getBody());
+                double oldPrice = jsonResponse.getDouble("price_five_years_ago");
+
+                // Fetch the current price
+                double currentPrice = getCurrentStockPrice(stockSymbol);
+
+                // Subtract the original purchase cost (old price * quantity)
+                double totalPurchaseCost = oldPrice * quantity;
+                updatedBalance -= totalPurchaseCost;
+
+                // Add the current value (current price * quantity)
+                double totalCurrentValue = currentPrice * quantity;
+                updatedBalance += totalCurrentValue;
+            }
+        } catch (Exception e) {
+            System.out.println("Error fetching stock price 5 years ago for " + stockSymbol + ": " + e.getMessage());
+        }
+    }
+
+    // Update balance, clear stocks, and set hasSimulated to true
+    user.setBalance(String.valueOf(updatedBalance));
+    user.setStonks(""); // Clears all stocks
+    user.setHasSimulated(true); //  Ensure hasSimulated is properly set
+    userRepository.save(user);
+
+    // Force refresh user in database
+    userRepository.flush();  // This ensures immediate persistence
+
+    // Ensure the updated value is saved in the person table as well
+    com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
+    person.setBalance(user.getBalance());
+    personJpaRepository.save(person);
+}
+
+
+
+
 }

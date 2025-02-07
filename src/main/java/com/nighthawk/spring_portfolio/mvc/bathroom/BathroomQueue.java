@@ -68,6 +68,7 @@ public class BathroomQueue {
         }
     }
 
+    
     /**
      * @return - returns the student who is at the front of the line, removing the
      *         commas and sanitizing the data

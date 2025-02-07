@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Approval Requests</title>
+    <script>
+        function approveStudent(teacherEmail, studentName) {
+            fetch("http://127.0.0.1:8085/api/approval/approveRequest", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ teacherEmail, studentName })
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert("Failed to approve request.");
+                }
+            });
+        }
+
+        function denyStudent(teacherEmail, studentName) {
+            fetch("http://127.0.0.1:8085/api/approval/denyRequest", { 
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ teacherEmail, studentName })
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert("Failed to deny request.");
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".approve-btn").forEach(button => {
+                button.addEventListener("click", function () {
+                    const teacherEmail = this.getAttribute("data-teacher-email");
+                    const studentName = this.getAttribute("data-student-name");
+                    approveStudent(teacherEmail, studentName);
+                });
+            });
+
+            document.querySelectorAll(".deny-btn").forEach(button => {
+                button.addEventListener("click", function () {
+                    const teacherEmail = this.getAttribute("data-teacher-email");
+                    const studentName = this.getAttribute("data-student-name");
+                    denyStudent(teacherEmail, studentName);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <h2><strong>Pending Approval Requests</strong></h2>
+    <table border="1">
+        <tr>
+            <th>Student Name</th>
+            <th>Actions</th>
+        </tr>
+        <tr th:each="request : ${pendingRequests}">
+            <td th:text="${request.studentName}"></td>
+            <td>
+                <button class="approve-btn" 
+                        th:data-teacher-email="${request.teacherEmail}" 
+                        th:data-student-name="${request.studentName}">
+                    Approve
+                </button>
+                <button class="deny-btn" 
+                        th:data-teacher-email="${request.teacherEmail}" 
+                        th:data-student-name="${request.studentName}">
+                    Deny
+                </button>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

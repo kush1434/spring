@@ -65,7 +65,7 @@ public class StudentInfo {
     @Column
     private String dailyActivity;
 
-    
+    private Double averageRating;    
 
     public StudentInfo(Person person, String username, int tableNumber, String course, ArrayList<String> tasks, ArrayList<String> completed, int trimester, int period) {
         this.person = person;
@@ -153,6 +153,7 @@ public class StudentInfo {
         public List<StudentInfo> findPeriod(String course, int trimester, int period) {
             return studentJPARepository.findPeriod(course, trimester, period);
         }
+        
 
         
     }

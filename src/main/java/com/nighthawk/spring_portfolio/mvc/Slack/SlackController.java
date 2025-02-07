@@ -15,10 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.web.client.RestTemplate;
-import java.util.Map;
-import java.util.List;
-import com.nighthawk.spring_portfolio.mvc.Slack.CalendarEventController;
 
 @RestController
 public class SlackController {
@@ -122,25 +118,5 @@ public class SlackController {
         return ResponseEntity.ok("OK");
     }
 
-    private void sendToAICalendar(String messageContent) {
-        try {
-            // Prepare the AI calendar service URL
-            String aiCalendarUrl = "http://localhost:8085/api/ai/calendar/add_event";
 
-            // Create headers for the AI calendar request
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Content-Type", "application/json");
-
-            // Create the request entity with the message content
-            HttpEntity<String> aiCalendarEntity = new HttpEntity<>(messageContent, headers);
-
-            // Send the request to the AI calendar service
-            ResponseEntity<String> aiCalendarResponse = restTemplate.postForEntity(aiCalendarUrl, aiCalendarEntity, String.class);
-
-            System.out.println("Message sent to AI calendar service: " + aiCalendarResponse.getBody());
-        } catch (Exception e) {
-            System.err.println("Failed to send message to AI calendar service.");
-            e.printStackTrace();
-        }
-    }
 }

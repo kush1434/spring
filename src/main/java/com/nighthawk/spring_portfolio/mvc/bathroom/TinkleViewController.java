@@ -33,7 +33,6 @@ public class TinkleViewController {
         Model model, 
         @AuthenticationPrincipal UserDetails userDetails,
         RedirectAttributes redirectAttributes) {
-
         // Check if user is authenticated
         if (userDetails == null) {
             return "redirect:/login";

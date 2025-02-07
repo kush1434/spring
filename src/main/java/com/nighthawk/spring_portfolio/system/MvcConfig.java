@@ -33,6 +33,9 @@ public class MvcConfig implements WebMvcConfigurer {
     public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/**").allowedOrigins("https://spring2025.nighthawkcodingsociety.com", "https://nighthawkcoders.github.io", "http://127.0.0.1:4100", "http://localhost:4100").allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
+
+        registry.addMapping("/socket.io").allowedOrigins("https://spring2025.nighthawkcodingsociety.com", "https://nighthawkcoders.github.io", "http://127.0.0.1:4100", "http://localhost:4100").allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
     }
     
 }

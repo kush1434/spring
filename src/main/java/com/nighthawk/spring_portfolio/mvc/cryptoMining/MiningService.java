@@ -50,6 +50,27 @@ public class MiningService {
         }
     }
 
+    @Scheduled(fixedRate = 3600000) // Runs every hour (3600000 ms)... change the time to test
+    @Transactional
+    public void processPendingBalances() {
+        List<MiningUser> miners = miningUserRepository.findAll();
+        
+        for (MiningUser miner : miners) {
+            double pending = miner.getPendingBalance();
+            if (pending > 0) {
+                // Transfer pending balance to main balance
+                miner.setBtcBalance(miner.getBtcBalance() + pending);
+                miner.setPendingBalance(0.0);
+                
+                System.out.println("Balance Update for user: " + miner.getPerson().getEmail());
+                System.out.println("Transferred pending balance: " + pending);
+                System.out.println("New BTC Balance: " + miner.getBtcBalance());
+                
+                miningUserRepository.save(miner);
+            }
+        }
+    }
+
     public Map<String, Object> buyGPU(MiningUser user, Long gpuId) {
         GPU gpu = gpuRepository.findById(gpuId).orElse(null);
         if (gpu == null) {

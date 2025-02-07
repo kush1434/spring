@@ -3,6 +3,8 @@ package com.nighthawk.spring_portfolio.mvc.assignments;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,6 +13,7 @@ import lombok.Data;
 
 @Data
 @Entity
+@JsonDeserialize(using = AssignmentQueueDeserializer.class)
 public class AssignmentQueue {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -35,3 +38,4 @@ public class AssignmentQueue {
         this.completed.clear();
     }
 }
+

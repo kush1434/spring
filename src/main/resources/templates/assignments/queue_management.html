@@ -36,7 +36,7 @@
 
         /* Card styling for each name */
         .card {
-            width: 90%;
+            width: 100%;
             margin: 10px 0;
             padding: 10px;
             background-color: #ffffff; /* Bright background for contrast */
@@ -153,8 +153,10 @@
             <label for="presenterInput">Presenters</label>
             <select id="presenterInput">
                 <option value="tester">Tester Set</option>
-                <option value="p1">Period 1</option>
-                <option value="p3">Period 3</option>
+                <option value="p1">Period 1 | By Person</option>
+                <option value="p3">Period 3 | By Person</option>
+                <option value="p1t">Period 1 | By Table</option>
+                <option value="p3t">Period 3 | By Table</option>
             </select>
             <button id="initializeQueue">Begin Presentations</button>
             <button id="resetQueue">Reset Assignment Queue</button>
@@ -303,6 +305,10 @@
             peopleList = ["Hanlun", "David", "Sharon", "Beijan", "Miheer", "Eshaan", "Tanav", "Saathvik", "Sri", "Aidan", "Nitin", "Srini", "Dinesh", "Josh", "Matthew", "Ian", "Trevor", "Alisha"]
         } else if (document.getElementById("presenterInput").value == "p3") {
             peopleList = ["Eric", "Shuban", "Aashray", "Anusha", "Vibha", "Avanthika", "Isabel", "Trystan", "Jason", "Tara", "Lilian", "Anika", "Arnav", "Drishya", "Tanuj", "Saaras", "Rahul", "Aadit", "Imaad", "Tanay", "Nisarg", "Arthur", "Nikhil", "Aditya", "Akhil", "Tarun", "Kayden", "Nandan", "Torin", "Dylan"]
+        } else if (document.getElementById("presenterInput").value == "p1t") {
+            peopleList = ["Hanlun | David | Sharon", "Beijan | Miheer | Eshaan", "Tanav | Saathvik | Sri", "Aidan | Nitin | Srini", "Dinesh | Josh | Matthew", "Ian | Trevor | Alisha"]
+        } else if (document.getElementById("presenterInput").value == "p3t") {
+            peopleList = ["Eric | Shuban | Aashray", "Anusha | Vibha | Avanthika", "Isabel | Trystan | Jason", "Tara | Lilian | Anika", "Arnav | Drishya | Tanuj", "Saaras | Rahul | Aadit", "Imaad | Tanay | Nisarg", "Arthur | Nikhil | Aditya", "Akhil | Tarun | Kayden", "Nandan | Torin | Dylan"]
         }
 
         await fetch(URL + `initQueue/${assignmentId}`, {
@@ -346,9 +352,7 @@
         });
         if (response.ok) {
             const userInfo = await response.json();
-            person = userInfo.name;
-            console.log(person);
-        }
+            person = userInfo.name;        }
     }
     function showAssignmentModal() {
         const modal = document.getElementById('assignmentModal');

@@ -33,7 +33,8 @@ public interface PersonJpaRepository extends JpaRepository<Person, Long> {
      * Spring Data JPA will automatically generate a query using the method name.
      */
     Person findByEmail(String email);
-    
+    Person findBySid(String sid);
+    Person findByUid(String uid);
     List<Person> findAllByOrderByNameAsc();
 
     List<Person> findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(String name, String email);
@@ -42,7 +43,7 @@ public interface PersonJpaRepository extends JpaRepository<Person, Long> {
     Person findByEmailAndPassword(String email, String password);
 
     boolean existsByEmail(String email);
-    Person findByUid(String uid);
+
     Person findByUidAndPassword(String uid, String password); // Adjusted to use UID for authentication
 
     boolean existsByUid(String uid); // Check existence by UID

@@ -4,6 +4,7 @@
 
 <head>
     <title>Person List</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
 </head>
 
 <body>
@@ -20,7 +21,7 @@
             <h2>Person Viewer</h2>
             <a th:href="@{/mvc/person/create}">Create Person</a>
             <div class="row align-items-md-stretch">
-                <table class="table">
+                <table id="personTable" class="table">
                     <thead>
                     <tr>
                         <th>ID</th>
@@ -58,6 +59,10 @@
 
         </div>
     </div>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script>
+        let table = new DataTable('#personTable');
+    </script>
 </th:block>
 </body>
 

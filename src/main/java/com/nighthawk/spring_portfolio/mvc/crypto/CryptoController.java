@@ -1,14 +1,20 @@
 package com.nighthawk.spring_portfolio.mvc.crypto;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/crypto")
@@ -103,7 +109,7 @@ public ResponseEntity<?> buyCrypto(@RequestBody BuyRequest buyRequest) {
 
     userStocksTable userStocks = person.getUser_stocks();
     if (userStocks == null) {
-        userStocks = new userStocksTable("", selectedCrypto.getSymbol() + ":" + cryptoAmount, String.valueOf(updatedBalance), person.getEmail(), person);
+        userStocks = new userStocksTable("", selectedCrypto.getSymbol() + ":" + cryptoAmount, String.valueOf(updatedBalance), person.getEmail(), person, false);
     } else {
         String updatedCrypto = addOrUpdateCryptoHoldings(userStocks.getCrypto(), selectedCrypto.getSymbol(), cryptoAmount);
         userStocks.setCrypto(updatedCrypto);
