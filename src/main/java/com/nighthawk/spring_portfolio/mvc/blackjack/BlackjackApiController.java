@@ -29,9 +29,6 @@ public class BlackjackApiController {
     @Autowired
     private PersonJpaRepository personJpaRepository;
 
-    /** 
-     * Start a new Blackjack game
-     */
     @PostMapping("/start")
     public ResponseEntity<Blackjack> startGame(@RequestBody Map<String, Object> request) {
         try {
@@ -58,9 +55,6 @@ public class BlackjackApiController {
         }
     }
 
-    /** 
-     * Handle "Hit" action
-     */
     @PostMapping("/hit")
     public ResponseEntity<Object> hit(@RequestBody Map<String, Object> request) {
         try {
@@ -110,9 +104,6 @@ public class BlackjackApiController {
         }
     }
 
-    /** 
-     * Handle "Stand" action
-     */
     @PostMapping("/stand")
     public ResponseEntity<Object> stand(@RequestBody Map<String, Object> request) {
         try {
@@ -137,7 +128,6 @@ public class BlackjackApiController {
             int dealerScore = (int) game.getGameStateMap().getOrDefault("dealerScore", 0);
             double betAmount = game.getBetAmount();
 
-            // Dealer hits until reaching at least 17
             while (dealerScore < 17 && deck != null && !deck.isEmpty()) {
                 String drawnCard = deck.remove(0);
                 dealerHand.add(drawnCard);
@@ -148,7 +138,6 @@ public class BlackjackApiController {
             game.getGameStateMap().put("dealerScore", dealerScore);
             game.getGameStateMap().put("deck", deck);
 
-            // Determine game outcome
             String result;
             if (playerScore > 21) {
                 result = "LOSE";
@@ -163,7 +152,7 @@ public class BlackjackApiController {
                 double updatedBalance = person.getBalanceDouble() - betAmount;
                 person.setBalanceString(updatedBalance);
             } else {
-                result = "DRAW"; // No balance change on draw
+                result = "DRAW";
             }
 
             game.getGameStateMap().put("result", result);
