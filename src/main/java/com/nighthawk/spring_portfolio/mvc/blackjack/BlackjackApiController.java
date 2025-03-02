@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 
+/**
+ * REST API Controller for the Blackjack game.
+ * Handles player actions including starting the game, hitting, and standing.
+ */
 @RestController
 @RequestMapping("/api/casino/blackjack")
 public class BlackjackApiController {
@@ -29,6 +33,12 @@ public class BlackjackApiController {
     @Autowired
     private PersonJpaRepository personJpaRepository;
 
+    /**
+     * Starts a new Blackjack game for a player.
+     *
+     * @param request A map containing "uid" (User ID) and "betAmount" (Bet amount for the game).
+     * @return A `ResponseEntity` with the game state if successful, or an error message.
+     */
     @PostMapping("/start")
     public ResponseEntity<Blackjack> startGame(@RequestBody Map<String, Object> request) {
         try {
@@ -40,6 +50,7 @@ public class BlackjackApiController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
             }
 
+            // Create a new game instance
             Blackjack game = new Blackjack();
             game.setPerson(person);
             game.setStatus("ACTIVE");
@@ -55,6 +66,13 @@ public class BlackjackApiController {
         }
     }
 
+    /**
+     * Handles the "Hit" action in Blackjack.
+     * The player requests an additional card.
+     *
+     * @param request A map containing "uid" (User ID).
+     * @return A `ResponseEntity` with the updated game state or an error message.
+     */
     @PostMapping("/hit")
     public ResponseEntity<Object> hit(@RequestBody Map<String, Object> request) {
         try {
@@ -80,15 +98,18 @@ public class BlackjackApiController {
                 return ResponseEntity.ok("Deck is empty");
             }
 
+            // Draw a card from the deck and add it to the player's hand
             String drawnCard = deck.remove(0);
             playerHand.add(drawnCard);
             int playerScore = game.calculateScore(playerHand);
 
+            // Update game state
             game.getGameStateMap().put("playerHand", playerHand);
             game.getGameStateMap().put("playerScore", playerScore);
             game.getGameStateMap().put("deck", deck);
             game.persistGameState();
 
+            // If player busts, update balance and end game
             if (playerScore > 21) {
                 double updatedBalance = person.getBalanceDouble() - game.getBetAmount();
                 person.setBalanceString(updatedBalance);
@@ -104,6 +125,13 @@ public class BlackjackApiController {
         }
     }
 
+    /**
+     * Handles the "Stand" action in Blackjack.
+     * The dealer plays its turn and the game result is determined.
+     *
+     * @param request A map containing "uid" (User ID).
+     * @return A `ResponseEntity` with the updated game state or an error message.
+     */
     @PostMapping("/stand")
     public ResponseEntity<Object> stand(@RequestBody Map<String, Object> request) {
         try {
@@ -128,16 +156,19 @@ public class BlackjackApiController {
             int dealerScore = (int) game.getGameStateMap().getOrDefault("dealerScore", 0);
             double betAmount = game.getBetAmount();
 
+            // Dealer must draw until score is at least 17
             while (dealerScore < 17 && deck != null && !deck.isEmpty()) {
                 String drawnCard = deck.remove(0);
                 dealerHand.add(drawnCard);
                 dealerScore = game.calculateScore(dealerHand);
             }
 
+            // Update game state
             game.getGameStateMap().put("dealerHand", dealerHand);
             game.getGameStateMap().put("dealerScore", dealerScore);
             game.getGameStateMap().put("deck", deck);
 
+            // Determine game result and update player balance
             String result;
             if (playerScore > 21) {
                 result = "LOSE";
@@ -152,9 +183,10 @@ public class BlackjackApiController {
                 double updatedBalance = person.getBalanceDouble() - betAmount;
                 person.setBalanceString(updatedBalance);
             } else {
-                result = "DRAW";
+                result = "DRAW"; // No balance change on draw
             }
 
+            // Save game result and mark game as inactive
             game.getGameStateMap().put("result", result);
             game.setStatus("INACTIVE");
             repository.save(game);
