@@ -1,101 +1,68 @@
 <mxfile host="65bd71144e">
     <diagram id="KYV1XObxaJGmMunvIiFv" name="Page-1">
-        <mxGraphModel dx="2222" dy="1092" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="2097" dy="993" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="3" value="MinesBoard.java" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="3" value="MinesBoard.java" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="180" y="130" width="205" height="200" as="geometry"/>
                 </mxCell>
-                <mxCell id="5" value="int[][] board&lt;br&gt;int stakes&lt;br&gt;int xCoord&lt;br&gt;int yCoord&lt;br&gt;&lt;br&gt;placeMines()&lt;br&gt;checkMines(int xCoord, int yCoord)&lt;br&gt;winnings()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="3">
+                <mxCell id="5" value="int[][] board&lt;br&gt;int stakes&lt;br&gt;int xCoord&lt;br&gt;int yCoord&lt;br&gt;&lt;br&gt;placeMines()&lt;br&gt;checkMines(int xCoord, int yCoord)&lt;br&gt;winnings()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="3" vertex="1">
                     <mxGeometry x="-5" y="50" width="210" height="130" as="geometry"/>
                 </mxCell>
-                <mxCell id="6" value="MinesApiController.java" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="6" value="MinesApiController.java" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-80" y="130" width="200" height="200" as="geometry"/>
                 </mxCell>
-                <mxCell id="7" value="default mapping: /api/casino/mines&lt;br&gt;&lt;br&gt;check pos for mine: /{xCoord}/{yCoord}&lt;br&gt;&lt;br&gt;/stakes/{stakes}&lt;br&gt;&lt;br&gt;/balance/{uid}&lt;br&gt;&lt;br&gt;/winnings" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="6">
+                <mxCell id="7" value="default mapping: /api/casino/mines&lt;br&gt;&lt;br&gt;check pos for mine: /{xCoord}/{yCoord}&lt;br&gt;&lt;br&gt;/stakes/{stakes}&lt;br&gt;&lt;br&gt;/balance/{uid}&lt;br&gt;&lt;br&gt;/winnings" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="6" vertex="1">
                     <mxGeometry x="-5" y="100" width="210" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="8" value="" style="shape=flexArrow;endArrow=classic;html=1;entryX=0.004;entryY=0.48;entryDx=0;entryDy=0;entryPerimeter=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="7" target="5">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="80" y="350" as="sourcePoint"/>
-                        <mxPoint x="130" y="300" as="targetPoint"/>
-                    </mxGeometry>
+                <mxCell id="34" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fillColor=#FFFFFF;" edge="1" parent="1" source="9" target="14">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="9" value="PokerApiController.java" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="9" value="PokerApiController.java" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-80" y="420" width="200" height="200" as="geometry"/>
                 </mxCell>
-                <mxCell id="13" value="double bet&lt;br&gt;&lt;br&gt;String uid&lt;br&gt;&lt;br&gt;default mapping: /api/casino/poker&lt;br&gt;&lt;br&gt;/play&lt;br&gt;&lt;br&gt;/reset" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="9">
+                <mxCell id="13" value="double bet&lt;br&gt;&lt;br&gt;String uid&lt;br&gt;&lt;br&gt;default mapping: /api/casino/poker&lt;br&gt;&lt;br&gt;/play&lt;br&gt;&lt;br&gt;/reset" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="9" vertex="1">
                     <mxGeometry y="41" width="190" height="149" as="geometry"/>
                 </mxCell>
-                <mxCell id="23" value="" style="shape=flexArrow;endArrow=classic;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="9" target="14">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="90" y="210" as="sourcePoint"/>
-                        <mxPoint x="140" y="160" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="24" value="" style="shape=flexArrow;endArrow=classic;html=1;" edge="1" parent="9" target="21">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="190" y="200" as="sourcePoint"/>
-                        <mxPoint x="240" y="150" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="10" value="Casino branch of Gamify" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="-440" y="490" width="120" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="11" value="" style="shape=flexArrow;endArrow=classic;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="10" target="7">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="40" y="470" as="sourcePoint"/>
-                        <mxPoint x="90" y="420" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="12" value="" style="shape=flexArrow;endArrow=classic;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="10" target="9">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="40" y="470" as="sourcePoint"/>
-                        <mxPoint x="90" y="420" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="14" value="PokerBetRequest.java" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="14" value="PokerBetRequest.java" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-85" y="680" width="200" height="200" as="geometry"/>
                 </mxCell>
-                <mxCell id="16" value="PokerBoard.java" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="16" value="PokerBoard.java" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="215" y="410" width="200" height="200" as="geometry"/>
                 </mxCell>
-                <mxCell id="17" value="List&amp;lt;PokerCard&amp;gt; deck&lt;br&gt;&lt;br&gt;List&amp;lt;PokerCard&amp;gt; playerHand&lt;br&gt;&lt;br&gt;List&amp;lt;PokerCard&amp;gt; dealerHand&lt;br&gt;&lt;br&gt;initializeDeck()&lt;br&gt;&lt;br&gt;shuffleDeck()" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+                <mxCell id="30" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fillColor=#FFFFFF;" edge="1" parent="1" source="17" target="19">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="List&amp;lt;PokerCard&amp;gt; deck&lt;br&gt;&lt;br&gt;List&amp;lt;PokerCard&amp;gt; playerHand&lt;br&gt;&lt;br&gt;List&amp;lt;PokerCard&amp;gt; dealerHand&lt;br&gt;&lt;br&gt;initializeDeck()&lt;br&gt;&lt;br&gt;shuffleDeck()" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="215" y="432" width="205" height="168" as="geometry"/>
                 </mxCell>
-                <mxCell id="18" value="PokerCard.java" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="18" value="PokerCard.java" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="530" y="550" width="200" height="200" as="geometry"/>
                 </mxCell>
-                <mxCell id="19" value="String rank&lt;br&gt;&lt;br&gt;String suit&lt;br&gt;&lt;br&gt;getRank()&lt;br&gt;&lt;br&gt;getSuit()&lt;br&gt;&lt;br&gt;compareTo(PokerCard other)&lt;br&gt;&lt;br&gt;getCardRankValue()" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="18">
+                <mxCell id="19" value="String rank&lt;br&gt;&lt;br&gt;String suit&lt;br&gt;&lt;br&gt;getRank()&lt;br&gt;&lt;br&gt;getSuit()&lt;br&gt;&lt;br&gt;compareTo(PokerCard other)&lt;br&gt;&lt;br&gt;getCardRankValue()" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="18" vertex="1">
                     <mxGeometry y="24" width="200" height="176" as="geometry"/>
                 </mxCell>
-                <mxCell id="15" value="int bet&lt;br&gt;&lt;br&gt;getBet()&lt;br&gt;&lt;br&gt;setBet()" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+                <mxCell id="15" value="int bet&lt;br&gt;&lt;br&gt;getBet()&lt;br&gt;&lt;br&gt;setBet()" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="-80" y="710" width="190" height="170" as="geometry"/>
                 </mxCell>
-                <mxCell id="20" value="PokeGameResult.java" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="20" value="PokeGameResult.java" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="210" y="690" width="200" height="200" as="geometry"/>
                 </mxCell>
-                <mxCell id="21" value="isPlayerWin()&lt;br&gt;&lt;br&gt;isDealerWin()&lt;br&gt;&lt;br&gt;getWinnings()&lt;br&gt;&lt;br&gt;evaluateHand(List&amp;lt;PokerCard&amp;gt; hand)&lt;br&gt;&lt;br&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="20">
+                <mxCell id="21" value="isPlayerWin()&lt;br&gt;&lt;br&gt;isDealerWin()&lt;br&gt;&lt;br&gt;getWinnings()&lt;br&gt;&lt;br&gt;evaluateHand(List&amp;lt;PokerCard&amp;gt; hand)&lt;br&gt;&lt;br&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="20" vertex="1">
                     <mxGeometry y="30" width="200" height="170" as="geometry"/>
                 </mxCell>
-                <mxCell id="22" value="" style="shape=flexArrow;endArrow=classic;html=1;entryX=-0.011;entryY=0.423;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="17">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="130" y="530" as="sourcePoint"/>
-                        <mxPoint x="180" y="480" as="targetPoint"/>
-                    </mxGeometry>
+                <mxCell id="27" value="Casino Branch of Gamify" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="-120" y="30" width="890" height="940" as="geometry"/>
                 </mxCell>
-                <mxCell id="25" value="" style="shape=flexArrow;endArrow=classic;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="19">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="410" y="790" as="sourcePoint"/>
-                        <mxPoint x="460" y="740" as="targetPoint"/>
-                    </mxGeometry>
+                <mxCell id="31" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fillColor=#FFFFFF;" edge="1" parent="1" source="7" target="5">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="26" value="" style="shape=flexArrow;endArrow=classic;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" target="19">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="420" y="490" as="sourcePoint"/>
-                        <mxPoint x="470" y="440" as="targetPoint"/>
-                    </mxGeometry>
+                <mxCell id="32" style="edgeStyle=none;html=1;fillColor=#FFFFFF;" edge="1" parent="1" source="13" target="17">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" style="edgeStyle=none;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;fillColor=#FFFFFF;" edge="1" parent="1" source="13" target="20">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
