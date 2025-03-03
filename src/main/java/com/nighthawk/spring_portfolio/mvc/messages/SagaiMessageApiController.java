@@ -20,13 +20,54 @@ public class SagaiMessageApiController {
     @Autowired
     private SagaiMessageJpaRepository messageRepository;
 
+    @Autowired
+    private SagaiCommentJpaRepository commentRepository;
+
+
     /* GET List of Jokes
      * @GetMapping annotation is used for mapping HTTP GET requests onto specific handler methods.
      */
     @GetMapping("/")
     public ResponseEntity<List<SagaiMessage>> getMessages() {
         // ResponseEntity returns List of Jokes provide by JPA findAll()
+
+        //create default messages 
+        createInitMessages();
         return new ResponseEntity<>( messageRepository.findAll(), HttpStatus.OK);
+    }
+
+     /** 
+      * This method is to create the default content for the college board Review.
+      * This method will check if the database already has more then 10 message then skips.
+      * This method will iterate through each message from Init() and save the message to the database.
+      * This method will also itterate through each comment in the message and save  to the Database.
+     */
+    private void createInitMessages(){
+
+        //check if the database already has more then 10 message then skips.
+        List<SagaiMessage> dataMessages = messageRepository.findAll();
+        System.out.println("messages size" +dataMessages.size());  // print object
+        if(dataMessages.size() >=10){
+            return;
+        }
+        //Get the list of messages we use for testing.
+        SagaiMessage messages[] = SagaiMessage.init();
+        //In case the message already exist then skip saving.
+        try{
+            for( SagaiMessage message : messages) {
+                System.out.println(message);  // print object
+                SagaiMessage msg = messageRepository.save(message); 
+                List<SagaiComment> comments = message.getComments();
+                for( SagaiComment comment : comments) {
+                    comment.setMessage(msg);
+                    commentRepository.save(comment);
+                }
+
+            }
+        }catch(Exception e){
+            System.out.println("message already saved.");  // print object
+        }
+          
     }
 
     /* Update Like

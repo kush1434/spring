@@ -36,3 +36,13 @@
 - In order to run this project locally, a .env file should be set up with the appropriate variables:
 - GAMIFY_API_URL
 - GAMIFY_API_KEY
+
+
+## Person MVC
+![Class Diagram](https://github.com/user-attachments/assets/26219a16-e3dc-45e3-af1c-466763957dce)
+
+- Basically there is a rough MVCframework.
+- The webpages act as the view. These pages can view details about the users, and request the controller to change details about them
+- The controller is mainly "personViewController" for the backend, but other controllers include "personApiController" for the front end.
+- Techincally the image is wrong, "personDetailsService" is a controller. It is used by other controllers to change the database, so it seemed more accurate to call it a part of the model, rather than a controller.
+- The person.java is the pojo (object) that is used for the database schema.

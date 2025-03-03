@@ -1,6 +1,9 @@
 package com.nighthawk.spring_portfolio.mvc.bathroom;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -9,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,64 +32,133 @@ public class Tinkle {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-
-    //Sets up a OnetoOne join column with the person_id on the person datable
-    // OnDelete annotation makes it such that the tinkle object will be deleted if the 
     @OneToOne
     @JoinColumn(name = "person_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonBackReference
-    //TimeIn column is where the entries are stored for when a user checks in and checks out
     private Person person;
-    private String timeIn;
+
+    private String timeIn; // Stores comma-separated time pairs
 
     @Column
-    private String person_name;
+    @Convert(converter = TimeInOutPairsConverter.class)
+    private List<LocalDateTime[]> timeInOutPairs = new ArrayList<>();
 
-    //Constructor for the Tinkle Object
-    public Tinkle(Person person, String statsInput)
-    {
+    @Column
+    private String personName;
+
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    public Tinkle(Person person, String statsInput) {
         this.person = person;
+        this.personName = person.getName();
         this.timeIn = statsInput;
-        this.person_name = person.getName();
+        parseAndStoreTimeInOut(statsInput);
     }
 
-    //Logic to add the timeIn value. Example formatting for the timeIn entry: 11:30:12-12:14:10,12:15:14-11:10:9
-    public void addTimeIn(String timeIn)
-    {
-        if (this.timeIn == null || this.timeIn.isEmpty())
-        {
-            this.timeIn = timeIn;
-        }
-        else 
-        {
-            this.timeIn += "," + timeIn;
-        }
+    public void addTimeIn(String timeInOutPairs) {
+        if (timeInOutPairs != null && !timeInOutPairs.isEmpty()) {
+            if (this.timeInOutPairs == null || this.timeInOutPairs.isEmpty()) {
+                this.timeInOutPairs = new ArrayList<>();
+            } else {
+                this.timeInOutPairs = new ArrayList<>(this.timeInOutPairs);
+            }
 
+            String[] pairs = timeInOutPairs.split(",");
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+            for (String pair : pairs) {
+                String[] times = pair.split("-");
+                if (times.length == 2) {
+                    try {
+                        times[0] = formatTime(times[0], timeFormatter);
+                        times[1] = formatTime(times[1], timeFormatter);
+
+                        String date = LocalDateTime.now().toLocalDate().toString();
+                        LocalDateTime parsedTimeIn = LocalDateTime.parse(date + " " + times[0], dateTimeFormatter);
+                        LocalDateTime parsedTimeOut = LocalDateTime.parse(date + " " + times[1], dateTimeFormatter);
+
+                        this.timeInOutPairs.add(new LocalDateTime[]{parsedTimeIn, parsedTimeOut});
+
+                        // Update timeIn column to maintain consistency
+                        if (this.timeIn == null || this.timeIn.isEmpty()) {
+                            this.timeIn = date + " " + times[0] + "--" + date + " " + times[1];
+                        } else {
+                            this.timeIn += "," + date + " " + times[0] + "--" + date + " " + times[1];
+                        }
+                    } catch (Exception e) {
+                        System.out.println("⚠️ Failed to parse time: " + pair);
+                    }
+                }
+            }
+        }
     }
 
-    //Initializing ddata for the sqlite db
+    private String formatTime(String time, DateTimeFormatter formatter) {
+        String[] parts = time.split(":");
+        if (parts.length == 3) {
+            int hour = Integer.parseInt(parts[0]);
+            int minute = Integer.parseInt(parts[1]);
+            int second = Integer.parseInt(parts[2]);
+            return String.format("%02d:%02d:%02d", hour, minute, second);
+        }
+        return time;
+    }
+
+    public void addTimeIn(LocalDateTime timeIn, LocalDateTime timeOut) {
+        this.timeInOutPairs.add(new LocalDateTime[]{timeIn, timeOut});
+
+        String formattedPair = timeIn.format(formatter) + "--" + timeOut.format(formatter);
+        if (this.timeIn == null || this.timeIn.isEmpty()) {
+            this.timeIn = formattedPair;
+        } else {
+            this.timeIn += "," + formattedPair;
+        }
+    }
+
+    private void parseAndStoreTimeInOut(String statsInput) {
+        if (statsInput != null && !statsInput.isEmpty()) {
+            String[] pairs = statsInput.split(",");
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+            for (String pair : pairs) {
+                String[] times = pair.split("--");
+                if (times.length == 2) {
+                    try {
+                        LocalDateTime parsedTimeIn = LocalDateTime.parse(times[0], dateTimeFormatter);
+                        LocalDateTime parsedTimeOut = LocalDateTime.parse(times[1], dateTimeFormatter);
+                        this.timeInOutPairs.add(new LocalDateTime[]{parsedTimeIn, parsedTimeOut});
+                    } catch (Exception e) {
+                        System.out.println("⚠️ Failed to parse existing time entry: " + pair);
+                    }
+                }
+            }
+        }
+    }
+
     public static Tinkle[] init(Person[] persons) {
         ArrayList<Tinkle> tinkles = new ArrayList<>();
-    
-        // Ensure we have enough sample data for unique timeIn values
-        String[] timeInSamples = {
-            "08:00:00-08:10:00,09:30:00-09:45:00", // Entry 1
-            "07:50:00-08:05:00,10:00:00-10:15:00", // Entry 2
-            "09:15:00-09:25:00,11:10:00-11:20:00", // Entry 3
-            "12:00:00-12:20:00,13:30:00-13:50:00", // Entry 4
-            "14:10:00-14:25:00,15:15:00-15:30:00", // Entry 5
-            "16:05:00-16:15:00,17:45:00-18:00:00", // Entry 6
-            "18:10:00-18:25:00,19:30:00-19:45:00"  // Entry 7
+
+        String[] timeInOutSamples = {
+            "2025-02-17 08:45:00--2025-02-17 09:10:00,2025-02-17 10:15:00--2025-02-17 10:50:00",
+            "2025-02-18 09:05:00--2025-02-18 09:25:00,2025-02-18 11:40:00--2025-02-18 12:10:00",
+            "2025-02-19 11:35:00--2025-02-19 12:00:00,2025-02-19 13:10:00--2025-02-19 13:55:00",
+            "2025-02-20 08:50:00--2025-02-20 09:05:00,2025-02-20 14:15:00--2025-02-20 14:45:00",
+            "2025-02-21 12:10:00--2025-02-21 12:50:00,2025-02-21 15:20:00--2025-02-21 15:35:00",
+            "2025-02-17 10:35:00--2025-02-17 11:10:00",
+            "2025-02-18 08:55:00--2025-02-18 09:40:00,2025-02-18 14:25:00--2025-02-18 14:50:00",
+            "2025-02-19 09:45:00--2025-02-19 10:05:00,2025-02-19 12:30:00--2025-02-19 13:05:00",
+            "2025-02-20 13:05:00--2025-02-20 13:50:00,2025-02-20 15:10:00--2025-02-20 15:35:00",
+            "2025-02-21 08:35:00--2025-02-21 09:05:00,2025-02-21 12:45:00--2025-02-21 13:20:00"
         };
-    
-        // Assign unique timeIn values to each Tinkle entry
+        
+
         for (int i = 0; i < persons.length; i++) {
-            String timeIn = timeInSamples[i % timeInSamples.length]; // Reuse timeIn samples if more persons exist
-            tinkles.add(new Tinkle(persons[i], timeIn));
+            String timeInOut = timeInOutSamples[i % timeInOutSamples.length];
+            tinkles.add(new Tinkle(persons[i], timeInOut));
         }
-    
+
         return tinkles.toArray(new Tinkle[0]);
     }
-    
 }

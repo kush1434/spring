@@ -21,28 +21,28 @@ public class DataInitializer implements CommandLineRunner {
        // Free Starter GPU
        createGPU("NVIDIA GeForce GT 1030", 1.55, 30, 65, 0, "Free Starter GPU");
 
-       // Budget GPUs ($50-500)
-       createGPU("NVIDIA GeForce GTX 1050", 14, 75, 67, 150, "Budget GPUs ($50-500)");
-       createGPU("AMD RX 570 8GB", 28, 120, 70, 250, "Budget GPUs ($50-500)");
-       createGPU("NVIDIA GeForce GTX 1060 6GB", 22, 120, 68, 400, "Budget GPUs ($50-500)");
+       // Budget GPUs ($10000-20000)
+       createGPU("NVIDIA GeForce GTX 1050", 14, 75, 67, 10000, "Budget GPUs ($10000-20000)");
+       createGPU("AMD RX 570 8GB", 28, 120, 70, 15000, "Budget GPUs ($10000-20000)");
+       createGPU("NVIDIA GeForce GTX 1060 6GB", 22, 120, 68, 20000, "Budget GPUs ($10000-20000)");
 
-       // Mid-Range GPUs ($500-1500)
-       createGPU("NVIDIA GeForce GTX 1660 SUPER", 31, 125, 69, 800, "Mid-Range GPUs ($500-1500)");
-       createGPU("AMD RX 5600 XT", 40, 150, 71, 1000, "Mid-Range GPUs ($500-1500)");
-       createGPU("NVIDIA RTX 2060", 32, 160, 70, 1200, "Mid-Range GPUs ($500-1500)");
-       createGPU("NVIDIA RTX 2070", 42, 175, 71, 1400, "Mid-Range GPUs ($500-1500)");
+       // Mid-Range GPUs ($20000-50000)
+       createGPU("NVIDIA GeForce GTX 1660 SUPER", 31, 125, 69, 25000, "Mid-Range GPUs ($20000-50000)");
+       createGPU("AMD RX 5600 XT", 40, 150, 71, 30000, "Mid-Range GPUs ($20000-50000)");
+       createGPU("NVIDIA RTX 2060", 32, 160, 70, 35000, "Mid-Range GPUs ($20000-50000)");
+       createGPU("NVIDIA RTX 2070", 42, 175, 71, 45000, "Mid-Range GPUs ($20000-50000)");
 
-       // High-End GPUs ($1500-3000)
-       createGPU("NVIDIA RTX 3060 Ti", 60, 200, 70, 1700, "High-End GPUs ($1500-3000)");
-       createGPU("NVIDIA RTX 3070", 62, 220, 71, 2000, "High-End GPUs ($1500-3000)");
-       createGPU("NVIDIA RTX 3080", 64, 300, 73, 2300, "High-End GPUs ($1500-3000)");
-       createGPU("NVIDIA RTX 3090", 98, 320, 72, 2800, "High-End GPUs ($1500-3000)");
+       // High-End GPUs ($50000-100000)
+       createGPU("NVIDIA RTX 3060 Ti", 60, 200, 70, 55000, "High-End GPUs ($50000-100000)");
+       createGPU("NVIDIA RTX 3070", 62, 220, 71, 65000, "High-End GPUs ($50000-100000)");
+       createGPU("NVIDIA RTX 3080", 64, 300, 73, 80000, "High-End GPUs ($50000-100000)");
+       createGPU("NVIDIA RTX 3090", 98, 320, 72, 95000, "High-End GPUs ($50000-100000)");
 
-       // Premium GPUs ($3000+)
-       createGPU("NVIDIA RTX 4070", 100, 285, 71, 3200, "Premium GPUs ($3000+)");
-       createGPU("AMD RX 7900 XTX", 110, 355, 73, 3500, "Premium GPUs ($3000+)");
-       createGPU("NVIDIA RTX 4080", 130, 320, 73, 3800, "Premium GPUs ($3000+)");
-       createGPU("NVIDIA RTX 4090", 140, 450, 75, 4000, "Premium GPUs ($3000+)");
+       // Premium GPUs ($100000+)
+       createGPU("NVIDIA RTX 4070", 100, 285, 71, 120000, "Premium GPUs ($100000+)");
+       createGPU("AMD RX 7900 XTX", 110, 355, 73, 150000, "Premium GPUs ($100000+)");
+       createGPU("NVIDIA RTX 4080", 130, 320, 73, 180000, "Premium GPUs ($100000+)");
+       createGPU("NVIDIA RTX 4090", 140, 450, 75, 200000, "Premium GPUs ($100000+)");
    }
 
     private void createGPU(String name, double hashRate, int power, int temp, double price, String category) {
@@ -55,4 +55,4 @@ public class DataInitializer implements CommandLineRunner {
         gpu.setCategory(category);
         gpuRepository.save(gpu);
     }
-} 
+}

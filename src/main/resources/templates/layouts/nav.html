@@ -47,8 +47,8 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink2">
                                 <li><a class="dropdown-item" th:href="@{/mvc/person/read}">SQL Person</a></li>
-                                <li><a class="dropdown-item" th:href="@{/mvc/person/search}">SQL Person Search</a></li>
                                 <li><a class="dropdown-item" th:href="@{/mvc/person/person-quiz}">Database Person Quiz</a></li>
+                                <li><a class="dropdown-item" th:href="@{/mvc/person/cookie-clicker}">Database Cookie Clicker</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -80,6 +80,7 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink3">
                                 <li><a class="dropdown-item" th:href="@{/admin/tinkle-view}">Tinkle View</a></li>
+                                <li><a class="dropdown-item" th:href="@{/admin/approval-requests}">Approval Requests</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -135,10 +136,7 @@
 
 
                 <!-- Dark mode action -->
-                <div class="form-check form-switch">
-                    <label class="custom-control-label" for="darkSwitch"></label>
-                    <input type="checkbox" onclick="darkFunction()" class="form-check-input link-dark" id="darkSwitch">
-                </div>
+         
             </div>
 
             <div class="collapse navbar-collapse" id="navbarNavDarkDropdown0" sec:authorize="isAuthenticated()">

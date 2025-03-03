@@ -1,11 +1,13 @@
 package com.nighthawk.spring_portfolio.mvc.blackjack;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -183,7 +185,7 @@ public class BlackjackApiController {
                 double updatedBalance = person.getBalanceDouble() - betAmount;
                 person.setBalanceString(updatedBalance);
             } else {
-                result = "DRAW"; // No balance change on draw
+                result = "DRAW";
             }
 
             // Save game result and mark game as inactive
@@ -197,5 +199,13 @@ public class BlackjackApiController {
             LOGGER.log(Level.SEVERE, "Error processing stand", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> safeCastToList(Object obj) {
+        if (obj instanceof List) {
+            return (List<String>) obj;
+        }
+        return new ArrayList<>();
     }
 }

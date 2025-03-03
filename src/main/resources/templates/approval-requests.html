@@ -2,76 +2,217 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Approval Requests</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 40px;
+        }
+
+        /* Navbar */
+        .navbar {
+            width: 100%;
+            background-color: #333;
+            padding: 15px 20px;
+            color: white;
+            text-align: center;
+            font-size: 20px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 50%;
+            margin-bottom: 30px;
+            border-collapse: collapse;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: white;
+        }
+
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        td {
+            font-size: 13px;
+        }
+
+        /* Heading */
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 6px 12px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .approve-btn {
+            background-color: #4CAF50;
+        }
+
+        .approve-btn:hover {
+            background-color: #45a049;
+        }
+
+        .deny-btn {
+            background-color: #d9534f;
+        }
+
+        .deny-btn:hover {
+            background-color: #c9302c;
+        }
+
+        /* Container */
+        .container {
+            width: 80%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+    </style>
+
     <script>
+        if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+            javaURI = "http://localhost:8085";
+        } else {
+            javaURI = "https://spring2025.nighthawkcodingsociety.com";
+        }
+
+        // Approve Student: Remove from requests & Add to Queue
         function approveStudent(teacherEmail, studentName) {
-            fetch("http://127.0.0.1:8085/api/approval/approveRequest", {
-                method: "DELETE",
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, "0");
+            const minutes = now.getMinutes().toString().padStart(2, "0");
+            const seconds = now.getSeconds().toString().padStart(2, "0");
+            const timeIn = `${hours}:${minutes}:${seconds}`;
+
+            fetch(javaURI + "/api/approval/approveRequest", {
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ teacherEmail, studentName })
+                body: JSON.stringify({ teacherEmail, studentName, timeIn }) 
             }).then(response => {
                 if (response.ok) {
-                    window.location.reload();
+                    console.log(`Approved: ${studentName}, now adding to queue with timeIn: ${timeIn}`);
+                    fetchPendingRequests(); // Refresh table after approval
                 } else {
-                    alert("Failed to approve request.");
+                    console.log(`Failed to approve request.`);
                 }
             });
         }
 
+        // Deny Student: Remove from requests only
         function denyStudent(teacherEmail, studentName) {
-            fetch("http://127.0.0.1:8085/api/approval/denyRequest", { 
+            fetch(javaURI + "/api/approval/denyRequest", { 
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ teacherEmail, studentName })
             }).then(response => {
                 if (response.ok) {
-                    window.location.reload();
+                    console.log(`Denied: ${studentName}`);
+                    fetchPendingRequests(); // Refresh table after denial
                 } else {
                     alert("Failed to deny request.");
                 }
             });
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
-            document.querySelectorAll(".approve-btn").forEach(button => {
-                button.addEventListener("click", function () {
-                    const teacherEmail = this.getAttribute("data-teacher-email");
-                    const studentName = this.getAttribute("data-student-name");
-                    approveStudent(teacherEmail, studentName);
-                });
-            });
+        // Auto-refresh function to update the table every 5 seconds
+        function fetchPendingRequests() {
+            fetch(javaURI + "/api/approval/pendingRequests")
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Auto-refreshing Approval Requests:", data);
+                    
+                    const tableBody = document.querySelector("#approvalTable tbody");
+                    tableBody.innerHTML = ""; // Clear table before repopulating
 
-            document.querySelectorAll(".deny-btn").forEach(button => {
-                button.addEventListener("click", function () {
-                    const teacherEmail = this.getAttribute("data-teacher-email");
-                    const studentName = this.getAttribute("data-student-name");
-                    denyStudent(teacherEmail, studentName);
-                });
-            });
-        });
+                    data.forEach(request => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${request.studentName}</td>
+                            <td>
+                                <button class="btn approve-btn" 
+                                        data-teacher-email="${request.teacherEmail}" 
+                                        data-student-name="${request.studentName}"
+                                        onclick="approveStudent('${request.teacherEmail}', '${request.studentName}')">
+                                    Approve
+                                </button>
+                                <button class="btn deny-btn" 
+                                        data-teacher-email="${request.teacherEmail}" 
+                                        data-student-name="${request.studentName}"
+                                        onclick="denyStudent('${request.teacherEmail}', '${request.studentName}')">
+                                    Deny
+                                </button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.log("Error fetching pending requests:", error));
+        }
+
+        // Auto-refresh every 5 seconds
+        setInterval(fetchPendingRequests, 5000);
+
+        // Initial load
+        document.addEventListener("DOMContentLoaded", fetchPendingRequests);
     </script>
 </head>
+
 <body>
-    <h2><strong>Pending Approval Requests</strong></h2>
-    <table border="1">
-        <tr>
-            <th>Student Name</th>
-            <th>Actions</th>
-        </tr>
-        <tr th:each="request : ${pendingRequests}">
-            <td th:text="${request.studentName}"></td>
-            <td>
-                <button class="approve-btn" 
-                        th:data-teacher-email="${request.teacherEmail}" 
-                        th:data-student-name="${request.studentName}">
-                    Approve
-                </button>
-                <button class="deny-btn" 
-                        th:data-teacher-email="${request.teacherEmail}" 
-                        th:data-student-name="${request.studentName}">
-                    Deny
-                </button>
-            </td>
-        </tr>
-    </table>
+    <!-- Navbar -->
+    <div class="navbar">Approval Requests</div>
+
+    <div class="container">
+        <h2>Pending Approval Requests</h2>
+        <table id="approvalTable">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Table rows auto-populated via JavaScript -->
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

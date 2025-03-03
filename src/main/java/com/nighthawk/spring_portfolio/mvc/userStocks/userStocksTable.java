@@ -40,6 +40,7 @@ public class userStocksTable {
 
     @Column
     private String email; // Email of the associated person
+    
     @OneToOne
     @JoinColumn(name = "person_id", referencedColumnName = "id")
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -54,9 +55,15 @@ public class userStocksTable {
 
     @Column
     private String balance; // Balance for the associated person
-
+    
     @Column
     private boolean hasSimulated;
+
+    @Column
+    private Boolean period1;
+    
+    @Column(columnDefinition = "TEXT")
+    private String cryptoHistory; // Stores all crypto purchase histories
 
     public double getBalanceDouble() {
         var balance_tmp = getBalance();
@@ -64,7 +71,7 @@ public class userStocksTable {
     }
 
     // Constructor for initializing a userStocksTable object
-    public userStocksTable(String stonks, String crypto, String balance, String email, Person person, boolean hasSimulated) {
+    public userStocksTable(String stonks, String crypto, String balance, String email, Person person, boolean hasSimulated, boolean period1, String cryptoHistory) {
         this.person_name = person.getName();
         this.stonks = stonks;
         this.crypto = crypto;
@@ -72,13 +79,15 @@ public class userStocksTable {
         this.email = email;
         this.person = person;
         this.hasSimulated = hasSimulated;
+        this.period1 = period1;
+        this.cryptoHistory = cryptoHistory;
     }
 
     // Method to initialize an array of userStocksTable objects for a list of Person entities
     public static userStocksTable[] init(Person[] persons) {
         ArrayList<userStocksTable> stocks = new ArrayList<>();
         for (Person person : persons) {
-            stocks.add(new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", startingBalance, person.getEmail(), person, false));
+            stocks.add(new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", startingBalance, person.getEmail(), person, false, true, ""));
         }
         return stocks.toArray(new userStocksTable[0]);
     }

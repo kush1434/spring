@@ -14,12 +14,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.github.cdimascio.dotenv.Dotenv;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @RestController
 @RequestMapping("/api/students")
 public class StudentInfoApiController {
+
+    private final Dotenv dotenv = Dotenv.load();
     
     @Autowired
     private StudentInfoJPARepository studentJPARepository;
@@ -76,6 +80,12 @@ public class StudentInfoApiController {
         }
     }
 
+    @GetMapping("/apiKey")
+    public ResponseEntity<String> getApiKey() {
+        String apiKey = dotenv.get("GITHUB_TOKEN");
+        return ResponseEntity.ok(apiKey);
+    }
+
     @Getter
     public static class TeamDto {
         private String course;
@@ -96,6 +106,41 @@ public class StudentInfoApiController {
             return ResponseEntity.ok(students);
         }
     }
+
+    @Getter
+    public static class StudentName {
+        private String name;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class StudentInfoDto {
+        private String username;
+        private String course;
+        private int tableNumber;
+        private int period;
+    }
+
+    @PostMapping("/findbyName")
+    public ResponseEntity<List<StudentInfoDto>> getStudentByName(@RequestBody StudentName studentName) {
+        List<Object[]> studentData = studentJPARepository.findSelectedFieldsByPersonName(studentName.getName());
+
+        if (studentData.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        } else {
+            List<StudentInfoDto> studentDtos = studentData.stream()
+                .map(data -> new StudentInfoDto(
+                    (String) data[0],  // username
+                    (String) data[1],  // course
+                    (Integer) data[2], // tableNumber
+                    (Integer) data[3]  // period
+                ))
+                .toList();
+            
+            return ResponseEntity.ok(studentDtos);
+        }
+    }
+
 
 
     @Getter 

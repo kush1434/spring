@@ -42,7 +42,8 @@ public class AdventureAnswerApiController {
     private final Dotenv dotenv = Dotenv.load();
     private final String apiUrl = dotenv.get("GAMIFY_API_URL"); // store api url
     private final String apiKey = dotenv.get("GAMIFY_API_KEY"); // store api key
-
+    @Autowired
+    private PersonJpaRepository repository;
     // autowire jpa repositories for database interactions
     @Autowired
     private AdventureAnswerJpaRepository answerJpaRepository;
@@ -58,6 +59,17 @@ public class AdventureAnswerApiController {
         private Long questionId; // associate with a question
         private Long personId; // associate with a person
         private Long chatScore; // store chat score for the answer
+    }
+
+    // added endpoint to match python user to java user
+    @GetMapping("/person/{uid}")
+    public ResponseEntity<Person> getPersonByUid(@PathVariable String uid) {
+        Person person = repository.findByUid(uid);
+        if (person != null) { // Good ID
+            return new ResponseEntity<>(person, HttpStatus.OK); // OK HTTP response: status code, headers, and body
+        }
+        // Bad ID
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     // endpoint to get the number of questions answered by a specific person

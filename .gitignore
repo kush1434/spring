@@ -15,7 +15,6 @@ volumes/sqlite.db
 .springBeans
 .sts4-cache
 
-volumes
 
 *.db
 

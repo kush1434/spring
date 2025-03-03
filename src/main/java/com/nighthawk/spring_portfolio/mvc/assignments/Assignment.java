@@ -31,8 +31,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -40,7 +38,6 @@ import lombok.Setter;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
-
 public class Assignment {
     // @JsonInclude(JsonInclude.Include.NON_NULL)
     @NotNull

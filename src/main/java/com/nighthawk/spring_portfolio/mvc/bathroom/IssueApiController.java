@@ -39,7 +39,6 @@ public class IssueApiController {
         private float positionX;
         private float positionY;
     }
-    @CrossOrigin(origins = "*")
     @PostMapping("/add")
     public ResponseEntity<Object> addIssue(@RequestBody IssueDto issueDto)
     {
@@ -67,7 +66,6 @@ public class IssueApiController {
         private String issue;
     }
 
-    @CrossOrigin(origins = "*")
     @PutMapping("/update")
     public ResponseEntity<Object> updateIssue(@RequestBody UpdateDto updateDto)
     {
@@ -83,7 +81,6 @@ public class IssueApiController {
         return new ResponseEntity<>("Issue not found", HttpStatus.NOT_FOUND);
     }
 
-    @CrossOrigin(origins = {"*"})
     @GetMapping("/issues")
     public ResponseEntity<List<Issue>> getCurrentIssues()
     {

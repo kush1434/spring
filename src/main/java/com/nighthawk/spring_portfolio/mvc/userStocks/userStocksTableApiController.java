@@ -2,9 +2,13 @@ package com.nighthawk.spring_portfolio.mvc.userStocks;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -129,6 +134,18 @@ public class userStocksTableApiController {
                                 .body("An error occurred during simulation: " + e.getMessage());
         }
     }
+    @GetMapping("/currentStockPrice")
+    @ResponseBody
+    public ResponseEntity<?> getCurrentStockPrice(@RequestParam String stockSymbol) {
+        try {
+            double stockPrice = userService.getCurrentStockPrice(stockSymbol);
+            return ResponseEntity.ok(new JSONObject().put("stockSymbol", stockSymbol).put("currentPrice", stockPrice).toString());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(new JSONObject().put("error", "Failed to fetch stock price").put("message", e.getMessage()).toString());
+        }
+    }
+
 
 
 }
@@ -224,17 +241,40 @@ class UserStocksTableService implements UserDetailsService {
     public double getCurrentStockPrice(String stockSymbol) {
         String url = "https://query1.finance.yahoo.com/v8/finance/chart/" + stockSymbol;
         RestTemplate restTemplate = new RestTemplate();
-        try {
-            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-            if (response.getStatusCode() == HttpStatus.OK) {
-                JSONObject jsonResponse = new JSONObject(response.getBody());
-                return jsonResponse.getJSONObject("chart").getJSONArray("result").getJSONObject(0)
-                        .getJSONObject("meta").getDouble("regularMarketPrice");
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0");
+    
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        int maxRetries = 3;
+        int retryCount = 0;
+        
+        while (retryCount < maxRetries) {
+            try {
+                ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+                
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    JSONObject jsonResponse = new JSONObject(response.getBody());
+                    return jsonResponse.getJSONObject("chart").getJSONArray("result").getJSONObject(0)
+                            .getJSONObject("meta").getDouble("regularMarketPrice");
+                }
+            } catch (HttpClientErrorException.TooManyRequests e) {
+                retryCount++;
+                System.out.println("Rate limited! Retrying... Attempt: " + retryCount);
+                
+                try {
+                    TimeUnit.SECONDS.sleep((long) Math.pow(2, retryCount)); // Exponential backoff
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Thread interrupted while waiting to retry API call.");
+                }
+            } catch (Exception e) {
+                System.out.println("Error fetching stock price: " + e.getMessage());
+                break;
             }
-        } catch (Exception e) {
-            System.out.println("Error fetching stock price: " + e.getMessage());
         }
-        throw new RuntimeException("Failed to fetch stock price for " + stockSymbol);
+        
+        throw new RuntimeException("Failed to fetch stock price for " + stockSymbol + " after retries.");
     }
 
     /**

@@ -10,13 +10,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
 
 @RestController
+
+
 @RequestMapping("/api/crypto")
 public class CryptoController {
 
@@ -32,6 +35,28 @@ public class CryptoController {
     @Autowired
     private CryptoJPArepo cryptoJPArepo;
 
+    @GetMapping("/balance")
+    public ResponseEntity<?> getUserBalance(@RequestParam String email) {
+        userStocksTable userStocks = userStocksRepo.findByEmail(email);
+    
+        if (userStocks == null) {
+            return ResponseEntity.status(404).body("User balance not found for email: " + email);
+        }
+    
+        return ResponseEntity.ok("{ \"email\": \"" + email + "\", \"balance\": \"" + userStocks.getBalance() + "\" }");
+    }
+    
+    @GetMapping("/balanceById")
+    public ResponseEntity<?> getUserBalanceById(@RequestParam Long id) {
+        userStocksTable userStocks = userStocksRepo.findById(id).orElse(null);
+
+        if (userStocks == null) {
+            return ResponseEntity.status(404).body("User balance not found for ID: " + id);
+        }
+
+        return ResponseEntity.ok("{ \"id\": \"" + id + "\", \"balance\": \"" + userStocks.getBalance() + "\" }");
+    }
+    
     @GetMapping("/live")
     public ResponseEntity<?> getLiveCryptoData() {
         Crypto[] cryptoData = cryptoService.getCryptoData();
@@ -63,125 +88,148 @@ public class CryptoController {
         return ResponseEntity.ok("{ \"cryptoId\": \"" + cryptoId + "\", \"price\": " + price + " }");
     }
 
-   @PostMapping("/buy")
-public ResponseEntity<?> buyCrypto(@RequestBody BuyRequest buyRequest) {
-    String email = buyRequest.getEmail();
-    String cryptoId = buyRequest.getCryptoId();
-    double usdAmount = buyRequest.getUsdAmount();
-
-    // Fetch user
-    Person person = personRepository.findByEmail(email);
-    if (person == null) {
-        return ResponseEntity.badRequest().body("User not found");
-    }
-
-    // Fetch live cryptocurrency data
-    Crypto[] liveData = cryptoService.getCryptoData();
-    if (liveData == null || liveData.length == 0) {
-        return ResponseEntity.status(500).body("Failed to fetch live cryptocurrency data.");
-    }
-
-    // Validate the cryptoId against live data
-    Crypto selectedCrypto = null;
-    for (Crypto crypto : liveData) {
-        if (crypto.getSymbol().equalsIgnoreCase(cryptoId) || crypto.getName().equalsIgnoreCase(cryptoId)) {
-            selectedCrypto = crypto;
-            break;
+    @PostMapping("/buy")
+    public ResponseEntity<?> buyCrypto(@RequestBody BuyRequest buyRequest) {
+        String email = buyRequest.getEmail();
+        String cryptoId = buyRequest.getCryptoId();
+        double usdAmount = buyRequest.getUsdAmount();
+    
+        // Fetch user
+        Person person = personRepository.findByEmail(email);
+        if (person == null) {
+            return ResponseEntity.badRequest().body("User not found");
         }
+    
+        // Fetch live cryptocurrency data
+        Crypto[] liveData = cryptoService.getCryptoData();
+        if (liveData == null || liveData.length == 0) {
+            return ResponseEntity.status(500).body("Failed to fetch live cryptocurrency data.");
+        }
+    
+        // Validate the cryptoId against live data
+        Crypto selectedCrypto = null;
+        for (Crypto crypto : liveData) {
+            if (crypto.getSymbol().equalsIgnoreCase(cryptoId) || crypto.getName().equalsIgnoreCase(cryptoId)) {
+                selectedCrypto = crypto;
+                break;
+            }
+        }
+    
+        if (selectedCrypto == null) {
+            return ResponseEntity.badRequest().body("Invalid cryptocurrency ID or name.");
+        }
+    
+        // Calculate crypto amount
+        double cryptoPrice = selectedCrypto.getPrice();
+        double cryptoAmount = usdAmount / cryptoPrice;
+    
+        // Check for sufficient balance
+        if (person.getBalanceDouble() < usdAmount) {
+            return ResponseEntity.badRequest().body("Insufficient balance.");
+        }
+    
+        // Deduct balance and update user's holdings
+        double updatedBalance = person.getBalanceDouble() - usdAmount;
+        person.setBalanceString(updatedBalance);
+    
+        userStocksTable userStocks = person.getUser_stocks();
+        if (userStocks == null) {
+            userStocks = new userStocksTable("", selectedCrypto.getSymbol() + ":" + cryptoAmount, String.valueOf(updatedBalance), person.getEmail(), person, false, true, "");
+        } else {
+            String updatedCrypto = addOrUpdateCryptoHoldings(userStocks.getCrypto(), selectedCrypto.getSymbol(), cryptoAmount);
+            userStocks.setCrypto(updatedCrypto);
+            userStocks.setBalance(String.valueOf(updatedBalance));
+    
+            // ✅ **Update transaction history**
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm");
+        String formattedDate = dateFormat.format(new Date());
+        String transactionEntry = "Bought " + cryptoAmount + " " + selectedCrypto.getSymbol() + " for $" + usdAmount + " at " + formattedDate;
+        userStocks.setCryptoHistory(userStocks.getCryptoHistory() + transactionEntry + "\n");
+        }
+    
+        // Save to database
+        userStocksRepo.save(userStocks);
+        personRepository.save(person);
+    
+        return ResponseEntity.ok("Successfully purchased " + cryptoAmount + " of " + selectedCrypto.getSymbol() + " for $" + usdAmount);
     }
-
-    if (selectedCrypto == null) {
-        return ResponseEntity.badRequest().body("Invalid cryptocurrency ID or name.");
-    }
-
-    // Calculate crypto amount
-    double cryptoPrice = selectedCrypto.getPrice();
-    double cryptoAmount = usdAmount / cryptoPrice;
-
-    // Check for sufficient balance
-    if (person.getBalanceDouble() < usdAmount) {
-        return ResponseEntity.badRequest().body("Insufficient balance.");
-    }
-
-    // Deduct balance and update user's holdings
-    double updatedBalance = person.getBalanceDouble() - usdAmount;
-    person.setBalanceString(updatedBalance);
-
-    userStocksTable userStocks = person.getUser_stocks();
-    if (userStocks == null) {
-        userStocks = new userStocksTable("", selectedCrypto.getSymbol() + ":" + cryptoAmount, String.valueOf(updatedBalance), person.getEmail(), person, false);
-    } else {
-        String updatedCrypto = addOrUpdateCryptoHoldings(userStocks.getCrypto(), selectedCrypto.getSymbol(), cryptoAmount);
-        userStocks.setCrypto(updatedCrypto);
-        userStocks.setBalance(String.valueOf(updatedBalance));
-    }
-
-    // Save to database
-    userStocksRepo.save(userStocks);
-    personRepository.save(person);
-
-    return ResponseEntity.ok("Successfully purchased " + cryptoAmount + " of " + selectedCrypto.getSymbol() + " for $" + usdAmount);
-}
+    
 
     
 
-@PostMapping("/sell")
-public ResponseEntity<?> sellCrypto(@RequestBody SellRequest sellRequest) {
-    String email = sellRequest.getEmail();
-    String cryptoId = sellRequest.getCryptoId();
-    double cryptoAmount = sellRequest.getCryptoAmount();
-
-    // Fetch user
-    Person person = personRepository.findByEmail(email);
-    if (person == null) {
-        return ResponseEntity.badRequest().body("User not found");
-    }
-
-    // Fetch live cryptocurrency data
-    Crypto[] liveData = cryptoService.getCryptoData();
-    if (liveData == null || liveData.length == 0) {
-        return ResponseEntity.status(500).body("Failed to fetch live cryptocurrency data.");
-    }
-
-    // Validate the cryptoId against live data
-    Crypto selectedCrypto = null;
-    for (Crypto crypto : liveData) {
-        if (crypto.getSymbol().equalsIgnoreCase(cryptoId) || crypto.getName().equalsIgnoreCase(cryptoId)) {
-            selectedCrypto = crypto;
-            break;
+    @PostMapping("/sell")
+    public ResponseEntity<?> sellCrypto(@RequestBody SellRequest sellRequest) {
+        String email = sellRequest.getEmail();
+        String cryptoId = sellRequest.getCryptoId();
+        double cryptoAmount = sellRequest.getCryptoAmount();
+    
+        // Fetch user
+        Person person = personRepository.findByEmail(email);
+        if (person == null) {
+            return ResponseEntity.badRequest().body("User not found");
         }
+    
+        // Fetch live cryptocurrency data
+        Crypto[] liveData = cryptoService.getCryptoData();
+        if (liveData == null || liveData.length == 0) {
+            return ResponseEntity.status(500).body("Failed to fetch live cryptocurrency data.");
+        }
+    
+        // Validate the cryptoId against live data
+        Crypto selectedCrypto = null;
+        for (Crypto crypto : liveData) {
+            if (crypto.getSymbol().equalsIgnoreCase(cryptoId) || crypto.getName().equalsIgnoreCase(cryptoId)) {
+                selectedCrypto = crypto;
+                break;
+            }
+        }
+    
+        if (selectedCrypto == null) {
+            return ResponseEntity.badRequest().body("Invalid cryptocurrency ID or name.");
+        }
+    
+        // Get the current price of the cryptocurrency
+        double cryptoPrice = selectedCrypto.getPrice();
+    
+        // Fetch and update crypto holdings
+        userStocksTable userStocks = person.getUser_stocks();
+        if (userStocks == null || userStocks.getCrypto() == null || userStocks.getCrypto().isEmpty()) {
+            return ResponseEntity.badRequest().body("No crypto holdings found to sell.");
+        }
+    
+        String updatedCrypto = removeOrUpdateCryptoHoldings(userStocks.getCrypto(), selectedCrypto.getSymbol(), cryptoAmount);
+        if (updatedCrypto == null) {
+            return ResponseEntity.badRequest().body("Insufficient crypto to sell.");
+        }
+    
+        // Update balance
+        double totalValueSold = cryptoPrice * cryptoAmount;
+        double updatedBalance = person.getBalanceDouble() + totalValueSold;
+        person.setBalanceString(updatedBalance);
+        userStocks.setCrypto(updatedCrypto);
+        userStocks.setBalance(String.valueOf(updatedBalance));
+    
+        // ✅ **Update transaction history**
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm");
+        String formattedDate = dateFormat.format(new Date());
+        String transactionEntry = "Sold " + cryptoAmount + " " + selectedCrypto.getSymbol() + " for $" + totalValueSold + " at " + formattedDate;
+        userStocks.setCryptoHistory(userStocks.getCryptoHistory() + transactionEntry + "\n");
+    
+        // Save to database
+        userStocksRepo.save(userStocks);
+        personRepository.save(person);
+    
+        return ResponseEntity.ok("Successfully sold " + cryptoAmount + " of " + selectedCrypto.getSymbol() + " for $" + totalValueSold);
     }
-
-    if (selectedCrypto == null) {
-        return ResponseEntity.badRequest().body("Invalid cryptocurrency ID or name.");
+    @GetMapping("/history")
+    public ResponseEntity<?> getCryptoTransactionHistory(@RequestParam String email) {
+    userStocksTable userStocks = userStocksRepo.findByEmail(email);
+    
+    if (userStocks == null || userStocks.getCryptoHistory() == null || userStocks.getCryptoHistory().isEmpty()) {
+        return ResponseEntity.status(404).body("No transaction history found for email: " + email);
     }
-
-    // Get the current price of the cryptocurrency
-    double cryptoPrice = selectedCrypto.getPrice();
-
-    // Fetch and update crypto holdings
-    userStocksTable userStocks = person.getUser_stocks();
-    if (userStocks == null || userStocks.getCrypto() == null || userStocks.getCrypto().isEmpty()) {
-        return ResponseEntity.badRequest().body("No crypto holdings found to sell.");
-    }
-
-    String updatedCrypto = removeOrUpdateCryptoHoldings(userStocks.getCrypto(), selectedCrypto.getSymbol(), cryptoAmount);
-    if (updatedCrypto == null) {
-        return ResponseEntity.badRequest().body("Insufficient crypto to sell.");
-    }
-
-    // Update balance
-    double totalValueSold = cryptoPrice * cryptoAmount;
-    double updatedBalance = person.getBalanceDouble() + totalValueSold;
-    person.setBalanceString(updatedBalance);
-    userStocks.setCrypto(updatedCrypto);
-    userStocks.setBalance(String.valueOf(updatedBalance));
-
-    // Save to database
-    userStocksRepo.save(userStocks);
-    personRepository.save(person);
-
-    return ResponseEntity.ok("Successfully sold " + cryptoAmount + " of " + selectedCrypto.getSymbol() + " for $" + totalValueSold);
+    
+    return ResponseEntity.ok("{ \"email\": \"" + email + "\", \"cryptoHistory\": \"" + userStocks.getCryptoHistory().replace("\n", "\\n") + "\" }");
 }
 
     // Utility method to resolve crypto ID to ticker symbol

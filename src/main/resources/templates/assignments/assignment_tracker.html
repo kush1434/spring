@@ -53,10 +53,10 @@
             text-align: left;
         }
         th {
-            background-color: #f2f2f2;
+            background-color:rgb(12, 10, 10);
         }
         tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color:rgb(30, 25, 25);
         }
         .student-row {
             cursor: pointer;
@@ -76,7 +76,7 @@
             background-color: rgba(0,0,0,0.4);
         }
         .modal-content {
-            background-color: #fefefe;
+            background-color:rgb(55, 54, 54);
             margin: 15% auto;
             padding: 20px;
             border: 1px solid #888;
@@ -114,7 +114,7 @@
             
             <!-- Add Assignment Modal -->
             <div id="addAssignmentModal" style="display:none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
-                <div style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%;">
+                <div style="background-color:rgb(31, 31, 31); margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%;">
                     <h2>Add New Assignment</h2>
                     <label>Name: <input type="text" id="assignmentName"></label><br>
                     <label>Type: <input type="text" id="assignmentType"></label><br>
@@ -341,8 +341,19 @@
                     submissions.forEach(submission => {
                         console.log('Processing submission:', submission);
                         const row = document.createElement('tr');
+                        if (submission.students.length === 0) {
+                            submission.students = [{ name: 'Unknown Student'}]
+                        }
+                        let studentNames = "";
+                        submission.students.forEach(student => {
+                            studentNames += student.name + ", ";
+                        });
+                        // for (student in submission.students) {
+                        //     studentNames += student.name + ", ";
+                        // }
+                        studentNames = studentNames.slice(0, -2);
                         row.innerHTML = `
-                            <td>${submission.student ? submission.student.name : 'Unknown Student'}</td>
+                            <td>${studentNames}</td>
                             <td>${submission.content || 'No content'}</td>
                             <td>${submission.comment || 'No comments'}</td>
                             <td>${submission.grade || 'Not graded'}</td>

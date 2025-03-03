@@ -11,6 +11,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -80,10 +81,10 @@ public class CalendarEventController {
         return calendarEventService.getEventsByDate(localDate);
     }
 
-    @PutMapping("/edit/{title}")
-    public ResponseEntity<String> editEvent(@PathVariable String title, @RequestBody Map<String, String> payload) {
+    @PutMapping("/edit/{id}")
+    @CrossOrigin(origins = {"http://127.0.0.1:4100","https://nighthawkcoders.github.io/portfolio_2025/"}, allowCredentials = "true")
+    public ResponseEntity<String> editEvent(@PathVariable int id, @RequestBody Map<String, String> payload) {
         try {
-            String decodedTitle = URLDecoder.decode(title, StandardCharsets.UTF_8);
             String newTitle = payload.get("newTitle");
             String description = payload.get("description");
 
@@ -94,9 +95,9 @@ public class CalendarEventController {
                 return ResponseEntity.badRequest().body("Description cannot be null or empty.");
             }
 
-            boolean updated = calendarEventService.updateEventByTitle(decodedTitle, newTitle.trim(), description.trim());
+            boolean updated = calendarEventService.updateEventById(id, newTitle.trim(), description.trim());
             return updated ? ResponseEntity.ok("Event updated successfully.")
-                           : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Event with the given title not found.");
+                        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Event with the given title not found.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("An error occurred while updating the event: " + e.getMessage());
@@ -118,15 +119,16 @@ public class CalendarEventController {
     public List<CalendarEvent> getNextDayEvents() {
         return calendarEventService.getEventsByDate(LocalDate.now().plusDays(1));
     }
-    @DeleteMapping("/delete/{title}")
-    public ResponseEntity<String> deleteEvent(@PathVariable String title) {
+    
+    @DeleteMapping("/delete/{id}")
+    @CrossOrigin(origins = {"http://127.0.0.1:4100","https://nighthawkcoders.github.io/portfolio_2025/"}, allowCredentials = "true")
+    public ResponseEntity<String> deleteEvent(@PathVariable int id) {
         // Decode the title to handle multi-word or special character titles
-        String decodedTitle = URLDecoder.decode(title, StandardCharsets.UTF_8);
         // Log the decoded title for debugging purposes
-        System.out.println("Attempting to delete event with title: " + decodedTitle);
+        System.out.println("Attempting to delete event...");
         try {
             // Call your service to delete the event
-            boolean deleted = calendarEventService.deleteEventByTitle(decodedTitle);
+            boolean deleted = calendarEventService.deleteEventById(id);
             // If the event wasn't found and deleted, return a 404 response
             if (!deleted) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Event with the given title not found.");

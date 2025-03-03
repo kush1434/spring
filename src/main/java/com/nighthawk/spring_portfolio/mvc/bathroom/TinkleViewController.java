@@ -52,7 +52,7 @@ public class TinkleViewController {
         // Add durations for each entry
         List<Map<String, String>> tinkleDataWithDurations = tinkleList.stream().map(tinkle -> {
             Map<String, String> row = new HashMap<>();
-            row.put("person_name", tinkle.getPerson_name());
+            row.put("person_name", tinkle.getPersonName());
             row.put("timeIn", tinkle.getTimeIn());
             row.put("duration", tinkleStatisticsService.calculateDurationFormatted(tinkle.getTimeIn()));
             return row;

@@ -22,7 +22,7 @@
         .period-header {
             background-color: #FFFFFF;
             color: black;
-            text-align: center;
+            text-align: cener;
             padding: 20px;
             font-size: 36px;
             font-weight: bold;
@@ -89,9 +89,11 @@
         .search-container {
             display: flex;
             justify-content: center;
+            align-items: center;
+            gap: 10px;
             padding: 20px;
         }
-        .search-container input[type="text"] {
+        .search-container select {
             width: 300px;
             padding: 8px;
             border-radius: 4px;
@@ -99,7 +101,6 @@
             font-size: 16px;
         }
         .search-container button {
-            margin-left: 10px;
             padding: 8px 12px;
             font-size: 16px;
             cursor: pointer;
@@ -131,9 +132,11 @@
             Period 3
         </div>
 
-        <!-- Search Bar -->
+        <!-- Search Dropdown -->
         <div class="search-container">
-            <input type="text" id="searchName" placeholder="Enter student name">
+            <select id="studentDropdown">
+                <option value="">Select a student</option>
+            </select>
             <button onclick="searchStudent()">Search</button>
         </div>
 
@@ -202,16 +205,42 @@
         </div>
 
         <script type="text/javascript">
-            function fetchRequest(tableNumber) {
-                window.location.href = '/mvc/student/tabledetails?table=' + tableNumber + '&period=3';
+            function loadStudents() {
+                const requestBody = {
+                    period: 3,
+                    course: "CSA",
+                    trimester: 2
+                };
+
+                fetch('/api/students/find-period', {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(requestBody)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const dropdown = document.getElementById("studentDropdown");
+                    dropdown.innerHTML = '<option value="">Select a student</option>';
+
+                    data.forEach(student => {
+                        const option = document.createElement("option");
+                        option.value = student.username;
+                        option.textContent = student.username;
+                        dropdown.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("Error fetching student data:", error));
             }
 
             function searchStudent() {
-                console.log("Searching...");
-                const name = document.getElementById("searchName").value;
+                const selectedUsername = document.getElementById("studentDropdown").value;
+                if (!selectedUsername) {
+                    alert("Please select a student.");
+                    return;
+                }
 
                 const criteriaDto = {
-                    username: name,
+                    username: selectedUsername,
                     course: "CSA",
                     trimester: 2,
                     period: 3
@@ -219,17 +248,10 @@
 
                 fetch('/api/students/find', {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(criteriaDto)
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Network response was not ok");
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     const params = new URLSearchParams({
                         username: data.username,
@@ -240,10 +262,16 @@
                     window.location.href = '/mvc/student/studentinfo?' + params.toString();
                 })
                 .catch(error => {
-                    console.error("There was a problem with the fetch operation:", error);
+                    console.error("Error:", error);
                     alert("Student not found.");
                 });
             }
+
+            function fetchRequest(tableNumber) {
+                window.location.href = '/mvc/student/tabledetails?table=' + tableNumber + '&period=3';
+            }
+
+            window.onload = loadStudents;
         </script>
     </div>
 </body>

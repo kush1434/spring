@@ -1,11 +1,15 @@
 package com.nighthawk.spring_portfolio.mvc.bathroom;
 
-import org.springframework.stereotype.Service;
-
 import java.time.Duration;
-import java.time.LocalTime;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
 
 @Service
 public class TinkleStatisticsService {
@@ -20,7 +24,7 @@ public class TinkleStatisticsService {
         // Group durations by person name
         Map<String, List<Long>> userWeeklyDurations = tinkleList.stream()
             .collect(Collectors.groupingBy(
-                Tinkle::getPerson_name,
+                Tinkle::getPersonName,
                 Collectors.mapping(
                     t -> calculateTotalDurationInSeconds(t.getTimeIn()),
                     Collectors.toList()
@@ -48,17 +52,22 @@ public class TinkleStatisticsService {
      * @param timeIn A string containing time pairs (e.g., "08:00:00-08:10:00,10:30:00-10:45:00").
      * @return Total duration in seconds.
      */
+    // Updated calculateTotalDurationInSeconds to use the new "--" delimiter and DateTime parsing with full date-time values.
     public long calculateTotalDurationInSeconds(String timeIn) {
         if (timeIn == null || timeIn.isEmpty()) return 0;
-    
+        
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        
         return Arrays.stream(timeIn.split(","))
             .mapToLong(pair -> {
-                String[] times = pair.split("-");
+                String[] times = pair.split("--"); // Changed delimiter to match new format
                 if (times.length == 2) {
                     try {
-                        return Duration.between(LocalTime.parse(times[0]), LocalTime.parse(times[1])).getSeconds();
+                        LocalDateTime start = LocalDateTime.parse(times[0].trim(), formatter);
+                        LocalDateTime end = LocalDateTime.parse(times[1].trim(), formatter);
+                        return Duration.between(start, end).getSeconds();
                     } catch (Exception e) {
-                        return 0; // Skip malformed entries
+                        return 0; // skip malformed entries
                     }
                 }
                 return 0;

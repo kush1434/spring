@@ -1,23 +1,18 @@
 package com.nighthawk.spring_portfolio.mvc.assignments;
 
-import java.io.OutputStreamWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,12 +29,6 @@ import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 import jakarta.transaction.Transactional;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.io.IOException;
-import java.io.ByteArrayOutputStream;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 @RestController
 @RequestMapping("/api/assignments")
@@ -206,12 +195,13 @@ public class AssignmentsApiController {
             @PathVariable Long assignmentId,
             @RequestParam Long studentId,
             @RequestParam String content,
-            @RequestParam String comment
+            @RequestParam String comment,
+            @RequestParam Boolean isLate
             ) {
         Assignment assignment = assignmentRepo.findById(assignmentId).orElse(null);
         Person student = personRepo.findById(studentId).orElse(null);
         if (assignment != null) {
-            AssignmentSubmission submission = new AssignmentSubmission(assignment, student, content,comment);
+            AssignmentSubmission submission = new AssignmentSubmission(assignment, List.of(student), content, comment, isLate);
             AssignmentSubmission savedSubmission = submissionRepo.save(submission);
             return new ResponseEntity<>(savedSubmission, HttpStatus.CREATED);
         }
