@@ -168,7 +168,7 @@ class StockRequest {
 @Service
 class UserService implements UserDetailsService {
     @Autowired
-    private UserJpaRepository userRepository;
+    private BankJpaRepository userRepository;
     
     //@Autowired
     //private QuestionJpaRepository questionJpaRepository;

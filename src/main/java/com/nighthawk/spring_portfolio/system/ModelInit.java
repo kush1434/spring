@@ -60,7 +60,7 @@ public class ModelInit {
     @Autowired TeacherJpaRepository teacherJPARepository;
     @Autowired IssueJPARepository issueJPARepository;
     @Autowired AdventureQuestionJpaRepository questionJpaRepository;
-    @Autowired UserJpaRepository userJpaRepository;
+    @Autowired BankJpaRepository userJpaRepository;
     @Autowired AssignmentJpaRepository assignmentJpaRepository;
     @Autowired AssignmentSubmissionJPA submissionJPA;
     @Autowired StudentInfoJPARepository studentInfoJPA;
