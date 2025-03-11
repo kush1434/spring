@@ -36,7 +36,7 @@ public class BankApiController {
 
     // Get the loan amount for a bank account
     @GetMapping("/loanAmount")
-    public ResponseEntity<Double> getLoanAmount(@RequestParam String uid) {
+    public ResponseEntity<Double> getLoanAmount(@RequestParam Long uid) {
         Bank bank = bankService.findByUid(uid);
         if (bank != null) {
             return ResponseEntity.ok(bank.getLoanAmount());
@@ -46,7 +46,7 @@ public class BankApiController {
 
     // Get a user's gambling profits
     @GetMapping("/gamblingProfits")
-    public ResponseEntity<List<Double>> getGamblingProfits(@RequestParam String uid) {
+    public ResponseEntity<List<Double>> getGamblingProfits(@RequestParam Long uid) {
         Bank bank = bankService.findByUid(uid);
         if (bank != null) {
             return ResponseEntity.ok(bank.getGamblingProfit(uid));
@@ -56,7 +56,7 @@ public class BankApiController {
 
     // Get a user's adventure game profits
     @GetMapping("/adventureGameProfits")
-    public ResponseEntity<List<Double>> getAdventureGameProfits(@RequestParam String uid) {
+    public ResponseEntity<List<Double>> getAdventureGameProfits(@RequestParam Long uid) {
         Bank bank = bankService.findByUid(uid);
         if (bank != null) {
             return ResponseEntity.ok(bank.getAdventureGameProfit(uid));
@@ -66,7 +66,7 @@ public class BankApiController {
 
     // Get a user's stock profits
     @GetMapping("/stocksProfits")
-    public ResponseEntity<List<Double>> getStocksProfits(@RequestParam String uid) {
+    public ResponseEntity<List<Double>> getStocksProfits(@RequestParam Long uid) {
         Bank bank = bankService.findByUid(uid);
         if (bank != null) {
             return ResponseEntity.ok(bank.getStocksProfit(uid));
@@ -81,6 +81,6 @@ public class BankApiController {
 @NoArgsConstructor
 @AllArgsConstructor
 class LoanRequest {
-    private String uid;  // Changed from username to uid
+    private Long uid;  // Changed from username to uid
     private double loanAmount;
 }

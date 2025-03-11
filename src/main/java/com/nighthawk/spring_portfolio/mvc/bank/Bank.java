@@ -1,5 +1,8 @@
 package com.nighthawk.spring_portfolio.mvc.bank;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,9 +12,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,7 +20,7 @@ public class Bank {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private Long uid;
 
     @Column(unique = true, nullable = false)
     private String username;
@@ -43,17 +43,17 @@ public class Bank {
     }
 
     // Method to get gambling profits for the user
-    public List<Double> getGamblingProfit(String uid) {
+    public List<Double> getGamblingProfit(Long uid) {
         return gamblingProfit;  // Return gambling profit for the user based on UID (now a String)
     }
 
     // Method to get adventure game profits for the user
-    public List<Double> getAdventureGameProfit(String uid) {
+    public List<Double> getAdventureGameProfit(Long uid) {
         return adventureGameProfit;  // Return adventure game profit for the user based on UID (now a String)
     }
 
     // Method to get stocks profits for the user
-    public List<Double> getStocksProfit(String uid) {
+    public List<Double> getStocksProfit(Long uid) {
         return stocksProfit;  // Return stock profits for the user based on UID (now a String)
     }
 
