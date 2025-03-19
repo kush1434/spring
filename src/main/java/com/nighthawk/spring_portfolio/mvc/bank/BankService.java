@@ -10,13 +10,13 @@ public class BankService {
     private BankJpaRepository bankRepository;
 
     // Find by UID instead of username
-    public Bank findByUid(Long uid) {
-        return bankRepository.findByUid(uid);  // Find by UID instead of username
+    public Bank findByUid(String uid) {
+        return bankRepository.findByPersonUid(uid);  // Find by UID instead of username
     }
 
     // Request a loan using the UID
-    public Bank requestLoan(Long uid, double loanAmount) {
-        Bank bank = bankRepository.findByUid(uid);
+    public Bank requestLoan(String uid, double loanAmount) {
+        Bank bank = bankRepository.findByPersonUid(uid);
         bank.requestLoan(loanAmount);  // Increase the loan amount
         return bankRepository.save(bank);
     }

@@ -45,6 +45,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 
 import com.nighthawk.spring_portfolio.mvc.assignments.AssignmentSubmission;
 import com.nighthawk.spring_portfolio.mvc.bathroom.Tinkle;
+import com.nighthawk.spring_portfolio.mvc.bank.Bank;
 import com.nighthawk.spring_portfolio.mvc.student.StudentInfo;
 import com.nighthawk.spring_portfolio.mvc.synergy.SynergyGrade;
 
@@ -183,6 +184,10 @@ public class Person implements Comparable<Person> {
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
     @JsonIgnore
     private userStocksTable user_stocks;
+
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
+    @JsonIgnore
+    private Bank bank;
 
     @Column
     private String balance;
