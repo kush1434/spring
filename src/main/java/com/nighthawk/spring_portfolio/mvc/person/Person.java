@@ -187,7 +187,7 @@ public class Person implements Comparable<Person> {
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
     @JsonIgnore
-    private Bank bank;
+    private Bank banks;
 
     @Column
     private String balance;
@@ -354,6 +354,10 @@ public class Person implements Comparable<Person> {
         for (Person person : people) {
             userStocksTable stock = new userStocksTable(null, "BTC,ETH", startingBalance, person.getEmail(), person, false, true, "");
             person.setUser_stocks(stock);
+        }
+        for (Person person : people) {
+            Bank bank = new Bank(person, 0, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+            person.setBanks(bank);
         }
 
         return people.toArray(new Person[0]);
