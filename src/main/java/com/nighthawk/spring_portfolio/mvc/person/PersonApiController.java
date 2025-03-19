@@ -1,453 +1,384 @@
 package com.nighthawk.spring_portfolio.mvc.person;
+
+
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PreRemove;
+import jakarta.persistence.Convert;
+import static jakarta.persistence.FetchType.EAGER;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
+import jakarta.persistence.CascadeType;
 
-import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
+import com.vladmihalcea.hibernate.type.json.JsonType;
 
-import lombok.Getter;
+import io.github.cdimascio.dotenv.Dotenv;
+
+import com.nighthawk.spring_portfolio.mvc.assignments.AssignmentSubmission;
+import com.nighthawk.spring_portfolio.mvc.bathroom.Tinkle;
+import com.nighthawk.spring_portfolio.mvc.student.StudentInfo;
+import com.nighthawk.spring_portfolio.mvc.synergy.SynergyGrade;
+
+import jakarta.persistence.FetchType;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+
 
 /**
- * This class provides RESTful API endpoints for managing Person entities.
- * It includes endpoints for creating, retrieving, updating, and deleting Person
- * entities.
+ * Person is a POJO, Plain Old Java Object.
+ * --- @Data is Lombox annotation
+ * for @Getter @Setter @ToString @EqualsAndHashCode @RequiredArgsConstructor
+ * --- @AllArgsConstructor is Lombox annotation for a constructor with all
+ * arguments
+ * --- @NoArgsConstructor is Lombox annotation for a constructor with no
+ * arguments
+ * --- @Entity annotation is used to mark the class as a persistent Java class.
  */
-@RestController
-@RequestMapping("/api")
-public class PersonApiController {
-    /*
-     * #### RESTful API REFERENCE ####
-     * Resource: https://spring.io/guides/gs/rest-service/
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
+@Convert(attributeName = "person", converter = JsonType.class)
+@JsonIgnoreProperties({"submissions"})
+public class Person implements Comparable<Person> {
+
+    private static Person createPerson(String name, String email, String uid, String password, Boolean kasmServerNeeded, String balance, String dob, List<String> asList) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    /** Automatic unique identifier for Person record 
+     * --- Id annotation is used to specify the identifier property of the entity.
+     * ----GeneratedValue annotation is used to specify the primary key generation
+     * strategy to use.
+     * ----- The strategy is to have the persistence provider pick an appropriate
+     * strategy for the particular database.
+     * ----- GenerationType.AUTO is the default generation type and it will pick the
+     * strategy based on the used database.
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    @OneToMany(mappedBy="student", cascade=CascadeType.ALL, orphanRemoval=true)
+    @JsonIgnore
+    private List<SynergyGrade> grades;
+    
+    @ManyToMany(mappedBy="students", cascade=CascadeType.MERGE)
+    @JsonIgnore
+    private List<AssignmentSubmission> submissions;
+    
+    @ManyToMany(fetch = EAGER)
+    @JoinTable(
+        name = "person_person_sections",  // unique name to avoid conflicts
+        joinColumns = @JoinColumn(name = "person_id"),
+        inverseJoinColumns = @JoinColumn(name = "section_id")
+    )
+    private Collection<PersonSections> sections = new ArrayList<>();
 
     /**
-     * Repository for accessing Person entities in the database.
+     * Many to Many relationship with PersonRole
+     * --- @ManyToMany annotation is used to specify a many-to-many relationship
+     * between the entities.
+     * --- FetchType.EAGER is used to specify that data must be eagerly fetched,
+     * meaning that it must be loaded immediately.
+     * --- Collection is a root interface in the Java Collection Framework, in this
+     * case it is used to store PersonRole objects.
+     * --- ArrayList is a resizable array implementation of the List interface,
+     * allowing all elements to be accessed using an integer index.
+     * --- PersonRole is a POJO, Plain Old Java Object.
      */
-    @Autowired
-    private PersonJpaRepository repository;
+    @ManyToMany(fetch = FetchType.EAGER)
+    private Collection<PersonRole> roles = new ArrayList<>();
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @OneToOne(mappedBy = "person", cascade=CascadeType.ALL)
+    private Tinkle timeEntries;
+
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
+    @JsonIgnore
+    private StudentInfo studentInfo;
+    /**
+     * email, password, roles are key attributes to login and authentication
+     * --- @NotEmpty annotation is used to validate that the annotated field is not
+     * null or empty, meaning it has to have a value.
+     * --- @Size annotation is used to validate that the annotated field is between
+     * the specified boundaries, in this case greater than 5.
+     * --- @Email annotation is used to validate that the annotated field is a valid
+     * email address.
+     * --- @Column annotation is used to specify the mapped column for a persistent
+     * property or field, in this case unique and email.
+     */
+    @NotEmpty
+    @Size(min = 1)
+    @Column(unique = true, nullable = false)
+    @Email
+    private String email;
+
+    @Column(unique = true, nullable = false)
+    private String uid; // New `uid` column added
+
+
+    @NotEmpty
+    private String password;
 
     /**
-     * Service for managing Person entities.
+     * name, dob are attributes to describe the person
+     * --- @NonNull annotation is used to generate a constructor witha
+     * AllArgsConstructor Lombox annotation.
+     * --- @Size annotation is used to validate that the annotated field is between
+     * the specified boundaries, in this case between 2 and 30 characters.
+     * --- @DateTimeFormat annotation is used to declare a field as a date, in this
+     * case the pattern is specified as yyyy-MM-dd.
      */
-    @Autowired
-    private PersonDetailsService personDetailsService;
+    @NonNull
+    @Size(min = 2, max = 30, message = "Name (2 to 30 chars)")
+    private String name;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date dob;
+
+    /** Profile picture (pfp) in base64 */
+    @Column(length = 255, nullable = true)
+    private String pfp;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean kasmServerNeeded = false;
+
+    @Column(nullable=true)
+    private String sid;
+    
+    /**
+     * user_stocks and balance describe properties used by the gamify application
+     */
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
+    @JsonIgnore
+    private userStocksTable user_stocks;
+
+    @Column
+    private String balance;
+
+    public double getBalanceDouble() {
+        var balance_tmp = getBalance();
+        return Double.parseDouble(balance_tmp);
+    }
+
+    public String setBalanceString(double updatedBalance) {
+        this.balance = String.valueOf(updatedBalance); // Update the balance as a String
+        return this.balance; // Return the updated balance as a String
+    }
 
     /**
-     * Retrieves a Person entity by current user of JWT token.
+     * stats is used to store JSON for daily stats
+     * --- @JdbcTypeCode annotation is used to specify the JDBC type code for a
+     * column, in this case json.
+     * --- @Column annotation is used to specify the mapped column for a persistent
+     * property or field, in this case columnDefinition is specified as jsonb.
+     * * * Example of JSON data:
+     * "stats": {
+     * "2022-11-13": {
+     * "calories": 2200,
+     * "steps": 8000
+     * }
+     * }
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Map<String, Object>> stats = new HashMap<>();
+
+    @PreRemove
+    private void removePersonFromSubmissions() {
+        if (submissions != null) {
+            // if a user is deleted, remove them from everything they've submitted
+            for (AssignmentSubmission submission : submissions) {
+                submission.getStudents().remove(this);
+            }
+        }
+    }
+
+    /** Custom constructor for Person when building a new Person object from an API call
+     * @param email, a String
+     * @param password, a String
+     * @param name, a String
+     * @param balance,
+     * @param dob, a Date
+     */
+    public Person(String email, String uid, String password, String sid, String name, Date dob, String pfp, String balance,  Boolean kasmServerNeeded, PersonRole role) {
+        this.email = email;
+        this.uid = uid;
+        this.password = password;
+        this.sid = sid;
+        this.name = name;
+        this.dob = dob;
+        this.kasmServerNeeded = kasmServerNeeded;
+        this.pfp = pfp;
+        this.balance = balance;
+        this.roles.add(role);
+        this.submissions = new ArrayList<>();
+
+        this.timeEntries = new Tinkle(this, "");
+    }
+
+    public boolean hasRoleWithName(String roleName) {
+        for (PersonRole role : roles) {
+            if (role.getName().equals(roleName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Custom getter to return age from dob attribute
+     */
+    /** Custom getter to return age from dob attribute
+     * @return int, the age of the person
+    */
+    public int getAge() {
+        if (this.dob != null) {
+            LocalDate birthDay = this.dob.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            return Period.between(birthDay, LocalDate.now()).getYears();
+        }
+        return -1;
+    }
+
+    /** Custom compareTo method to compare Person objects by name
+     * @param other, a Person object
+     * @return int, the result of the comparison
+     */
+    @Override
+    public int compareTo(Person other) {
+        return this.name.compareTo(other.name);
+    }
+
+    /** 1st telescoping method to create a Person object with USER role
+     * @param name
+     * @param email
+     * @param password
+     * @param balance
+     * @param dob
+     * @return Person
+     */
+    public static Person createPerson(String name, String email, String uid, String password, String sid, Boolean kasmServerNeeded, String balance, String dob, List<String> asList) {
+        // By default, Spring Security expects roles to have a "ROLE_" prefix.
+        return createPerson(name, email, uid, password, sid, kasmServerNeeded, balance, dob, Arrays.asList("ROLE_USER", "ROLE_STUDENT"));
+    }
+    
+    /**
+     * 2nd telescoping method to create a Person object with parameterized roles
      * 
-     * @return A ResponseEntity containing the Person entity if found, or a
-     *         NOT_FOUND status if not found.
+     * @param roles
      */
-    @GetMapping("/person/get")
-    public ResponseEntity<Person> getPerson(@AuthenticationPrincipal UserDetails userDetails) {
-        // Check if the user is not logged in
-        if (userDetails == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        String email = userDetails.getUsername(); // Email is mapped/unmapped to username for Spring Security
-
-        // Find a person by username
-        Person person = repository.findByUid(email);  
-
-        // Return the person if found
-        if (person != null) {
-            return new ResponseEntity<>(person, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    /**
-     * Retrieves all the Person entities in the database, people
-     * 
-     * @return A ResponseEntity containing a list for Person entities
-     */
-    @GetMapping("/people")
-    public ResponseEntity<List<Person>> getPeople() {
-        return new ResponseEntity<>( repository.findAllByOrderByNameAsc(), HttpStatus.OK);
-    }
-
-    /**
-     * Retrieves a Person entity by its ID.
-     *
-     * @param id The ID of the Person entity to retrieve.
-     * @return A ResponseEntity containing the Person entity if found, or a
-     *         NOT_FOUND status if not found.
-     */
-    @GetMapping("/person/{id}")
-    public ResponseEntity<Person> getPerson(@PathVariable long id) {
-        Optional<Person> optional = repository.findById(id);
-        if (optional.isPresent()) { // Good ID
-            Person person = optional.get(); // value from findByID
-            return new ResponseEntity<>(person, HttpStatus.OK); // OK HTTP response: status code, headers, and body
-        }
-        // Bad ID
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
-
-    /**
-     * Delete a Person entity by its ID.
-     *
-     * @param id The ID of the Person entity to delete.
-     * @return A ResponseEntity containing the Person entity if deleted, or a
-     *         NOT_FOUND status if not found.
-     */
-    @DeleteMapping("/person/{id}")
-    public ResponseEntity<Person> deletePerson(@PathVariable long id) {
-        Optional<Person> optional = repository.findById(id);
-        if (optional.isPresent()) { // Good ID
-            Person person = optional.get(); // value from findByID
-            repository.deleteById(id); // value from findByID
-            return new ResponseEntity<>(person, HttpStatus.OK); // OK HTTP response: status code, headers, and body
-        }
-        // Bad ID
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
-
-
-    @Autowired
-    private UserStocksRepository userStocksRepository;
-
-    /*
-     * DTO (Data Transfer Object) to support POST request for postPerson method
-     * .. represents the data in the request body
-     */
-    @Getter
-    public static class PersonDto {
-        private String email;
-        private String uid;
-        private String sid;
-        private String password;
-        private String name;
-        private String dob;
-        private String pfp;
-        private double balance;
-        private Boolean kasmServerNeeded; 
-    }
-
-    /**
-     * Create a new Person entity.
-     * 
-     * @param personDto
-     * @return A ResponseEntity containing a success message if the Person entity is
-     *         created, or a BAD_REQUEST status if not created.
-     */
-    @PostMapping("/person/create")
-    public ResponseEntity<Object> postPerson(@RequestBody PersonDto personDto) {
-        // Validate dob input
-        Date dob;
+    public static Person createPerson(String name, String uid,  String email, String password, String sid,  String pfp, Boolean kasmServerNeeded, String balance, String dob, List<String> roleNames) {
+        Person person = new Person();
+        person.setName(name);
+        person.setUid(uid);
+        person.setEmail(email);
+        person.setPassword(password);
+        person.setSid(sid);
+        person.setKasmServerNeeded(kasmServerNeeded);
+        person.setBalance(balance);
+        person.setPfp(pfp);
         try {
-            dob = new SimpleDateFormat("MM-dd-yyyy").parse(personDto.getDob());
+            Date date = new SimpleDateFormat("MM-dd-yyyy").parse(dob);
+            person.setDob(date);
         } catch (Exception e) {
-            return new ResponseEntity<>(personDto.getDob() + " error; try MM-dd-yyyy", HttpStatus.BAD_REQUEST);
+            // handle exception
         }
-        // A person object WITHOUT ID will create a new record in the database
-        String startingBalance = "100000";
-        Person person = new Person(personDto.getEmail(), personDto.getUid(),personDto.getPassword(),personDto.getSid(), personDto.getName(), dob, "pfp1", startingBalance, true, personDetailsService.findRole("USER"));
 
-        personDetailsService.save(person);
-
-        userStocksTable userStocks = new userStocksTable(null, "BTC", "1000", person.getEmail(), person, false, true, "");
-        userStocksRepository.save(userStocks);
-
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-
-        JSONObject responseObject = new JSONObject();
-        responseObject.put("response",personDto.getEmail() + " is created successfully");
-
-        return new ResponseEntity<>(responseObject.toString(), responseHeaders, HttpStatus.OK);
-    }
-
-    @PostMapping(value = "/person/update", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> updatePerson(Authentication authentication, @RequestBody final PersonDto personDto) {
-        // Get the email of the current user from the authentication context
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String email = userDetails.getUsername(); // Assuming email is used as the username in Spring Security
-        System.out.println(email);
-        // Find the person by email
-        Optional<Person> optionalPerson = Optional.ofNullable(repository.findByUid(email));
-        if (optionalPerson.isPresent()) {
-            Person existingPerson = optionalPerson.get();
-
-            // Update fields only if they're provided in personDto
-            if (personDto.getEmail() != null) {
-                existingPerson.setEmail(personDto.getEmail());
-            }
-            if (personDto.getPassword() != null) {
-                existingPerson.setPassword(passwordEncoder.encode(personDto.getPassword()));
-
-            }
-            if (personDto.getUid() != null) {
-                existingPerson.setUid(personDto.getUid());
-
-            }
-            if (personDto.getSid() != null) {
-                existingPerson.setSid(personDto.getSid());
-            }
+        List<PersonRole> roles = new ArrayList<>();
+        for (String roleName : roleNames) {
+            PersonRole role = new PersonRole(roleName);
+            roles.add(role);
+        }
+        person.setRoles(roles);
         
-            if (personDto.getName() != null) {
-                existingPerson.setName(personDto.getName());
-            }
-            if (personDto.getPfp() != null) {
-                existingPerson.setPfp(personDto.getPfp());
-            }
-            if (personDto.getKasmServerNeeded() != null) {
-                existingPerson.setKasmServerNeeded(personDto.getKasmServerNeeded());
-            }
-            // Save the updated person back to the repository
-            Person updatedPerson = repository.save(existingPerson);
+        return person;
+    }
+    
+    /**
+     * Static method to initialize an array list of Person objects
+     * Uses createPerson method to create Person objects
+     * Sorts the list of Person objects using Collections.sort which uses the compareTo method 
+     * @return Person[], an array of Person objects
+     */
+    public static String startingBalance = "100000";
+    public static Person[] init() {
+        ArrayList<Person> people = new ArrayList<>();
+        final Dotenv dotenv = Dotenv.load();
+        final String adminPassword = dotenv.get("ADMIN_PASSWORD");
+        final String defaultPassword = dotenv.get("DEFAULT_PASSWORD");
+        people.add(createPerson("Thomas Edison", "toby", "toby@gmail.com",  adminPassword, "1", "/images/toby.png", true, startingBalance, "01-01-1840", Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER", "ROLE_TEACHER")));
+        people.add(createPerson("Alexander Graham Bell", "lex", "lexb@gmail.com", defaultPassword, "1", "/images/lex.png", true, startingBalance, "01-01-1847", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
+        people.add(createPerson("Nikola Tesla", "niko",  "niko@gmail.com",  defaultPassword, "1", "/images/niko.png", true, startingBalance, "01-01-1850", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
+        people.add(createPerson("Madam Curie", "madam", "madam@gmail.com", defaultPassword, "1", "/images/madam.png", true, startingBalance, "01-01-1860", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
+        people.add(createPerson("Grace Hopper", "hop",  "hop@gmail.com", defaultPassword, "123", "/images/hop.png", true, startingBalance, "12-09-1906", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
+        people.add(createPerson("John Mortensen","jm1021",  "jmort1021@gmail.com", defaultPassword, "1", "/images/jm1021.png", true, startingBalance, "10-21-1959", Arrays.asList("ROLE_ADMIN", "ROLE_TEACHER")));
+        people.add(createPerson("Alan Turing","alan",  "turing@gmail.com", defaultPassword, "2", "/images/alan.png", false, startingBalance, "06-23-1912", Arrays.asList("ROLE_USER", "ROLE_TESTER","ROLE_STUDENT")));
 
-            // Return the updated person entity
-            return new ResponseEntity<>(updatedPerson, HttpStatus.OK);
+        Collections.sort(people);
+        for (Person person : people) {
+            userStocksTable stock = new userStocksTable(null, "BTC,ETH", startingBalance, person.getEmail(), person, false, true, "");
+            person.setUser_stocks(stock);
         }
 
-        // Return NOT_FOUND if person not found
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return people.toArray(new Person[0]);
     }
 
-
     /**
-     * Search for a Person entity by name or email.
+     * Static method to print Person objects from an array
      * 
-     * @param map of a key-value (k,v), the key is "term" and the value is the
-     *            search term.
-     * @return A ResponseEntity containing a list of Person entities that match the
-     *         search term.
+     * @param args, not used
      */
+    public static void main(String[] args) {
+        // obtain Person from initializer
+        Person[] persons = init();
 
-    /**
-     * Search for a Person entity by name or email.
-     * 
-     * @param map of a key-value (k,v), the key is "term" and the value is the
-     *            search term.
-     * @return A ResponseEntity containing a list of Person entities that match the
-     *         search term.
-     */
-    @PostMapping(value = "/people/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> personSearch(@RequestBody final Map<String, String> map) {
-        // extract term from RequestEntity
-        String term = (String) map.get("term");
-
-        // JPA query to filter on term
-        List<Person> list = repository.findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(term, term);
-
-        // return resulting list and status, error checking should be added
-        return new ResponseEntity<>(list, HttpStatus.OK);
+        // iterate using "enhanced for loop"
+        for (Person person : persons) {
+            System.out.println(person);  // print object
+            System.out.println();
+        }
     }
 
-
-    @CrossOrigin(origins = {"*"})
-    @GetMapping("/{sid}")
-    public ResponseEntity<String> getNameById(@PathVariable String sid)
-    {
-        Person person = repository.findBySid(sid);
-        if(person != null)
-        {
-            return ResponseEntity.ok(person.getName());
-        }
-        else
-        {
-            return ResponseEntity.ok("Not a valid barcode");
-        }
-    };
-    // @PostMapping(value = "/person/setSections", produces = MediaType.APPLICATION_JSON_VALUE)
-    // public ResponseEntity<?> setSections(@AuthenticationPrincipal UserDetails userDetails, @RequestBody final List<SectionDTO> sections) {
-    //     // Check if the authentication object is null
-    //     if (userDetails == null) {
-    //         return ResponseEntity
-    //                 .status(HttpStatus.UNAUTHORIZED)
-    //                 .body("Error: Authentication object is null. User is not authenticated.");
-    //     }
-        
-    //     String email = userDetails.getUsername();
-        
-    //     // Manually wrap the result in Optional.ofNullable
-    //     Optional<Person> optional = Optional.ofNullable(repository.findByEmail(email));
-    //     if (optional.isPresent()) {
-    //         Person person = optional.get();
-
-    //         // Get existing sections and ensure it is not null
-    //         Collection<PersonSections> existingSections = person.getSections();
-    //         if (existingSections == null) {
-    //             existingSections = new ArrayList<>();
-    //         }
-
-    //         // Add  sections
-    //         for (SectionDTO sectionDTO : sections) {
-    //             if (!existingSections.stream().anyMatch(s -> s.getName().equals(sectionDTO.getName()))) {
-    //                 PersonSections newSection = new PersonSections(sectionDTO.getName(), sectionDTO.getAbbreviation(), sectionDTO.getYear());
-    //                 existingSections.add(newSection);
-    //             } else {
-    //                 return ResponseEntity
-    //                         .status(HttpStatus.CONFLICT)
-    //                         .body("Error: Section with name '" + sectionDTO.getName() + "' already exists.");
-    //             }
-    //         }
-
-    //         // Persist updated sections
-    //         person.setSections(existingSections);
-    //         repository.save(person);
-
-    //         // Return updated Person
-    //         return ResponseEntity.ok(person);
-    //     }
-
-    //     // Person not found
-    //     return ResponseEntity
-    //             .status(HttpStatus.NOT_FOUND)
-    //             .body("Error: Person not found with email: " + email);
-    // }
-
-
-    @PutMapping("/person/{id}")
-    public ResponseEntity<Object> updatePerson(@PathVariable long id, @RequestBody PersonDto personDto) {
-        Optional<Person> optional = repository.findById(id);
-        if (optional.isPresent()) {  // If the person with the given ID exists
-            Person existingPerson = optional.get();
-
-            // Update the existing person's details
-            existingPerson.setEmail(personDto.getEmail());
-            existingPerson.setPassword(personDto.getPassword());
-            existingPerson.setName(personDto.getName());
-            
-            // Optional: Update other fields if they exist in Person
-            existingPerson.setPfp(personDto.getPfp());
-            existingPerson.setKasmServerNeeded(personDto.getKasmServerNeeded());
-
-            // Save the updated person back to the repository
-            repository.save(existingPerson);
-
-            // Return the updated person entity
-            return new ResponseEntity<>(existingPerson, HttpStatus.OK);
-        }
-
-        // Return NOT_FOUND if the person with the given ID does not exist
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public Date getDob() {
+        return this.dob;
     }
-    @GetMapping("/top5bybalance")
-    public ResponseEntity<List<Person>> getTop5ByBalance() {
-        List<Person> top5Users = repository.findTop5ByOrderByBalanceDesc();
-        return new ResponseEntity<>(top5Users, HttpStatus.OK);
+    
+    public String getPfp() {
+        return this.pfp;
     }
-
-    /**
-     * Retrieves the balance of a Person entity by its ID.
-     *
-     * @param id The ID of the Person entity whose balance is to be fetched.
-     * @return A ResponseEntity containing the balance if found, or a NOT_FOUND status if the person does not exist.
-     */
-    @GetMapping("/person/{id}/balance")
-    public ResponseEntity<Object> getBalance(@PathVariable long id) {
-        Optional<Person> optional = repository.findById(id);
-        if (optional.isPresent()) {
-            Person person = optional.get();
-
-        // Assuming there is a getBalance() method or a balance field in Person
-            Map<String, Object> response = new HashMap<>();
-            response.put("id", person.getId());
-            response.put("name", person.getName());
-            response.put("balance", person.getBalance()); // Replace with actual logic if needed
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }
-        return new ResponseEntity<>("Person not found", HttpStatus.NOT_FOUND);
-    }
-
-    /**
-     * Adds stats to the Person table
-     * 
-     * @param stat_map is a JSON object, example format:
-        {"health":
-            {"date": "2021-01-01",
-            "measurements":
-                {   
-                    "weight": "150",
-                    "height": "70",
-                    "bmi": "21.52"
-                }
-            }
-        }
-     * @return A ResponseEntity containing the Person entity with updated stats, or
-     *         a NOT_FOUND status if not found.
-     */
-    @PostMapping(value = "/person/setStats", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Person> personStats(Authentication authentication, @RequestBody final Map<String,Object> stat_map) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String email = userDetails.getUsername(); // Email is mapped/unmapped to username for Spring Security
-
-        // Find a person by username
-        Optional<Person> optional = Optional.ofNullable(repository.findByUid(email));
-        if (optional.isPresent()) { // Good ID
-            Person person = optional.get(); // value from findByID
-
-            // Get existing stats
-            Map<String, Map<String, Object>> existingStats = person.getStats();
-
-            // Iterate through each key in the incoming stats
-            for (String key : stat_map.keySet()) {
-                // Extract the stats for this key from the incoming stats
-                Map<String, Object> incomingStats = (Map<String, Object>) stat_map.get(key);
-
-                // Extract the date and attributes from the incoming stats
-                String date = (String) incomingStats.get("date");
-                Map<String, Object> attributeMap = new HashMap<>(incomingStats);
-                attributeMap.remove("date");
-
-                // New key test.
-                if (!existingStats.containsKey(key)) {
-                    // Add the new key
-                    existingStats.put(key, new HashMap<>());
-                }
-
-                // Existing date test.
-                if (existingStats.get(key).containsKey(date)) { // Existing date, update the attributes
-                    // Make a map inside of existingStats to hold the current attributes for the
-                    // date
-                    Map<String, Object> existingAttributes = (Map<String, Object>) existingStats.get(key).get(date);
-                    // Combine the existing attributes with these new attributes
-                    existingAttributes.putAll(attributeMap);
-                } else { // New date, add the new date and attributes
-                    existingStats.get(key).put(date, attributeMap);
-                }
-            }
-
-            // Set and save the updated stats
-            person.setStats(existingStats);
-            repository.save(person); // conclude by writing the stats updates to the database
-
-            // return Person with update to Stats
-            return new ResponseEntity<>(person, HttpStatus.OK);
-        }
-        // return Bad ID
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    
+    public Collection<PersonRole> getRoles() {
+        return this.roles;
     }
 }
