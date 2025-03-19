@@ -16,6 +16,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -47,6 +48,7 @@ public class Bank {
     private List<Double> stocksProfit = new ArrayList<>();
 
     public Bank(Person person, double loanAmount, List<String> stocksOwned, List<Double> gamblingProfit, List<Double> adventureGameProfit, List<Double> stocksProfit) {
+        this.person = person;
         this.username = person.getName();
         this.balance = person.getBalanceDouble();
         this.loanAmount = loanAmount;
@@ -95,5 +97,12 @@ public class Bank {
         }
 
         return bankList.toArray(new Bank[0]);
+    }
+    @PreUpdate
+    public void updateUsername() {
+        if (person != null) {
+            this.username = person.getName();
+            this.balance = person.getBalanceDouble();
+        }
     }
 }
