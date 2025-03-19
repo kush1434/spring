@@ -1,8 +1,5 @@
 package com.nighthawk.spring_portfolio.mvc.person;
 
-// Import the Bank class
-import com.nighthawk.spring_portfolio.mvc.bank.Bank;
-
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
@@ -55,7 +52,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-
+import com.nighthawk.spring_portfolio.mvc.bank.Bank;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -129,19 +126,37 @@ public class Person implements Comparable<Person> {
     @Column
     private String balance;
 
-    // Add the Bank field with proper mapping
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
     @JsonIgnore
     private Bank bank;
 
-    public double getBalanceDouble() {
-        var balance_tmp = getBalance();
-        return Double.parseDouble(balance_tmp);
+    // Method to update balance in both Person and Bank
+    public void setBalance(String balance) {
+        this.balance = balance;
+        if (this.bank != null) {
+            this.bank.setBalance(Double.parseDouble(balance)); // Update Bank balance
+        }
     }
 
+    // Method to update balance with a double value
+    public void setBalance(double balance) {
+        this.balance = String.valueOf(balance);
+        if (this.bank != null) {
+            this.bank.setBalance(balance); // Update Bank balance
+        }
+    }
+
+    // Method to set balance as a string and return the updated balance
     public String setBalanceString(double updatedBalance) {
-        this.balance = String.valueOf(updatedBalance);
-        return this.balance;
+        this.balance = String.valueOf(updatedBalance); // Update the balance as a String
+        if (this.bank != null) {
+            this.bank.setBalance(updatedBalance); // Update Bank balance
+        }
+        return this.balance; // Return the updated balance as a String
+    }
+
+    public double getBalanceDouble() {
+        return Double.parseDouble(this.balance);
     }
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -231,7 +246,6 @@ public class Person implements Comparable<Person> {
         final Dotenv dotenv = Dotenv.load();
         final String adminPassword = dotenv.get("ADMIN_PASSWORD");
         final String defaultPassword = dotenv.get("DEFAULT_PASSWORD");
-    
         people.add(createPerson("Thomas Edison", "toby", "toby@gmail.com", adminPassword, "1", "/images/toby.png", true, startingBalance, "01-01-1840", Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER", "ROLE_TEACHER")));
         people.add(createPerson("Alexander Graham Bell", "lex", "lexb@gmail.com", defaultPassword, "1", "/images/lex.png", true, startingBalance, "01-01-1847", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
         people.add(createPerson("Nikola Tesla", "niko", "niko@gmail.com", defaultPassword, "1", "/images/niko.png", true, startingBalance, "01-01-1850", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
@@ -239,12 +253,12 @@ public class Person implements Comparable<Person> {
         people.add(createPerson("Grace Hopper", "hop", "hop@gmail.com", defaultPassword, "123", "/images/hop.png", true, startingBalance, "12-09-1906", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
         people.add(createPerson("John Mortensen", "jm1021", "jmort1021@gmail.com", defaultPassword, "1", "/images/jm1021.png", true, startingBalance, "10-21-1959", Arrays.asList("ROLE_ADMIN", "ROLE_TEACHER")));
         people.add(createPerson("Alan Turing", "alan", "turing@gmail.com", defaultPassword, "2", "/images/alan.png", false, startingBalance, "06-23-1912", Arrays.asList("ROLE_USER", "ROLE_TESTER", "ROLE_STUDENT")));
-    
+
         Collections.sort(people);
         for (Person person : people) {
             userStocksTable stock = new userStocksTable(null, "BTC,ETH", startingBalance, person.getEmail(), person, false, true, "");
             person.setUser_stocks(stock);
-    
+
             // Initialize the Bank entity for each person
             Bank bank = new Bank();
             bank.setPerson(person);
@@ -257,7 +271,7 @@ public class Person implements Comparable<Person> {
             bank.setStocksProfit(new ArrayList<>());
             person.setBank(bank);
         }
-    
+
         return people.toArray(new Person[0]);
     }
 

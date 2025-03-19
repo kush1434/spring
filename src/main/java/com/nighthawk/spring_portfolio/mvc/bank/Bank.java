@@ -36,19 +36,19 @@ public class Bank {
     private double balance;
     private double loanAmount;
 
-    @JdbcTypeCode(SqlTypes.JSON) // Store as JSON
-    @Column(columnDefinition = "jsonb") // Use JSONB for PostgreSQL, or "json" for other databases
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private List<String> stocksOwned = new ArrayList<>();
 
-    @JdbcTypeCode(SqlTypes.JSON) // Store as JSON
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private List<Double> gamblingProfit = new ArrayList<>();
 
-    @JdbcTypeCode(SqlTypes.JSON) // Store as JSON
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private List<Double> adventureGameProfit = new ArrayList<>();
 
-    @JdbcTypeCode(SqlTypes.JSON) // Store as JSON
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private List<Double> stocksProfit = new ArrayList<>();
 
