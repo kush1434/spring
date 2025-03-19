@@ -251,6 +251,7 @@ public class Person implements Comparable<Person> {
         this.submissions = new ArrayList<>();
 
         this.timeEntries = new Tinkle(this, "");
+        this.banks= new Bank(this, 0, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
     public boolean hasRoleWithName(String roleName) {
