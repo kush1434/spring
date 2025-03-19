@@ -199,6 +199,7 @@ public class Person implements Comparable<Person> {
 
     public String setBalanceString(double updatedBalance) {
         this.balance = String.valueOf(updatedBalance); // Update the balance as a String
+        this.banks.setBalance(updatedBalance);
         return this.balance; // Return the updated balance as a String
     }
 
