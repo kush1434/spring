@@ -344,24 +344,137 @@ public class Person implements Comparable<Person> {
         final Dotenv dotenv = Dotenv.load();
         final String adminPassword = dotenv.get("ADMIN_PASSWORD");
         final String defaultPassword = dotenv.get("DEFAULT_PASSWORD");
-        people.add(createPerson("Thomas Edison", "toby", "toby@gmail.com",  adminPassword, "1", "/images/toby.png", true, startingBalance, "01-01-1840", Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER", "ROLE_TEACHER")));
-        people.add(createPerson("Alexander Graham Bell", "lex", "lexb@gmail.com", defaultPassword, "1", "/images/lex.png", true, startingBalance, "01-01-1847", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
-        people.add(createPerson("Nikola Tesla", "niko",  "niko@gmail.com",  defaultPassword, "1", "/images/niko.png", true, startingBalance, "01-01-1850", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
-        people.add(createPerson("Madam Curie", "madam", "madam@gmail.com", defaultPassword, "1", "/images/madam.png", true, startingBalance, "01-01-1860", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
-        people.add(createPerson("Grace Hopper", "hop",  "hop@gmail.com", defaultPassword, "123", "/images/hop.png", true, startingBalance, "12-09-1906", Arrays.asList("ROLE_USER", "ROLE_STUDENT")));
-        people.add(createPerson("John Mortensen","jm1021",  "jmort1021@gmail.com", defaultPassword, "1", "/images/jm1021.png", true, startingBalance, "10-21-1959", Arrays.asList("ROLE_ADMIN", "ROLE_TEACHER")));
-        people.add(createPerson("Alan Turing","alan",  "turing@gmail.com", defaultPassword, "2", "/images/alan.png", false, startingBalance, "06-23-1912", Arrays.asList("ROLE_USER", "ROLE_TESTER","ROLE_STUDENT")));
-
-        Collections.sort(people);
-        for (Person person : people) {
-            userStocksTable stock = new userStocksTable(null, "BTC,ETH", startingBalance, person.getEmail(), person, false, true, "");
+    
+        // JSON-like list of person data
+        List<Map<String, Object>> personData = Arrays.asList(
+            Map.of(
+                "name", "Thomas Edison",
+                "uid", "toby",
+                "email", "toby@gmail.com",
+                "password", adminPassword,
+                "sid", "1",
+                "pfp", "/images/toby.png",
+                "kasmServerNeeded", true,
+                "balance", startingBalance,
+                "dob", "01-01-1840",
+                "roles", (List<String>) Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER", "ROLE_TEACHER"),
+                "stocks", "BTC,ETH"
+            ),
+            Map.of(
+                "name", "Alexander Graham Bell",
+                "uid", "lex",
+                "email", "lexb@gmail.com",
+                "password", defaultPassword,
+                "sid", "1",
+                "pfp", "/images/lex.png",
+                "kasmServerNeeded", true,
+                "balance", startingBalance,
+                "dob", "01-01-1847",
+                "roles", (List<String>) Arrays.asList("ROLE_USER", "ROLE_STUDENT"),
+                "stocks", "BTC,ETH"
+            ),
+            Map.of(
+                "name", "Nikola Tesla",
+                "uid", "niko",
+                "email", "niko@gmail.com",
+                "password", defaultPassword,
+                "sid", "1",
+                "pfp", "/images/niko.png",
+                "kasmServerNeeded", true,
+                "balance", startingBalance,
+                "dob", "01-01-1850",
+                "roles", (List<String>) Arrays.asList("ROLE_USER", "ROLE_STUDENT"),
+                "stocks", "BTC,ETH"
+            ),
+            Map.of(
+                "name", "Madam Curie",
+                "uid", "madam",
+                "email", "madam@gmail.com",
+                "password", defaultPassword,
+                "sid", "1",
+                "pfp", "/images/madam.png",
+                "kasmServerNeeded", true,
+                "balance", startingBalance,
+                "dob", "01-01-1860",
+                "roles", (List<String>) Arrays.asList("ROLE_USER", "ROLE_STUDENT"),
+                "stocks", "BTC,ETH"
+            ),
+            Map.of(
+                "name", "Grace Hopper",
+                "uid", "hop",
+                "email", "hop@gmail.com",
+                "password", defaultPassword,
+                "sid", "123",
+                "pfp", "/images/hop.png",
+                "kasmServerNeeded", true,
+                "balance", startingBalance,
+                "dob", "12-09-1906",
+                "roles", (List<String>) Arrays.asList("ROLE_USER", "ROLE_STUDENT"),
+                "stocks", "BTC,ETH"
+            ),
+            Map.of(
+                "name", "John Mortensen",
+                "uid", "jm1021",
+                "email", "jmort1021@gmail.com",
+                "password", defaultPassword,
+                "sid", "1",
+                "pfp", "/images/jm1021.png",
+                "kasmServerNeeded", true,
+                "balance", startingBalance,
+                "dob", "10-21-1959",
+                "roles", (List<String>) Arrays.asList("ROLE_ADMIN", "ROLE_TEACHER"),
+                "stocks", "BTC,ETH"
+            ),
+            Map.of(
+                "name", "Alan Turing",
+                "uid", "alan",
+                "email", "turing@gmail.com",
+                "password", defaultPassword,
+                "sid", "2",
+                "pfp", "/images/alan.png",
+                "kasmServerNeeded", false,
+                "balance", startingBalance,
+                "dob", "06-23-1912",
+                "roles", (List<String>) Arrays.asList("ROLE_USER", "ROLE_TESTER", "ROLE_STUDENT"),
+                "stocks", "BTC,ETH"
+            )
+        );
+    
+        // Iterate over the JSON-like list to create Person objects
+        for (Map<String, Object> data : personData) {
+            Person person = createPerson(
+                (String) data.get("name"),
+                (String) data.get("uid"),
+                (String) data.get("email"),
+                (String) data.get("password"),
+                (String) data.get("sid"),
+                (String) data.get("pfp"),
+                (Boolean) data.get("kasmServerNeeded"),
+                (String) data.get("balance"),
+                (String) data.get("dob"),
+                (List<String>) data.get("roles")
+            );
+    
+            // Create userStocksTable and set the one-to-one relationship
+            userStocksTable stock = new userStocksTable(
+                null,
+                (String) data.get("stocks"),
+                (String) data.get("balance"),
+                person.getEmail(),
+                person,
+                false,
+                true,
+                ""
+            );
+            stock.setPerson(person); // Set the one-to-one relationship
             person.setUser_stocks(stock);
+    
+            people.add(person);
         }
-        for (Person person : people) {
-            Bank bank = new Bank(person, 0, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-            person.setBanks(bank);
-        }
-
+    
+        // Sort the list of people
+        Collections.sort(people);
+    
         return people.toArray(new Person[0]);
     }
 
