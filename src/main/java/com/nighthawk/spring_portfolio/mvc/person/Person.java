@@ -328,7 +328,8 @@ public class Person implements Comparable<Person> {
             roles.add(role);
         }
         person.setRoles(roles);
-        
+        person.setBanks(new Bank(person, 0, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>()));
+
         return person;
     }
     
