@@ -345,98 +345,98 @@ public class Person implements Comparable<Person> {
         final String adminPassword = dotenv.get("ADMIN_PASSWORD");
         final String defaultPassword = dotenv.get("DEFAULT_PASSWORD");
     
-        // JSON-like list of person data
+        // JSON-like list of person data using Map.ofEntries
         List<Map<String, Object>> personData = Arrays.asList(
-            Map.of(
-                "name", "Thomas Edison",
-                "uid", "toby",
-                "email", "toby@gmail.com",
-                "password", adminPassword,
-                "sid", "1",
-                "pfp", "/images/toby.png",
-                "kasmServerNeeded", true,
-                "balance", startingBalance,
-                "dob", "01-01-1840",
-                "roles", (List<String>) Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER", "ROLE_TEACHER"),
-                "stocks", "BTC,ETH"
+            Map.ofEntries(
+                Map.entry("name", "Thomas Edison"),
+                Map.entry("uid", "toby"),
+                Map.entry("email", "toby@gmail.com"),
+                Map.entry("password", adminPassword),
+                Map.entry("sid", "1"),
+                Map.entry("pfp", "/images/toby.png"),
+                Map.entry("kasmServerNeeded", true),
+                Map.entry("balance", startingBalance),
+                Map.entry("dob", "01-01-1840"),
+                Map.entry("roles", Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER", "ROLE_TEACHER")),
+                Map.entry("stocks", "BTC,ETH")
             ),
-            Map.of(
-                "name", "Alexander Graham Bell",
-                "uid", "lex",
-                "email", "lexb@gmail.com",
-                "password", defaultPassword,
-                "sid", "1",
-                "pfp", "/images/lex.png",
-                "kasmServerNeeded", true,
-                "balance", startingBalance,
-                "dob", "01-01-1847",
-                "roles", (List<String>) Arrays.asList("ROLE_USER", "ROLE_STUDENT"),
-                "stocks", "BTC,ETH"
+            Map.ofEntries(
+                Map.entry("name", "Alexander Graham Bell"),
+                Map.entry("uid", "lex"),
+                Map.entry("email", "lexb@gmail.com"),
+                Map.entry("password", defaultPassword),
+                Map.entry("sid", "1"),
+                Map.entry("pfp", "/images/lex.png"),
+                Map.entry("kasmServerNeeded", true),
+                Map.entry("balance", startingBalance),
+                Map.entry("dob", "01-01-1847"),
+                Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
+                Map.entry("stocks", "BTC,ETH")
             ),
-            Map.of(
-                "name", "Nikola Tesla",
-                "uid", "niko",
-                "email", "niko@gmail.com",
-                "password", defaultPassword,
-                "sid", "1",
-                "pfp", "/images/niko.png",
-                "kasmServerNeeded", true,
-                "balance", startingBalance,
-                "dob", "01-01-1850",
-                "roles", (List<String>) Arrays.asList("ROLE_USER", "ROLE_STUDENT"),
-                "stocks", "BTC,ETH"
+            Map.ofEntries(
+                Map.entry("name", "Nikola Tesla"),
+                Map.entry("uid", "niko"),
+                Map.entry("email", "niko@gmail.com"),
+                Map.entry("password", defaultPassword),
+                Map.entry("sid", "1"),
+                Map.entry("pfp", "/images/niko.png"),
+                Map.entry("kasmServerNeeded", true),
+                Map.entry("balance", startingBalance),
+                Map.entry("dob", "01-01-1850"),
+                Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
+                Map.entry("stocks", "BTC,ETH")
             ),
-            Map.of(
-                "name", "Madam Curie",
-                "uid", "madam",
-                "email", "madam@gmail.com",
-                "password", defaultPassword,
-                "sid", "1",
-                "pfp", "/images/madam.png",
-                "kasmServerNeeded", true,
-                "balance", startingBalance,
-                "dob", "01-01-1860",
-                "roles", (List<String>) Arrays.asList("ROLE_USER", "ROLE_STUDENT"),
-                "stocks", "BTC,ETH"
+            Map.ofEntries(
+                Map.entry("name", "Madam Curie"),
+                Map.entry("uid", "madam"),
+                Map.entry("email", "madam@gmail.com"),
+                Map.entry("password", defaultPassword),
+                Map.entry("sid", "1"),
+                Map.entry("pfp", "/images/madam.png"),
+                Map.entry("kasmServerNeeded", true),
+                Map.entry("balance", startingBalance),
+                Map.entry("dob", "01-01-1860"),
+                Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
+                Map.entry("stocks", "BTC,ETH")
             ),
-            Map.of(
-                "name", "Grace Hopper",
-                "uid", "hop",
-                "email", "hop@gmail.com",
-                "password", defaultPassword,
-                "sid", "123",
-                "pfp", "/images/hop.png",
-                "kasmServerNeeded", true,
-                "balance", startingBalance,
-                "dob", "12-09-1906",
-                "roles", (List<String>) Arrays.asList("ROLE_USER", "ROLE_STUDENT"),
-                "stocks", "BTC,ETH"
+            Map.ofEntries(
+                Map.entry("name", "Grace Hopper"),
+                Map.entry("uid", "hop"),
+                Map.entry("email", "hop@gmail.com"),
+                Map.entry("password", defaultPassword),
+                Map.entry("sid", "123"),
+                Map.entry("pfp", "/images/hop.png"),
+                Map.entry("kasmServerNeeded", true),
+                Map.entry("balance", startingBalance),
+                Map.entry("dob", "12-09-1906"),
+                Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
+                Map.entry("stocks", "BTC,ETH")
             ),
-            Map.of(
-                "name", "John Mortensen",
-                "uid", "jm1021",
-                "email", "jmort1021@gmail.com",
-                "password", defaultPassword,
-                "sid", "1",
-                "pfp", "/images/jm1021.png",
-                "kasmServerNeeded", true,
-                "balance", startingBalance,
-                "dob", "10-21-1959",
-                "roles", (List<String>) Arrays.asList("ROLE_ADMIN", "ROLE_TEACHER"),
-                "stocks", "BTC,ETH"
+            Map.ofEntries(
+                Map.entry("name", "John Mortensen"),
+                Map.entry("uid", "jm1021"),
+                Map.entry("email", "jmort1021@gmail.com"),
+                Map.entry("password", defaultPassword),
+                Map.entry("sid", "1"),
+                Map.entry("pfp", "/images/jm1021.png"),
+                Map.entry("kasmServerNeeded", true),
+                Map.entry("balance", startingBalance),
+                Map.entry("dob", "10-21-1959"),
+                Map.entry("roles", Arrays.asList("ROLE_ADMIN", "ROLE_TEACHER")),
+                Map.entry("stocks", "BTC,ETH")
             ),
-            Map.of(
-                "name", "Alan Turing",
-                "uid", "alan",
-                "email", "turing@gmail.com",
-                "password", defaultPassword,
-                "sid", "2",
-                "pfp", "/images/alan.png",
-                "kasmServerNeeded", false,
-                "balance", startingBalance,
-                "dob", "06-23-1912",
-                "roles", (List<String>) Arrays.asList("ROLE_USER", "ROLE_TESTER", "ROLE_STUDENT"),
-                "stocks", "BTC,ETH"
+            Map.ofEntries(
+                Map.entry("name", "Alan Turing"),
+                Map.entry("uid", "alan"),
+                Map.entry("email", "turing@gmail.com"),
+                Map.entry("password", defaultPassword),
+                Map.entry("sid", "2"),
+                Map.entry("pfp", "/images/alan.png"),
+                Map.entry("kasmServerNeeded", false),
+                Map.entry("balance", startingBalance),
+                Map.entry("dob", "06-23-1912"),
+                Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_TESTER", "ROLE_STUDENT")),
+                Map.entry("stocks", "BTC,ETH")
             )
         );
     
