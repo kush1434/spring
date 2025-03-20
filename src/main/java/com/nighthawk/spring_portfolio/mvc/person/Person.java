@@ -25,6 +25,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PreRemove;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Convert;
 import static jakarta.persistence.FetchType.EAGER;
 import jakarta.validation.constraints.Email;
@@ -201,6 +202,13 @@ public class Person implements Comparable<Person> {
         this.balance = String.valueOf(updatedBalance); // Update the balance as a String
         this.banks.setBalance(updatedBalance);
         return this.balance; // Return the updated balance as a String
+    }
+
+    public void setName(String name) {
+        this.name = name;
+        if (this.banks != null) {
+            this.banks.setUsername(name);
+        }
     }
 
     /**
@@ -479,6 +487,7 @@ public class Person implements Comparable<Person> {
         return people.toArray(new Person[0]);
     }
 
+
     /**
      * Static method to print Person objects from an array
      * 
@@ -498,6 +507,8 @@ public class Person implements Comparable<Person> {
     public Date getDob() {
         return this.dob;
     }
+
+    
     
     public String getPfp() {
         return this.pfp;

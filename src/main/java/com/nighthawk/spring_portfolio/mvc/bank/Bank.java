@@ -98,11 +98,4 @@ public class Bank {
 
         return bankList.toArray(new Bank[0]);
     }
-    @PreUpdate
-    public void updateUsername() {
-        if (person != null) {
-            this.username = person.getName();
-            this.balance = person.getBalanceDouble();
-        }
-    }
 }
