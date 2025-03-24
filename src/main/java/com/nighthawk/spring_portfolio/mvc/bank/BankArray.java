@@ -22,10 +22,10 @@ public class BankArray {
     @Autowired
     private UserStocksRepository userStocksRepo;
 
-    private Map<String, Double> profitMap = new HashMap<>(); // Stores user profits
-    private Map<String, List<BankRequest>> profitHistoryMap = new HashMap<>(); // Stores profit history logs per user
+    // Stores all transactions for each user
+    private Map<String, List<BankRequest>> profitMap = new HashMap<>();
 
-    // DTO for updating profits
+    // DTO for storing transactions
     public static class BankRequest {
         private String uid;
         private double amount;
@@ -40,7 +40,7 @@ public class BankArray {
 
         @Override
         public String toString() {
-            return "Source: " + source + ", Amount: $" + amount;
+            return "{Source: " + source + ", Amount: $" + amount + "}";
         }
     }
 
@@ -56,43 +56,28 @@ public class BankArray {
             return new ResponseEntity<>("User stocks not found", HttpStatus.NOT_FOUND);
         }
 
-        // Update profit in memory
-        profitMap.put(request.getUid(), profitMap.getOrDefault(request.getUid(), 0.0) + request.getAmount());
+        // Store request in profitMap
+        profitMap.putIfAbsent(request.getUid(), new ArrayList<>());
+        profitMap.get(request.getUid()).add(request);
 
-        // Append profit history
+        // Append profit history for the user
         String profitHistory = userStocks.getCryptoHistory() + request.getSource() + " profit: $" + request.getAmount() + "\n";
         userStocks.setCryptoHistory(profitHistory);
         userStocksRepo.save(userStocks);
 
-        // Store request in profit history map
-        profitHistoryMap.putIfAbsent(request.getUid(), new ArrayList<>());
-        profitHistoryMap.get(request.getUid()).add(request);
-
         // Print logs
-        System.out.println("Current profitMap: " + profitMap);
-        System.out.println("Updated profit history for " + request.getUid() + ": " + profitHistoryMap.get(request.getUid()));
+        System.out.println("Updated profitMap for " + request.getUid() + ": " + profitMap.get(request.getUid()));
 
         return new ResponseEntity<>("Profit updated successfully", HttpStatus.OK);
     }
 
-    // Get total profit for a user
+    // Get all profit history for a user
     @PostMapping("/getProfit")
     public ResponseEntity<?> getProfit(@RequestBody Map<String, String> request) {
         String uid = request.get("uid");
         if (!profitMap.containsKey(uid)) {
             return new ResponseEntity<>("No profit data found", HttpStatus.NOT_FOUND);
         }
-        System.out.println("Current profitMap: " + profitMap);
-        return new ResponseEntity<>("Total Profit: $" + profitMap.get(uid), HttpStatus.OK);
-    }
-
-    // Get profit history for a user
-    @PostMapping("/getProfitHistory")
-    public ResponseEntity<?> getProfitHistory(@RequestBody Map<String, String> request) {
-        String uid = request.get("uid");
-        if (!profitHistoryMap.containsKey(uid)) {
-            return new ResponseEntity<>("No profit history found", HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(profitHistoryMap.get(uid), HttpStatus.OK);
+        return new ResponseEntity<>(profitMap.get(uid), HttpStatus.OK);
     }
 }
