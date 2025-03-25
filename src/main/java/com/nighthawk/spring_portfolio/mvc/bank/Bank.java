@@ -46,9 +46,6 @@ public class Bank {
     private double balance;
     private double loanAmount;
 
-    // Change profitMap to a HashMap with String key and List<Double> value
-    @Convert(converter = JsonType.class)
-    @Column(columnDefinition = "jsonb")
     private Map<String, List<Double>> profitMap = new HashMap<>();
 
     // Updated constructor to match the new profitMap type
@@ -61,11 +58,6 @@ public class Bank {
         this.username = person.getName();
         this.balance = person.getBalanceDouble();
         this.loanAmount = loanAmount;
-        
-        // Initialize profitMap with a key for the first entry
-        if (initialProfits != null && !initialProfits.isEmpty()) {
-            this.profitMap.put("initialProfits", initialProfits);
-        }
     }
 
     // Method to update profitMap with a new profit entry
