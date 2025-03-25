@@ -130,7 +130,7 @@ public class CryptoController {
     
         // Deduct balance and update user's holdings
         double updatedBalance = person.getBalanceDouble() - usdAmount;
-        person.setBalanceString(updatedBalance);
+        person.setBalanceString(updatedBalance, "crypto");
     
         userStocksTable userStocks = person.getUser_stocks();
         if (userStocks == null) {
@@ -205,7 +205,7 @@ public class CryptoController {
         // Update balance
         double totalValueSold = cryptoPrice * cryptoAmount;
         double updatedBalance = person.getBalanceDouble() + totalValueSold;
-        person.setBalanceString(updatedBalance);
+        person.setBalanceString(updatedBalance, "crypto");
         userStocks.setCrypto(updatedCrypto);
         userStocks.setBalance(String.valueOf(updatedBalance));
     

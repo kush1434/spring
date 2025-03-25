@@ -1,6 +1,5 @@
 package com.nighthawk.spring_portfolio.mvc.person;
 
-
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
@@ -32,6 +31,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -47,6 +47,8 @@ import io.github.cdimascio.dotenv.Dotenv;
 import com.nighthawk.spring_portfolio.mvc.assignments.AssignmentSubmission;
 import com.nighthawk.spring_portfolio.mvc.bathroom.Tinkle;
 import com.nighthawk.spring_portfolio.mvc.bank.Bank;
+import com.nighthawk.spring_portfolio.mvc.bank.BankArrayApiController;
+import com.nighthawk.spring_portfolio.mvc.bank.BankArrayApiController.BankRequest;
 import com.nighthawk.spring_portfolio.mvc.student.StudentInfo;
 import com.nighthawk.spring_portfolio.mvc.synergy.SynergyGrade;
 
@@ -55,7 +57,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-
 
 /**
  * Person is a POJO, Plain Old Java Object.
@@ -74,10 +75,6 @@ import lombok.NonNull;
 @Convert(attributeName = "person", converter = JsonType.class)
 @JsonIgnoreProperties({"submissions"})
 public class Person implements Comparable<Person> {
-
-    private static Person createPerson(String name, String email, String uid, String password, Boolean kasmServerNeeded, String balance, String dob, List<String> asList) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     /** Automatic unique identifier for Person record 
      * --- Id annotation is used to specify the identifier property of the entity.
@@ -149,7 +146,6 @@ public class Person implements Comparable<Person> {
     @Column(unique = true, nullable = false)
     private String uid; // New `uid` column added
 
-
     @NotEmpty
     private String password;
 
@@ -190,6 +186,9 @@ public class Person implements Comparable<Person> {
     @JsonIgnore
     private Bank banks;
 
+    @Transient
+    private BankArrayApiController.BankRequest bankrequest;
+
     @Column
     private String balance;
 
@@ -198,9 +197,18 @@ public class Person implements Comparable<Person> {
         return Double.parseDouble(balance_tmp);
     }
 
-    public String setBalanceString(double updatedBalance) {
+    public String setBalanceString(double updatedBalance, String source) {
         this.balance = String.valueOf(updatedBalance); // Update the balance as a String
         this.banks.setBalance(updatedBalance);
+        Double profit = updatedBalance - this.banks.getBalance();
+        System.out.println("Profit: " + profit);
+        // Create a new BankRequest instead of using class field
+        BankArrayApiController.BankRequest request = new BankArrayApiController.BankRequest();
+        request.setSource(source);
+        request.setAmount(profit);
+        request.setUid(this.uid);
+        System.out.println(request.toString());
+        
         return this.balance; // Return the updated balance as a String
     }
 
@@ -487,7 +495,6 @@ public class Person implements Comparable<Person> {
         return people.toArray(new Person[0]);
     }
 
-
     /**
      * Static method to print Person objects from an array
      * 
@@ -507,8 +514,6 @@ public class Person implements Comparable<Person> {
     public Date getDob() {
         return this.dob;
     }
-
-    
     
     public String getPfp() {
         return this.pfp;

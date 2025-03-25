@@ -182,7 +182,7 @@ public class AdventureAnswerApiController {
 
         double questionPoints = question.getPoints();
         double updatedBalance = person.getBalanceDouble() + questionPoints;
-        person.setBalanceString(updatedBalance);
+        person.setBalanceString(updatedBalance, "adventure");
         
         personJpaRepository.save(person); // save the updated person object
 

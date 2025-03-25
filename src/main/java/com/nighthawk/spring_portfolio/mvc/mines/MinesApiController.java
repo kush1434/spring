@@ -55,7 +55,7 @@ public class MinesApiController {
         double betSize = minesRequest.getBet();
         double winnings = board.winnings() * betSize;
         double updatedBalance = user.getBalanceDouble() + winnings;
-        user.setBalanceString(updatedBalance);
+        user.setBalanceString(updatedBalance, "casino");
         personJpaRepository.save(user);
         
         return new ResponseEntity<>(user.getBalanceDouble(), HttpStatus.OK);
@@ -74,7 +74,7 @@ public class MinesApiController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        user.setBalanceString(updatedBalance);
+        user.setBalanceString(updatedBalance, "casino");
         personJpaRepository.save(user);
         board = new MinesBoard(stakes);
         
@@ -111,7 +111,7 @@ public class MinesApiController {
         }
 
         // Save updated balance
-        person.setBalanceString(updatedBalance);
+        person.setBalanceString(updatedBalance, "casino");
         personJpaRepository.save(person);
 
         // Return response
