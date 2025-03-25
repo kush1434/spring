@@ -199,8 +199,8 @@ public class Person implements Comparable<Person> {
 
     public String setBalanceString(double updatedBalance, String source) {
         this.balance = String.valueOf(updatedBalance); // Update the balance as a String
-        this.banks.setBalance(updatedBalance);
         Double profit = updatedBalance - this.banks.getBalance();
+        this.banks.setBalance(updatedBalance);
         System.out.println("Profit: " + profit);
         // Create a new BankRequest instead of using class field
         BankArrayApiController.BankRequest request = new BankArrayApiController.BankRequest();
