@@ -28,7 +28,6 @@ import com.vladmihalcea.hibernate.type.json.JsonType;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Convert(attributeName = "bank", converter = JsonType.class)
 public class Bank {
 
     @Id
