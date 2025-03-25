@@ -59,7 +59,6 @@ public class BankArrayApiController extends BankArray {
         // Append profit history for the user
         String profitHistory = userStocks.getCryptoHistory() + request.getSource() + " profit: $" + request.getAmount() + "\n";
         userStocks.setCryptoHistory(profitHistory);
-        userStocksRepo.save(userStocks);
 
         // Print logs
         System.out.println("Updated profitMap for " + request.getUid() + ": " + profitMap.get(request.getUid()));

@@ -44,35 +44,8 @@ public class BankApiController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 
-    // Get a user's gambling profits
-    @GetMapping("/gamblingProfits")
-    public ResponseEntity<List<Double>> getGamblingProfits(@RequestParam String uid) {
-        Bank bank = bankService.findByUid(uid);
-        if (bank != null) {
-            return ResponseEntity.ok(bank.getGamblingProfit(uid));
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ArrayList<>());
-    }
 
-    // Get a user's adventure game profits
-    @GetMapping("/adventureGameProfits")
-    public ResponseEntity<List<Double>> getAdventureGameProfits(@RequestParam String uid) {
-        Bank bank = bankService.findByUid(uid);
-        if (bank != null) {
-            return ResponseEntity.ok(bank.getAdventureGameProfit(uid));
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ArrayList<>());
-    }
-
-    // Get a user's stock profits
-    @GetMapping("/stocksProfits")
-    public ResponseEntity<List<Double>> getStocksProfits(@RequestParam String uid) {
-        Bank bank = bankService.findByUid(uid);
-        if (bank != null) {
-            return ResponseEntity.ok(bank.getStocksProfit(uid));
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ArrayList<>());
-    }
+    
 }
 
 // Request objects

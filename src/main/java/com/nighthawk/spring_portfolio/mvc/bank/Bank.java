@@ -1,7 +1,9 @@
 package com.nighthawk.spring_portfolio.mvc.bank;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -10,21 +12,23 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.vladmihalcea.hibernate.type.json.JsonType;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Convert(attributeName = "bank", converter = JsonType.class)
 public class Bank {
 
     @Id
@@ -38,57 +42,64 @@ public class Bank {
     @JoinColumn(name = "person_id", referencedColumnName = "id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
-    private Person person; // One-to-One relationship with the Person entity
+    private Person person;
 
     private double balance;
     private double loanAmount;
-    private List<String> stocksOwned = new ArrayList<>();
-    private List<Double> gamblingProfit = new ArrayList<>();
-    private List<Double> adventureGameProfit = new ArrayList<>();
-    private List<Double> stocksProfit = new ArrayList<>();
 
-    public Bank(Person person, double loanAmount, List<String> stocksOwned, List<Double> gamblingProfit, List<Double> adventureGameProfit, List<Double> stocksProfit) {
+    // Change profitMap to a HashMap with String key and List<Double> value
+    @Convert(converter = JsonType.class)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, List<Double>> profitMap = new HashMap<>();
+
+    // Updated constructor to match the new profitMap type
+    public Bank(Person person, double loanAmount, 
+                List<Double> initialProfits, 
+                List<Double> someOtherList1, 
+                List<Double> someOtherList2, 
+                List<Double> someOtherList3) {
         this.person = person;
         this.username = person.getName();
         this.balance = person.getBalanceDouble();
         this.loanAmount = loanAmount;
-        this.stocksOwned = stocksOwned;
-        this.gamblingProfit = gamblingProfit;
-        this.adventureGameProfit = adventureGameProfit;
-        this.stocksProfit = stocksProfit;
+        
+        // Initialize profitMap with a key for the first entry
+        if (initialProfits != null && !initialProfits.isEmpty()) {
+            this.profitMap.put("initialProfits", initialProfits);
+        }
     }
 
-    // Method to get gambling profits for the user
-    public List<Double> getGamblingProfit(String person_id) {
-        return gamblingProfit;  // Return gambling profit for the user based on UID (now a String)
+    // Method to update profitMap with a new profit entry
+    public void updateProfitMap(String key, Double profit) {
+        // If the key doesn't exist, create a new list
+        if (!this.profitMap.containsKey(key)) {
+            this.profitMap.put(key, new ArrayList<>());
+        }
+        
+        // Add the new profit to the list for this key
+        this.profitMap.get(key).add(profit);
     }
 
-    // Method to get adventure game profits for the user
-    public List<Double> getAdventureGameProfit(String person_id) {
-        return adventureGameProfit;  // Return adventure game profit for the user based on UID (now a String)
+    // Method to get profits for the user
+    public List<Double> getProfitMap(String key) {
+        return this.profitMap.getOrDefault(key, new ArrayList<>());
     }
 
-    // Method to get stocks profits for the user
-    public List<Double> getStocksProfit(String person_id) {
-        return stocksProfit;  // Return stock profits for the user based on UID (now a String)
-    }
-
-    // Method to request a loan
+    // Rest of the methods remain the same
     public void requestLoan(double loanAmount) {
-        this.loanAmount += loanAmount;  // Increase the loan amount
-        this.balance += loanAmount;  // Add the loan amount to the balance
+        this.loanAmount += loanAmount;
+        this.balance += loanAmount;
     }
 
-    // Method to get the current loan amount
     public double getLoanAmount() {
         return loanAmount;
     }
 
-    // Method to calculate daily interest on the loan
     public double dailyInterestCalculation() {
         double interestRate = 0.05;  
         return loanAmount * interestRate;
     }
+
     public static Bank[] init(Person[] persons) {
         ArrayList<Bank> bankList = new ArrayList<>();
 
