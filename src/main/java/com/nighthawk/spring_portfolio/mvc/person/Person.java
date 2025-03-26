@@ -202,7 +202,7 @@ public class Person implements Comparable<Person> {
         Double profit = updatedBalance - this.banks.getBalance();
         this.banks.setBalance(updatedBalance);
         System.out.println("Profit: " + profit);
-        this.banks.updateProfitMap(source, updatedBalance);
+        this.banks.updateProfitMap(source, profit);
         
         return this.balance; // Return the updated balance as a String
     }
