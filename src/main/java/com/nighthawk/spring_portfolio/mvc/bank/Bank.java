@@ -1,7 +1,9 @@
 package com.nighthawk.spring_portfolio.mvc.bank;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -10,13 +12,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -43,34 +45,49 @@ public class Bank {
     private double balance;
     private double loanAmount;
     private List<String> stocksOwned = new ArrayList<>();
-    private List<Double> gamblingProfit = new ArrayList<>();
-    private List<Double> adventureGameProfit = new ArrayList<>();
-    private List<Double> stocksProfit = new ArrayList<>();
 
-    public Bank(Person person, double loanAmount, List<String> stocksOwned, List<Double> gamblingProfit, List<Double> adventureGameProfit, List<Double> stocksProfit) {
+    @ElementCollection
+    private Map<String, List<Double>> profitMap = new HashMap<>();
+
+    public Bank(Person person, double loanAmount) {
         this.person = person;
         this.username = person.getName();
         this.balance = person.getBalanceDouble();
         this.loanAmount = loanAmount;
-        this.stocksOwned = stocksOwned;
-        this.gamblingProfit = gamblingProfit;
-        this.adventureGameProfit = adventureGameProfit;
-        this.stocksProfit = stocksProfit;
+        
+        // Initialize profit map with default categories
+        this.profitMap.put("gambling", new ArrayList<>());
+        this.profitMap.put("adventureGame", new ArrayList<>());
+        this.profitMap.put("stocks", new ArrayList<>());
     }
 
-    // Method to get gambling profits for the user
-    public List<Double> getGamblingProfit(String person_id) {
-        return gamblingProfit;  // Return gambling profit for the user based on UID (now a String)
+    // Getter for profit map
+    public Map<String, List<Double>> getProfitMap() {
+        return profitMap;
     }
 
-    // Method to get adventure game profits for the user
-    public List<Double> getAdventureGameProfit(String person_id) {
-        return adventureGameProfit;  // Return adventure game profit for the user based on UID (now a String)
+    // Update profit map method
+    public void updateProfitMap(Map<String, List<Double>> newProfitMap) {
+        // Clear existing map
+        this.profitMap.clear();
+        
+        // Add all entries from the new map
+        if (newProfitMap != null) {
+            this.profitMap.putAll(newProfitMap);
+        }
     }
 
-    // Method to get stocks profits for the user
-    public List<Double> getStocksProfit(String person_id) {
-        return stocksProfit;  // Return stock profits for the user based on UID (now a String)
+    // Method to get profits for a specific category
+    public List<Double> getProfitByCategory(String category) {
+        return profitMap.getOrDefault(category, new ArrayList<>());
+    }
+
+    // Method to add profit to a specific category
+    public void addProfitToCategory(String category, Double profit) {
+        if (!profitMap.containsKey(category)) {
+            profitMap.put(category, new ArrayList<>());
+        }
+        profitMap.get(category).add(profit);
     }
 
     // Method to request a loan
@@ -89,11 +106,12 @@ public class Bank {
         double interestRate = 0.05;  
         return loanAmount * interestRate;
     }
+
     public static Bank[] init(Person[] persons) {
         ArrayList<Bank> bankList = new ArrayList<>();
 
         for (Person person : persons) {
-            bankList.add(new Bank(person, 0, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>()));
+            bankList.add(new Bank(person, 0));
         }
 
         return bankList.toArray(new Bank[0]);
