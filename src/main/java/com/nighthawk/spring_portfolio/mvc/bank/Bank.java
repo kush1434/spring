@@ -5,14 +5,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,9 +45,9 @@ public class Bank {
 
     private double balance;
     private double loanAmount;
-    private List<String> stocksOwned = new ArrayList<>();
 
-    @ElementCollection
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private Map<String, List<Double>> profitMap = new HashMap<>();
 
     public Bank(Person person, double loanAmount) {
@@ -54,40 +55,42 @@ public class Bank {
         this.username = person.getName();
         this.balance = person.getBalanceDouble();
         this.loanAmount = loanAmount;
-        
+
         // Initialize profit map with default categories
-        this.profitMap.put("gambling", new ArrayList<>());
-        this.profitMap.put("adventureGame", new ArrayList<>());
-        this.profitMap.put("stocks", new ArrayList<>());
+        this.profitMap = new HashMap<>();
     }
 
-    // Getter for profit map
-    public Map<String, List<Double>> getProfitMap() {
-        return profitMap;
-    }
+    // Updated updateProfitMap method
+    public void updateProfitMap(String category, Double value) {
+        // Ensure the map is initialized
+        if (this.profitMap == null) {
+            this.profitMap = new HashMap<>();
+        }
 
-    // Update profit map method
-    public void updateProfitMap(Map<String, List<Double>> newProfitMap) {
-        // Clear existing map
-        this.profitMap.clear();
-        
-        // Add all entries from the new map
-        if (newProfitMap != null) {
-            this.profitMap.putAll(newProfitMap);
+        // If the category already exists in the map, add the value to its list
+        if (profitMap.containsKey(category)) {
+            profitMap.get(category).add(value);
+        } 
+        // If the category doesn't exist, create a new list with the value
+        else {
+            List<Double> newList = new ArrayList<>();
+            newList.add(value);
+            profitMap.put(category, newList);
         }
     }
 
     // Method to get profits for a specific category
     public List<Double> getProfitByCategory(String category) {
+        // Ensure the map is initialized
+        if (this.profitMap == null) {
+            this.profitMap = new HashMap<>();
+        }
         return profitMap.getOrDefault(category, new ArrayList<>());
     }
 
-    // Method to add profit to a specific category
+    // Method to add profit to a specific category (kept for backward compatibility)
     public void addProfitToCategory(String category, Double profit) {
-        if (!profitMap.containsKey(category)) {
-            profitMap.put(category, new ArrayList<>());
-        }
-        profitMap.get(category).add(profit);
+        updateProfitMap(category, profit);
     }
 
     // Method to request a loan

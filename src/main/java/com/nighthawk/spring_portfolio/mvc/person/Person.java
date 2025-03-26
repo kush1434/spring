@@ -202,12 +202,7 @@ public class Person implements Comparable<Person> {
         Double profit = updatedBalance - this.banks.getBalance();
         this.banks.setBalance(updatedBalance);
         System.out.println("Profit: " + profit);
-        // Create a new BankRequest instead of using class field
-        BankArrayApiController.BankRequest request = new BankArrayApiController.BankRequest();
-        request.setSource(source);
-        request.setAmount(profit);
-        request.setUid(this.uid);
-        System.out.println(request.toString());
+        this.banks.updateProfitMap(source, updatedBalance);
         
         return this.balance; // Return the updated balance as a String
     }
@@ -268,7 +263,7 @@ public class Person implements Comparable<Person> {
         this.submissions = new ArrayList<>();
 
         this.timeEntries = new Tinkle(this, "");
-        this.banks= new Bank(this, 0, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this.banks= new Bank(this, 0);
     }
 
     public boolean hasRoleWithName(String roleName) {
@@ -344,7 +339,7 @@ public class Person implements Comparable<Person> {
             roles.add(role);
         }
         person.setRoles(roles);
-        person.setBanks(new Bank(person, 0, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>()));
+        person.setBanks(new Bank(person, 0));
 
         return person;
     }
