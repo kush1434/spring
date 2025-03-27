@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @RequestMapping("/bank")
@@ -27,8 +25,8 @@ public class BankApiController {
     @PostMapping("/requestLoan")
     public ResponseEntity<String> requestLoan(@RequestBody LoanRequest request) {
         try {
-            Bank bank = bankService.requestLoan(request.getUid(), request.getLoanAmount());
-            return ResponseEntity.ok("Loan of amount " + request.getLoanAmount() + " granted to user with UID: " + bank.getUsername());
+            Bank bank = bankService.requestLoan(request.getPersonId(), request.getLoanAmount());
+            return ResponseEntity.ok("Loan of amount " + request.getLoanAmount() + " granted to user with Person ID: " + request.getPersonId());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan request failed: " + e.getMessage());
         }
@@ -36,24 +34,21 @@ public class BankApiController {
 
     // Get the loan amount for a bank account
     @GetMapping("/loanAmount")
-    public ResponseEntity<Double> getLoanAmount(@RequestParam String uid) {
-        Bank bank = bankService.findByUid(uid);
-        if (bank != null) {
+    public ResponseEntity<Double> getLoanAmount(@RequestParam Long personId) {
+        try {
+            Bank bank = bankService.findByPersonId(personId);
             return ResponseEntity.ok(bank.getLoanAmount());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
-
-
-    
 }
 
 // Request objects
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 class LoanRequest {
-    private String uid;  // Changed from username to uid
+    private Long personId;
     private double loanAmount;
 }

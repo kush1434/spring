@@ -3,7 +3,6 @@ package com.nighthawk.spring_portfolio.mvc.bank;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BankJpaRepository extends JpaRepository<Bank, Long> {
-
-    // Method to find a bank by its UID
-    Bank findByPersonUid(String uid);
+    // Find bank by person_id
+    Bank findByPersonId(Long personId);
 }
