@@ -56,22 +56,17 @@ public class Bank {
         this.balance = person.getBalanceDouble();
         this.loanAmount = loanAmount;
 
-        // Initialize profit map with default categories
         this.profitMap = new HashMap<>();
     }
 
-    // Updated updateProfitMap method
     public void updateProfitMap(String category, Double value) {
-        // Ensure the map is initialized
         if (this.profitMap == null) {
             this.profitMap = new HashMap<>();
         }
 
-        // If the category already exists in the map, add the value to its list
         if (profitMap.containsKey(category)) {
             profitMap.get(category).add(value);
         } 
-        // If the category doesn't exist, create a new list with the value
         else {
             List<Double> newList = new ArrayList<>();
             newList.add(value);
@@ -79,21 +74,17 @@ public class Bank {
         }
     }
 
-    // Method to get profits for a specific category
     public List<Double> getProfitByCategory(String category) {
-        // Ensure the map is initialized
         if (this.profitMap == null) {
             this.profitMap = new HashMap<>();
         }
         return profitMap.getOrDefault(category, new ArrayList<>());
     }
 
-    // Method to add profit to a specific category (kept for backward compatibility)
     public void addProfitToCategory(String category, Double profit) {
         updateProfitMap(category, profit);
     }
 
-    // Method to request a loan
     public void requestLoan(double loanAmount) {
         this.loanAmount += loanAmount;  // Increase the loan amount
         this.balance += loanAmount;  // Add the loan amount to the balance
