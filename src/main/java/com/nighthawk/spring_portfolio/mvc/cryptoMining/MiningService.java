@@ -40,28 +40,23 @@ public class MiningService {
     @Scheduled(fixedRate = MINING_INTERVAL)
     @Transactional
     public void processMining() {
-        System.out.println("\n=== Mining Process Started ===");
-        System.out.println("Time: " + new Date());
+
         
         List<MiningUser> activeMiners = miningUserRepository.findAll().stream()
             .filter(user -> user.isMining() && !user.getActiveGPUs().isEmpty())
             .collect(Collectors.toList());
 
-        System.out.println("Found " + activeMiners.size() + " active miners");
 
         activeMiners.forEach(miner -> {
             double hashrate = miner.getCurrentHashrate();
-            System.out.println("Processing miner: " + miner.getPerson().getEmail());
-            System.out.println("Current hashrate: " + hashrate);
+            
 
             if (hashrate <= 0) {
-                System.out.println("Skipping miner due to zero hashrate");
                 return;
             }
 
             // Calculate mining reward with more detailed logging
             double btcMined = hashrate * HASH_TO_BTC_RATE / 60.0;
-            System.out.println("BTC to be mined this minute: " + String.format("%.8f", btcMined));
             
             // Get current balances for logging
             double oldPending = miner.getPendingBalance();
@@ -73,15 +68,11 @@ public class MiningService {
             miner.setShares(miner.getShares() + 1);
             miner.setTotalSharesMined(miner.getTotalSharesMined() + 1);
             
-            System.out.println("Old pending balance: " + String.format("%.8f", oldPending));
-            System.out.println("New pending balance: " + String.format("%.8f", newPending));
             
             // Save changes
             try {
                 miningUserRepository.save(miner);
-                System.out.println("Successfully saved mining updates");
             } catch (Exception e) {
-                System.out.println("Error saving mining updates: " + e.getMessage());
                 e.printStackTrace();
             }
         });
@@ -90,10 +81,8 @@ public class MiningService {
     @Scheduled(fixedRate = BALANCE_TRANSFER_INTERVAL)
     @Transactional
     public void processPendingBalances() {
-        System.out.println("\n=== Processing Pending Balances ===");
         
         List<MiningUser> miners = miningUserRepository.findAll();
-        System.out.println("Found " + miners.size() + " total miners");
         
         miners.forEach(miner -> {
             double pending = miner.getPendingBalance();
@@ -122,13 +111,9 @@ public class MiningService {
                     miner.setPendingBalance(0.0);
                     miningUserRepository.save(miner);
                     
-                    System.out.println("\nTransfer Details for " + miner.getPerson().getEmail());
-                    System.out.println("BTC Transferred: " + String.format("%.8f", pending));
-                    System.out.println("New Confirmed BTC: " + String.format("%.8f", newConfirmed));
-                    System.out.println("USD Value: $" + String.format("%.2f", pendingUSD));
+
                     
                 } catch (Exception e) {
-                    System.out.println("Error processing pending balance: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -168,15 +153,6 @@ public class MiningService {
         miner.setDailyRevenue(dailyUSD);
         miner.setPowerCost(dailyPowerCost);
         
-        // Log profitability details
-        System.out.println("\nDaily Mining Projections:");
-        System.out.println("GPU: " + miner.getActiveGPUs().get(0).getName());
-        System.out.println("Hashrate: " + String.format("%.2f", hashrate) + " MH/s");
-        System.out.println("BTC Revenue: " + String.format("%.8f", dailyBTC) + " BTC");
-        System.out.println("USD Revenue: $" + String.format("%.2f", dailyUSD));
-        System.out.println("Power Cost: $" + String.format("%.2f", dailyPowerCost));
-        System.out.println("Net Profit: $" + String.format("%.2f", dailyUSD - dailyPowerCost));
-        System.out.println("ROI (days): " + String.format("%.1f", 
-            (miner.getActiveGPUs().get(0).getPrice() / (dailyUSD - dailyPowerCost))));
+
     }
 }

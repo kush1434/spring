@@ -32,32 +32,6 @@ public class BankApiController {
         }
     }
 
-    @GetMapping("/profitByCategory")
-    public ResponseEntity<?> getProfitByCategory(
-        @RequestParam String uid, 
-        @RequestParam String category
-    ) {
-        try {
-            Bank bank = bankService.findByUid(uid);
-            if (bank == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Bank account not found for user: " + uid);
-            }
-
-            List<Double> profits = bank.getProfitByCategory(category);
-            
-            if (profits.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                    .body("No profits found for category: " + category);
-            }
-
-            return ResponseEntity.ok(profits);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error retrieving profits: " + e.getMessage());
-        }
-    }
-
     // Get the loan amount for a bank account
     @GetMapping("/loanAmount")
     public ResponseEntity<Double> getLoanAmount(@RequestParam Long personId) {
