@@ -142,7 +142,7 @@ public class AdventureAnswerApiController {
         if (isAnswerCorrect) {
             double questionPoints = question.getPoints();
             double updatedBalance = person.getBalanceDouble() + questionPoints;
-            person.setBalanceString(updatedBalance);
+            person.setBalanceString(updatedBalance, "adventuregame");
         }
     
         return ResponseEntity.ok(true);
