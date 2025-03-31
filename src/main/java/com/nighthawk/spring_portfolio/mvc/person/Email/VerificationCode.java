@@ -1,9 +1,9 @@
-package com.nighthawk.spring_portfolio.mvc.person.PersonPasswordReset;
+package com.nighthawk.spring_portfolio.mvc.person.Email;
 
 import java.time.Instant;
 import java.util.ArrayList;
 
-public class ResetCode {
+public class VerificationCode {
     public static char RandomCharacter(){
         char random = (char)(int)(Math.random()*43 + 48);
         while((int)random >= 58 && (int)random <= 64){
@@ -15,7 +15,7 @@ public class ResetCode {
 
     public static ArrayList<String[]> codes = new ArrayList<String[]>();
 
-    public static String GenerateResetCode(String uid){
+    public static String GenerateVerificationCode(String uid){
         for (int i = 0; i< codes.size(); i++) { //remove expired codes
             String[] array = codes.get(i);
             if(Instant.now().isAfter(Instant.parse(array[2]))){

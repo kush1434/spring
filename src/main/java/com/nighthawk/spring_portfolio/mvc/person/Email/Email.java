@@ -1,4 +1,4 @@
-package com.nighthawk.spring_portfolio.mvc.person.PersonPasswordReset;
+package com.nighthawk.spring_portfolio.mvc.person.Email;
 
 
 // Java program to send email 
@@ -103,6 +103,27 @@ public class Email
          emailContent.addBodyPart(body2);
 
          sendEmail(recipient, "Password Reset", emailContent);
+      }
+      catch (MessagingException mex)  
+      { 
+         mex.printStackTrace(); 
+      } 
+   }
+
+   public static void sendVerificationEmail(String recipient,String code){
+
+      try{
+         MimeMultipart emailContent = new MimeMultipart();
+
+         MimeBodyPart body1 = new MimeBodyPart();
+         body1.setContent("<h1>Thank you for signing up for DNHS Computer Science. Use the following code to verify your email:</h1>","text/html");
+         MimeBodyPart body2 = new MimeBodyPart();
+         body2.setContent("<code style=\"background-color: lightblue; font-size: 50px; border-radius: 15px;\">"+code+"</code>","text/html");
+
+         emailContent.addBodyPart(body1);
+         emailContent.addBodyPart(body2);
+
+         sendEmail(recipient, "Email Verification", emailContent);
       }
       catch (MessagingException mex)  
       { 

@@ -53,11 +53,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/person/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/synergy/grades/requests").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/synergy/**").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
-
+                        
 
                         .requestMatchers(HttpMethod.DELETE, "/api/synergy/saigai/").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/calendar/edit/{id}").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/calendar/delete/{id}").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/calendar/add").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
+                        .requestMatchers(HttpMethod.POST, "/api/calendar/add_event").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
+                        .requestMatchers(HttpMethod.PUT, "/api/calendar/edit/{id}").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/calendar/delete/{id}").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
+                    
 
 
                 )
@@ -97,6 +100,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/mvc/synergy/gradebook").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN", "ROLE_STUDENT")
                         .requestMatchers(HttpMethod.GET, "/mvc/synergy/view-grade-requests").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/mvc/assignments/tracker").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/mvc/teamteach/teachergrading").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
                         .requestMatchers("/**").permitAll()
                 )
                 .formLogin(form -> form

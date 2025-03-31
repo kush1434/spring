@@ -1,81 +1,13 @@
 <!DOCTYPE html>
-<html xmlns:layout="http://www.thymeleaf.org" xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layouts/base}">
+<html xmlns:layout="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml"
+      layout:decorate="~{layouts/base}" lang="en">
 <head>
     <title>Tinkle View</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Global Styles */
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f7fc;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: 40px;
-        }
-        .navbar {
-            width: 100%;
-            background-color: #333;
-            padding: 15px 20px;
-            color: white;
-            text-align: center;
-            font-size: 20px;
-        }
-        table {
-            width: 50%;
-            margin-bottom: 30px;
-            border-collapse: collapse;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th, td {
-            padding: 8px 12px;
-            text-align: left;
-            border: 1px solid #ddd;
-        }
-        th {
-            background-color: #4CAF50;
-            color: white;
-            font-size: 14px;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        td {
-            font-size: 13px;
-            color: #333; /* Darker font color for better readability */
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .sort-arrow {
-            font-size: 12px;
-            color: #4CAF50;
-            margin-left: 5px;
-            cursor: pointer;
-        }
-        .chart-container {
-            width: 60%;
-            max-width: 900px;
-            margin-bottom: 30px;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .chart-container canvas {
-            width: 100% !important;
-            height: 400px !important;
-        }
+        /* Container */
         .container {
-            width: 80%;
+            width: 80%; /* Keeps content width reasonable */
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
@@ -83,53 +15,107 @@
             border-radius: 12px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
         }
-        .btn {
-            padding: 8px 15px;
+
+        /* Table Alignment */
+        table {
+            width: 100%; 
+            margin-left: 0;
+            margin-bottom: 40px; /* Increased from 30px to 40px for more space */
+            border-collapse: collapse;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+
+        /* Table Headings & Cells */
+        th, td {
+            padding: 12px;
+            text-align: left; /* Left-align text */
+            border: 1px solid #ddd;
+        }
+
+        /* Table Header Styling */
+        th {
             background-color: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 5px;
             font-size: 14px;
+        }
+
+        /* Hover Effect */
+        tr:hover {
+            background-color: #575353;
+        }
+
+        /* Highlight excessive duration pairs */
+        .highlight-long {
+            background-color: #ec150e !important; /* Light red */
+            font-weight: bold;
+        }
+
+        /* Sort Arrows */
+        .sort-arrow {
+            font-size: 12px;
+            color: #4CAF50;
+            margin-left: 5px;
             cursor: pointer;
         }
-        .btn:hover {
-            background-color: #45a049;
-        }
-        /* Highlight excessive duration pairs only */
-        .highlight-long {
-            background-color: #ffcccb !important; /* Light red */
+
+        /* Day column styling */
+        .day-column {
+            text-align: center;
             font-weight: bold;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
     <div class="navbar">Tinkle View Navbar</div>
 
+
     <div class="container" layout:fragment="body">
         <h2>User Entries</h2>
-        <table>
+
+        
+ 
+        <table id="userEntriesTable" class="display">
             <thead>
                 <tr>
-                    <th onclick="sortTable(0)">Person Name <span class="sort-arrow">↓</span></th>
-                    <th onclick="sortTable(1)">Time In <span class="sort-arrow">↓</span></th>
-                    <th onclick="sortTable(2)">Duration (HH:MM:SS) <span class="sort-arrow">↓</span></th>
+                    <th class="sortable-header">Person Name <span class="sort-arrow">↓</span></th>
+                    <th class="sortable-header">Day <span class="sort-arrow">↓</span></th>
+                    <th class="sortable-header">Time In <span class="sort-arrow">↓</span></th>
+                    <th class="sortable-header">Duration (HH:MM:SS) <span class="sort-arrow">↓</span></th>
                 </tr>
             </thead>
             <tbody>
                 <tr th:each="entry : ${tinkleList}">
                     <td th:text="${entry.person_name}"></td>
+                    <td class="day-column" th:text="${#strings.substring(entry.timeIn, 0, 10)}"></td>
                     <td class="time-in-cell" th:text="${entry.timeIn}"></td>
                     <td th:text="${entry.duration}"></td>
                 </tr>
             </tbody>
         </table>
-
+    
+        <div>
+            <button class="btn" onclick="sortByAverageDuration()">Sort by Average Weekly Duration</button>
+        </div>
+        
         <h2>Average Weekly Duration per User</h2>
-        <table>
+        <table id="weeklyDurationTable" class="display">
             <thead>
                 <tr>
-                    <th onclick="sortTable(0)">Person Name <span class="sort-arrow">↓</span></th>
-                    <th onclick="sortTable(1)">Average Weekly Duration (Minutes) <span class="sort-arrow">↓</span></th>
+                    <th class="sortable-header">Person Name <span class="sort-arrow">↓</span></th>
+                    <th class="sortable-header">Average weekly duration <span class="sort-arrow">↓</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -145,92 +131,189 @@
             <canvas id="weeklyDurationChart"></canvas>
         </div>
 
+        <!-- DataTables CSS -->
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+        <!-- jQuery -->
+        <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+        <!-- DataTables JS -->
+        <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+
         <script th:inline="javascript">
-            // Prepare bar chart data.
-            const labels = /*[[${chartLabels}]]*/ [];
-            const data = /*[[${chartData}]]*/ [];
-            const formattedData = data.map(seconds => (seconds / 60).toFixed(2));
-
-            const ctx = document.getElementById('weeklyDurationChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Average Weekly Duration (Minutes)',
-                        data: formattedData,
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Duration (Minutes)' }
-                        },
-                        x: { title: { display: true, text: 'Users' } }
-                    }
-                }
-            });
-
-            // Function to sort the table when header is clicked.
-            function sortTable(columnIndex) {
-                const table = document.querySelector('table');
-                const rows = Array.from(table.tBodies[0].rows);
-                const isAscending = table.querySelectorAll("th")[columnIndex].getAttribute("data-sort-order") !== "asc";
-
-                rows.sort((rowA, rowB) => {
-                    const cellA = rowA.cells[columnIndex].innerText.trim();
-                    const cellB = rowB.cells[columnIndex].innerText.trim();
-                    if (!isNaN(cellA) && !isNaN(cellB)) {
-                        return isAscending ? cellA - cellB : cellB - cellA;
-                    } else {
-                        return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
-                    }
-                });
-
-                const tbody = table.tBodies[0];
-                rows.forEach(row => tbody.appendChild(row));
-                table.querySelectorAll("th")[columnIndex].setAttribute("data-sort-order", isAscending ? "asc" : "desc");
-                updateSortArrows(columnIndex, isAscending);
-            }
-
-            function updateSortArrows(sortedColumnIndex, isAscending) {
-                document.querySelectorAll('.sort-arrow').forEach((arrow, index) => {
-                    arrow.innerHTML = index === sortedColumnIndex ? (isAscending ? "↑" : "↓") : "↓";
-                });
-            }
-
-            // Process each "Time In" cell to highlight specific excessive duration pairs.
-            document.addEventListener("DOMContentLoaded", () => {
-                const thresholdMinutes = 15; // define the threshold in minutes
-                document.querySelectorAll('.time-in-cell').forEach(cell => {
-                    const cellText = cell.innerText.trim();
+            $(document).ready(function () {
+                // Format time in cells for better readability
+                $('.time-in-cell').each(function() {
+                    const cellText = $(this).text().trim();
                     if (!cellText) return;
                     
-                    const pairs = cellText.split(",");
+                    const pairs = cellText.split(',');
+                    const formattedPairs = pairs.map(pair => {
+                        let trimmed = pair.trim();
+                        let times = trimmed.split("--");
+                        
+                        if (times.length === 2) {
+                            // Extract just the time portion (HH:MM:SS) from each datetime
+                            const startTime = times[0].substring(11, 16); // Extract HH:MM
+                            const endTime = times[1].substring(11, 16);   // Extract HH:MM
+                            return `${startTime}--${endTime}`;
+                        }
+                        return trimmed;
+                    }).join(", ");
+                    
+                    $(this).text(formattedPairs);
+                });
+                
+                // Format day column to show MM-DD format
+                $('.day-column').each(function() {
+                    const dateText = $(this).text().trim();
+                    if (!dateText) return;
+                    
+                    // Convert YYYY-MM-DD to MM-DD
+                    const parts = dateText.split('-');
+                    if (parts.length === 3) {
+                        $(this).text(`${parts[1]}-${parts[2]}`);
+                    }
+                });
+
+                // Prepare bar chart data.
+                const labels = /*[[${chartLabels}]]*/ [];
+                const data = /*[[${chartData}]]*/ [];
+                const formattedData = data.map(seconds => (seconds / 60).toFixed(2));
+
+                const ctx = $('#weeklyDurationChart')[0].getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Average Weekly Duration (Minutes)',
+                            data: formattedData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Duration (Minutes)' }
+                            },
+                            x: { title: { display: true, text: 'Users' } }
+                        }
+                    }
+                });
+
+                // Initialize DataTables with pagination, sorting, and searching
+                $('#userEntriesTable').DataTable({
+                    paging: true,           // Enable pagination
+                    searching: true,        // Enable search box
+                    ordering: true,         // Enable column sorting
+                    lengthMenu: [5, 10, 25, 50], // Number of rows per page options
+                    pageLength: 5,          // Default rows per page
+                    responsive: true,       // Responsive table
+                    autoWidth: false,
+                    language: {
+                        search: "🔍 Search:",
+                        lengthMenu: "Show _MENU_ entries per page",
+                        zeroRecords: "No matching records found",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoFiltered: "(filtered from _MAX_ total entries)",
+                        paginate: {
+                            first: "<<",
+                            last: ">>",
+                            next: ">",
+                            previous: "<"
+                        }
+                    },
+                    columnDefs: [
+                        { targets: 1, type: 'date' }, // Day column
+                        { targets: 2, type: 'string' }, // Time In column
+                        { targets: 3, type: 'num' }   // Duration column
+                    ]
+                });
+
+                // Initialize DataTables for the average duration table
+                $('#weeklyDurationTable').DataTable({
+                    paging: true,
+                    searching: true,
+                    ordering: true,
+                    lengthMenu: [5, 10, 25, 50],
+                    pageLength: 5,
+                    responsive: true,
+                    autoWidth: false,
+                    language: {
+                        search: "🔍 Search:",
+                        lengthMenu: "Show _MENU_ entries per page",
+                        zeroRecords: "No matching records found",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoFiltered: "(filtered from _MAX_ total entries)",
+                        paginate: {
+                            first: "<<",
+                            last: ">>",
+                            next: ">",
+                            previous: "<"
+                        }
+                    },
+                });
+
+                // Highlight excessive duration pairs
+                const thresholdMinutes = 15;
+                $('.time-in-cell').each(function () {
+                    const cellText = $(this).text().trim();
+                    if (!cellText) return;
+
+                    const pairs = cellText.split(',');
                     const newHTML = pairs.map(pair => {
                         let trimmed = pair.trim();
-                        // Each pair: "YYYY-MM-DD HH:mm:ss--YYYY-MM-DD HH:mm:ss"
                         let times = trimmed.split("--");
+
                         if (times.length === 2) {
-                            // Parse times as Date objects.
-                            const start = new Date(times[0]);
-                            const end = new Date(times[1]);
-                            const diffMinutes = (end - start) / 60000;
+                            // Convert HH:MM to minutes for comparison
+                            const startParts = times[0].split(':');
+                            const endParts = times[1].split(':');
+                            
+                            const startMinutes = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+                            const endMinutes = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+                            
+                            const diffMinutes = endMinutes - startMinutes;
+                            
                             if (diffMinutes > thresholdMinutes) {
                                 return `<span class="highlight-long">${trimmed}</span>`;
                             }
                         }
                         return trimmed;
                     }).join(", ");
-                    cell.innerHTML = newHTML;
+
+                    $(this).html(newHTML);
                 });
             });
+            function sortByAverageDuration() {
+                const table = document.getElementById('weeklyDurationTable'); // Select the correct table
+                const tbody = table.tBodies[0];
+                const rows = Array.from(tbody.rows);
+            
+                function durationToSeconds(duration) {
+                    const parts = duration.split(":").map(Number);
+                    if (parts.length === 3) {
+                        return parts[0] * 3600 + parts[1] * 60 + parts[2]; // Convert HH:MM:SS to seconds
+                    }
+                    return 0;
+                }
+            
+                rows.sort((rowA, rowB) => {
+                    const durationA = durationToSeconds(rowA.cells[1].innerText.trim()); // Column index 1
+                    const durationB = durationToSeconds(rowB.cells[1].innerText.trim());
+                    return durationB - durationA; // Sort in descending order
+                });
+            
+                rows.forEach(row => tbody.appendChild(row)); // Append rows in new order
+            }
+            
+            
+            
         </script>
+
     </div>
 </body>
 </html>

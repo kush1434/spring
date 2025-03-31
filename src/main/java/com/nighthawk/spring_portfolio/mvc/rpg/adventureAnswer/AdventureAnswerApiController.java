@@ -1,7 +1,10 @@
 // define package and import necessary libraries
 package com.nighthawk.spring_portfolio.mvc.rpg.adventureAnswer;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,11 +25,14 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.rpg.adventureChoice.AdventureChoice;
+import com.nighthawk.spring_portfolio.mvc.rpg.adventureChoice.AdventureChoiceJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.rpg.adventureQuestion.AdventureQuestion;
 import com.nighthawk.spring_portfolio.mvc.rpg.adventureQuestion.AdventureQuestionJpaRepository;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;
+import lombok.Setter;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -51,16 +58,24 @@ public class AdventureAnswerApiController {
     private PersonJpaRepository personJpaRepository;
     @Autowired
     private AdventureQuestionJpaRepository questionJpaRepository;
-
+    @Autowired
+    private AdventureChoiceJpaRepository choiceJpaRepository;
     // define dto class to encapsulate answer data for api requests
     @Getter 
     public static class AnswerDto {
         private String content; // store the answer content
         private Long questionId; // associate with a question
         private Long personId; // associate with a person
+        private Long choiceId;
         private Long chatScore; // store chat score for the answer
     }
-
+    @Getter
+    @Setter
+    public class AdventureChoiceDto {
+        private Long id;
+        private String choice;
+        private Boolean is_correct;  
+    }
     // added endpoint to match python user to java user
     @GetMapping("/person/{uid}")
     public ResponseEntity<Person> getPersonByUid(@PathVariable String uid) {
@@ -94,16 +109,86 @@ public class AdventureAnswerApiController {
         // return the list of questions with an ok status
         return new ResponseEntity<>(questions, HttpStatus.OK);
     }
-
-    // endpoint to get a specific question by its id
-    @GetMapping("getQuestion/{questionid}") 
-    public ResponseEntity<AdventureQuestion> getQuestion(@PathVariable Integer questionid) {
-        // fetch the question by its id
-        AdventureQuestion question = questionJpaRepository.findById(questionid);
-
-        // return the question with an ok status
-        return new ResponseEntity<>(question, HttpStatus.OK);
+    @Getter 
+    public static class MCQAnswerDto {
+        private Long questionId; // associate with a question
+        private Long personId; // associate with a person
+        private Long choiceId;
     }
+
+    @PostMapping("/submitMCQAnswer")
+    public ResponseEntity<Boolean> postAnswer(@RequestBody MCQAnswerDto mcqAnswerDto) {
+        // fetch the question, person, and choice associated with the answer
+        Optional<AdventureQuestion> questionOpt = questionJpaRepository.findById(mcqAnswerDto.getQuestionId());
+        Optional<Person> personOpt = personJpaRepository.findById(mcqAnswerDto.getPersonId());
+        Optional<AdventureChoice> choiceOpt = choiceJpaRepository.findById(mcqAnswerDto.getChoiceId());
+    
+        if (!questionOpt.isPresent() || !personOpt.isPresent() || !choiceOpt.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        
+        Person person = personOpt.get();
+        AdventureQuestion question = questionOpt.get();
+        AdventureChoice choice = choiceOpt.get();
+    
+        // Determine if the answer is correct
+        boolean isAnswerCorrect = choice.getIs_correct();
+    
+        // Create and save the answer
+        AdventureAnswer answer = new AdventureAnswer(null, question, person, choice, isAnswerCorrect, null);
+        answerJpaRepository.save(answer);
+    
+        // Update the person’s balance only if the answer is correct
+        if (isAnswerCorrect) {
+            double questionPoints = question.getPoints();
+            double updatedBalance = person.getBalanceDouble() + questionPoints;
+            person.setBalanceString(updatedBalance);
+        }
+    
+        return ResponseEntity.ok(true);
+    }
+    
+
+    @GetMapping("getQuestion")
+    public ResponseEntity<Map<String, Object>> getQuestion(@RequestParam String category) {
+        // Fetch all questions for the provided category
+        List<AdventureQuestion> questions = questionJpaRepository.findByCategory(category);
+        
+        if (questions.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        
+        // Build a list to hold each question and its corresponding choices
+        List<Map<String, Object>> questionsWithChoices = new ArrayList<>();
+        
+        for (AdventureQuestion question : questions) {
+            // Fetch answer choices for the current question
+            List<AdventureChoice> choices = choiceJpaRepository.findByQuestionId(question.getId());
+            List<AdventureChoiceDto> choiceDTOs = new ArrayList<>();
+            
+            for (AdventureChoice choice : choices) {
+                AdventureChoiceDto choiceDTO = new AdventureChoiceDto();
+                choiceDTO.setId(choice.getId());
+                choiceDTO.setChoice(choice.getChoice());
+                choiceDTO.setIs_correct(choice.getIs_correct());
+                choiceDTOs.add(choiceDTO);
+            }
+            
+            // Create a map for the current question and add its choices
+            Map<String, Object> questionEntry = new HashMap<>();
+            questionEntry.put("question", question);
+            questionEntry.put("choices", choiceDTOs);
+            questionsWithChoices.add(questionEntry);
+        }
+        
+        // Wrap the list in a response map
+        Map<String, Object> response = new HashMap<>();
+        response.put("questions", questionsWithChoices);
+        
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
 
     // endpoint to get the total chat score for a specific person
     @GetMapping("/getChatScore/{personid}")
@@ -142,7 +227,7 @@ public class AdventureAnswerApiController {
         // fetch the question and person associated with the answer
         Optional<AdventureQuestion> questionOpt = questionJpaRepository.findById(answerDto.getQuestionId());
         Optional<Person> personOpt = personJpaRepository.findById(answerDto.getPersonId());
-        
+        Optional<AdventureChoice> choiceOpt = choiceJpaRepository.findById(answerDto.getChoiceId());
         // log the api key for debugging
         System.out.println("API Key: " + apiKey);
 
@@ -154,30 +239,31 @@ public class AdventureAnswerApiController {
         // extract question and person objects
         AdventureQuestion question = questionOpt.get();
         Person person = personOpt.get();
+        AdventureChoice choice = choiceOpt.get();
 
         // log the question for debugging
         System.out.println(question);
 
         // rubric for grading the answer
-        String rubric = "Correctness and Completeness (500 points): 500 - completely correct, "
-                        + "450 - minor issues or unhandled edge cases, 400 - several small errors, "
-                        + "350 - partial with multiple issues, below 300 - major issues/incomplete; "
-                        + "Efficiency and Optimization (200 points): 200 - optimal or near-optimal, "
-                        + "180 - minor optimization needed, 160 - functional but inefficient, "
-                        + "140 - improvements needed, below 140 - inefficient; Code Structure and Organization "
-                        + "(150 points): 150 - well-organized, 130 - mostly organized, 110 - readable but lacks structure, "
-                        + "90 - hard to follow, below 90 - unorganized; Readability and Documentation (100 points): "
-                        + "100 - clear, well-documented, 85 - readable but limited comments, 70 - somewhat readable, "
-                        + "50 - minimally readable, below 50 - poor readability; Error Handling and Edge Cases "
-                        + "(50 points): 50 - handles all cases, 40 - most cases covered, 30 - some cases covered, "
-                        + "20 - minimal handling, below 20 - little attention; Extra Credit (100 points): "
-                        + "impressive/innovative elements. Give me an integer score from 1-1000 AND ONLY RESPOND WITH A NUMBER AND NO TEXT.";
+        String rubric = "Correctness and Completeness (750 points): 750 - completely correct, "
+                        + "675 - minor issues or unhandled edge cases, 600 - several small errors, "
+                        + "525 - partial with multiple issues, below 450 - major issues/incomplete; "
+                        + "Efficiency and Optimization (3000 points): 3000 - optimal or near-optimal, "
+                        + "2700 - minor optimization needed, 2400 - functional but inefficient, "
+                        + "2100 - improvements needed, below 2100 - inefficient; Code Structure and Organization "
+                        + "(2250 points): 2250 - well-organized, 1950 - mostly organized, 1650 - readable but lacks structure, "
+                        + "1350 - hard to follow, below 1350 - unorganized; Readability and Documentation (1500 points): "
+                        + "1500 - clear, well-documented, 1275 - readable but limited comments, 1050 - somewhat readable, "
+                        + "750 - minimally readable, below 750 - poor readability; Error Handling and Edge Cases "
+                        + "(750 points): 750 - handles all cases, 600 - most cases covered, 450 - some cases covered, "
+                        + "300 - minimal handling, below 300 - little attention; Extra Credit (1000 points): "
+                        + "impressive/innovative elements. Give me an integer score from 1-15000";
 
         // calculate the chat score for the answer based on the rubric
         Long chatScore = getChatScore(answerDto.getContent(), rubric);
 
         // create a new answer object
-        AdventureAnswer answer = new AdventureAnswer(answerDto.getContent(), question, person, chatScore);
+        AdventureAnswer answer = new AdventureAnswer(answerDto.getContent(), question, person, choice, choice.getIs_correct(), chatScore);
         answerJpaRepository.save(answer); // save the answer to the database
 
         double questionPoints = question.getPoints();

@@ -2,13 +2,11 @@ package com.nighthawk.spring_portfolio.mvc.assignments;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 
 import jakarta.persistence.Entity;
@@ -33,7 +31,7 @@ public class AssignmentSubmission {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "assignment_id")
     @JsonBackReference
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -46,6 +44,14 @@ public class AssignmentSubmission {
         inverseJoinColumns = @JoinColumn(name = "student_id")
     )
     private List<Person> students = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+        name = "assignment_submission_graders",
+        joinColumns = @JoinColumn(name = "submission_id"),
+        inverseJoinColumns = @JoinColumn(name = "person_id")
+    )
+    private List<Person> assignedGraders;
 
     private String content;
     private Double grade;

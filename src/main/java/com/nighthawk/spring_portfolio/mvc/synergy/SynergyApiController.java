@@ -54,6 +54,17 @@ public class SynergyApiController {
     }
     
     /**
+     * A dto that stores information about a grade request for many students.
+     */
+    @Getter
+    public static class SynergyGradeRequestDtoBulk {
+        private List<Long> studentIds;
+        private Long assignmentId;
+        private Double gradeSuggestion;
+        private String explanation;
+    }
+    
+    /**
      * A data transfer object that stores information about a grade request that is made for
      * the student who creaed it.
      */
@@ -194,6 +205,44 @@ public class SynergyApiController {
         gradeRequestRepository.save(gradeRequest);
 
         return ResponseEntity.ok(Map.of("message", "Successfully created the grade request."));
+    }
+    
+    
+    /**
+     * A POST endpoint to create multiple grade requests.
+     * @param userDetails The information about the logged in user. Automatically passed in by thymeleaf.
+     * @param requestData The JSON data passed in, of the format studentId: Long, assignmentId: Long,
+     *                    gradeSuggestion: Double, explanation: String
+     * @return A JSON object signifying that the request was created.
+     */
+    @PostMapping("/grades/requests/bulk")
+    public ResponseEntity<Map<String, String>> createGradeRequest(
+        @AuthenticationPrincipal UserDetails userDetails, 
+        @RequestBody SynergyGradeRequestDtoBulk requestData
+    ) throws ResponseStatusException {
+        String uid = userDetails.getUsername();
+        Person grader = personRepository.findByUid(uid);
+        if (grader == null) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN, "You must be a logged in user to do this"
+            );
+        }
+
+        List<Person> students = personRepository.findAllById(requestData.getStudentIds());
+        if (students.isEmpty()) {
+            new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid student ID passed");
+        }
+
+        Assignment assignment = assignmentRepository.findById(requestData.getAssignmentId()).orElseThrow(() -> 
+            new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid assignment ID passed")
+        );
+        
+        for (Person student : students) {
+            SynergyGradeRequest gradeRequest = new SynergyGradeRequest(assignment, student, grader, requestData.getExplanation(), requestData.getGradeSuggestion());
+            gradeRequestRepository.save(gradeRequest);
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Successfully created the grade requests."));
     }
 
     @GetMapping("/grades/requests/seed")

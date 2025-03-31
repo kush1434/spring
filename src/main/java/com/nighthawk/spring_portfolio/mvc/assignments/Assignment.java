@@ -142,7 +142,6 @@ public class Assignment {
 
     public void setAssignedGraders(List<com.nighthawk.spring_portfolio.mvc.person.Person> persons) {
         this.assignedGraders = persons;
-        System.out.println("ok bruh");
     }
 
     @Override

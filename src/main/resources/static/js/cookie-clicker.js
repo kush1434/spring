@@ -133,6 +133,28 @@ class cookieSacrifice {
         Object.keys(gameData.tableOfCostMultipliers).forEach(name =>{
             if(name != "cookieSacrifice") {gameData.tableOfCostMultipliers[name] = 1 }
         })
+
+
+
+        console.log(gameData.cookies);
+
+        var body = {
+            uid: document.getElementById("uid").value,
+            bet: gameData.cookies + gameData.tableOfCostMultipliers["cookieSacrifice"]/100 * cookieSacrifice.price,
+        }
+        fetch("/api/casino/mines/save", {
+                method: "POST",
+                body: JSON.stringify(body),
+                cache: "no-cache",
+                headers: new Headers({
+                    "content-type": "application/json"
+                })
+            }).then(function (response) {
+                if (response.status !== 200) {
+                    alert("Something went wrong with the sacrifice. Sacrifice continuing anyway.");
+                }
+        })
+
         gameData.tableOfClickObjects.length = 0; //clear table
         gameData.tableOfPassiveObjects.length = 0; //clear table
         gameData.cookies = 0;

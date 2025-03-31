@@ -36,8 +36,14 @@ import com.nighthawk.spring_portfolio.mvc.person.PersonDetailsService;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.person.PersonRole;
 import com.nighthawk.spring_portfolio.mvc.person.PersonRoleJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.rpg.adventureChoice.AdventureChoice;
+import com.nighthawk.spring_portfolio.mvc.rpg.adventureChoice.AdventureChoiceJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.rpg.adventureQuestion.AdventureQuestion;
 import com.nighthawk.spring_portfolio.mvc.rpg.adventureQuestion.AdventureQuestionJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.rpg.adventureRubric.AdventureRubric;
+import com.nighthawk.spring_portfolio.mvc.rpg.adventureRubric.AdventureRubricJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.rpg.gamifyGame.Game;
+import com.nighthawk.spring_portfolio.mvc.rpg.gamifyGame.GameJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.student.StudentInfo.StudentService;
 import com.nighthawk.spring_portfolio.mvc.student.StudentInfoJPARepository;
 import com.nighthawk.spring_portfolio.mvc.student.StudentQueue;
@@ -73,6 +79,9 @@ public class ModelInit {
     @Autowired StudentService studentService;
     @Autowired BankJpaRepository bankJpaRepository;
     @Autowired BankService bankService;
+    @Autowired AdventureRubricJpaRepository rubricJpaRepository;
+    @Autowired AdventureChoiceJpaRepository choiceJpaRepository;
+    @Autowired GameJpaRepository gameJpaRepository;
 
     @Bean
     @Transactional
@@ -117,14 +126,59 @@ public class ModelInit {
                     announcementJPA.save(new Announcement(announcement.getAuthor(), announcement.getTitle(), announcement.getBody(), announcement.getTags())); // JPA save
                 }
             }
+            AdventureRubric[] rubricArray = AdventureRubric.init();
+            for(AdventureRubric rubric: rubricArray) {
+                AdventureRubric rubricFound = rubricJpaRepository.findByRuid(rubric.getRuid());
+                if(rubricFound == null) {
+                    rubricJpaRepository.save(rubric);
+                }
+            }    
 
-            AdventureQuestion[] questionArray = AdventureQuestion.init();
-            for (AdventureQuestion question : questionArray) {
-                AdventureQuestion questionFound = questionJpaRepository.findByTitle(question.getTitle());
+            String[][] gameArray = Game.init();
+            for (String[] gameInfo : gameArray) {
+                String name = gameInfo[0];
+                Person person = personJpaRepository.findByUid(gameInfo[1]);
+                
+                Game gameFound = gameJpaRepository.findByName(name);
+                if (gameFound == null) {
+                    gameJpaRepository.save(new Game(name, person));
+                }
+            }   
+
+            String[][] questionArray = AdventureQuestion.init();
+            for (String[] questionInfo : questionArray) {
+                String title = questionInfo[0];
+                String content = questionInfo[1];
+                String category = questionInfo[2];
+                Integer points = Integer.parseInt(questionInfo[3]);
+                
+            
+                AdventureQuestion questionFound = questionJpaRepository.findByContent(content);
                 if (questionFound == null) {
-                    questionJpaRepository.save(new AdventureQuestion(question.getTitle(), question.getContent(), question.getPoints()));
+                    if (questionInfo[4] != "null") {
+                        AdventureRubric rubric = rubricJpaRepository.findByRuid(questionInfo[4]);
+                        // rubricJpaRepository.save(rubric);
+                        questionJpaRepository.save(new AdventureQuestion(title, content, category, points, rubric));
+                    } else {
+                        questionJpaRepository.save(new AdventureQuestion(title, content, category, points));
+                    }
+                    
                 }
             }
+            String[][] choiceArray = AdventureChoice.init();
+            for (String[] choiceInfo : choiceArray) {
+                AdventureQuestion question = questionJpaRepository.findById(Integer.parseInt(choiceInfo[0]));
+                String choice = choiceInfo[1];
+                Boolean is_correct = Boolean.parseBoolean(choiceInfo[2]);
+                
+                AdventureChoice choiceFound = choiceJpaRepository.findByQuestionAndChoice(question, choice);
+                if (choiceFound == null) {
+                    choiceJpaRepository.save(new AdventureChoice(question, choice, is_correct));
+                }
+            }        
+
+
+
             
             List<Comment> Comments = Comment.init();
             for (Comment Comment : Comments) {

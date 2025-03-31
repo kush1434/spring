@@ -116,7 +116,9 @@
                                                     <img id="cookie" th:src="|https://github.com/${person.uid}.png|"
                                                          alt="Profile Picture"
                                                          onerror="this.onerror=null; this.src='https://github.com/user-attachments/assets/13dec9b2-21d6-458e-b099-f5f85ae9caf2';" />
+                                                    <input type="text" th:value="${person.uid}" id="uid" placeholder="Uid Address" style="display: none;">
                                                 </a>
+                                                <a id="uid" value="${person.uid}" style="display: none;"></a>
                                             </div>
                                         </tr>
                                         </thead>

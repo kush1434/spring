@@ -17,9 +17,6 @@ volumes/sqlite.db-wal
 .springBeans
 .sts4-cache
 
-
-*.db
-
 ### IntelliJ IDEA ###
 .idea
 *.iws
@@ -42,3 +39,12 @@ build/
 ### Java build ###
 *.class
 .java-version
+
+### Database ###
+*.db
+*.db-shm
+*.db-wal
+volumes/backups/
+
+### Plots ###
+testoutput/

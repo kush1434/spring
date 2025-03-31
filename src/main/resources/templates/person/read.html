@@ -82,6 +82,7 @@
                         <th class="sortable">UID</th> <!-- Changed GHID to UID -->
                         <th class="sortable">UN</th>
                         <th class="sortable">Email</th> <!-- Added Email column -->
+                        <th class="sortable">Balance</th>
                         <th>KSM</th>
                         <th>PFP</th>
                         <th class="sortable">SID</th>
@@ -96,6 +97,7 @@
                         </td>
                         <td th:text="${person.name}">Name</td>
                         <td th:text="${person.email}">Email</td> <!-- Display Email -->
+                        <td th:text="${person.balance}">Balance</td>
                         <!-- Checkbox for Kasm Image status -->
                         <td>
                             <img th:src="@{${person.kasmServerNeeded} ? 'https://github.com/user-attachments/assets/da1c6827-8c47-4ba9-a979-980eb3c685cd' : 'https://github.com/user-attachments/assets/53e808fc-3c01-4cae-b403-73116a71122f'}" 

@@ -13,7 +13,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 public class WebSocketHandler extends TextWebSocketHandler {
 
     private static Set<WebSocketSession> sessions = new HashSet<>();
-    String broadcasterID;
+    public String broadcasterID;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -40,7 +40,26 @@ public class WebSocketHandler extends TextWebSocketHandler {
         switch (messageContext) {
             case "broadcastRequest":
                 broadcasterID = session.getId();
-                break;
+                payload.put("context","broadcastRequestServer");
+
+                for (WebSocketSession webSocketSession : sessions) {
+                    if (webSocketSession.isOpen() && !webSocketSession.getId().equals(broadcasterID)) {
+                        try {
+                            webSocketSession.sendMessage(new TextMessage(payload.toString()));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    }
+                }
+            break;
+
+            case "endStream":
+                if(session.getId()!=broadcasterID)
+                {
+                    return;
+                }
+                broadcasterID = null;
 
             case "viewerOfferClient":
                 if (broadcasterID == null) {

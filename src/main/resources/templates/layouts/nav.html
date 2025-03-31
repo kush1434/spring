@@ -31,6 +31,9 @@
                             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink0">
                                 <li><a class="dropdown-item" th:href="@{/greet}">Spring Greeting</a></li>
                                 <li><a class="dropdown-item" th:href="@{/birds}">Birds Background</a></li>
+                                <li><a class="dropdown-item" th:href="@{/mvc/person/cookie-clicker}">Cookie Clicker</a></li>
+                                <li><a class="dropdown-item" th:href="@{/profileThymeleaf}" Fibonacci</a></li>
+                                <li><a class="dropdown-item" th:href="@{/palindrome}">Palindrome</a></li>
                                 <li><a class="dropdown-item" th:href="@{/dne}">404 Error</a></li>
                             </ul>
                         </li>
@@ -47,8 +50,8 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink2">
                                 <li><a class="dropdown-item" th:href="@{/mvc/person/read}">SQL Person</a></li>
-                                <li><a class="dropdown-item" th:href="@{/mvc/person/person-quiz}">Database Person Quiz</a></li>
-                                <li><a class="dropdown-item" th:href="@{/mvc/person/cookie-clicker}">Database Cookie Clicker</a></li>
+                                <li><a class="dropdown-item" sec:authorize="hasRole('ROLE_ADMIN')" th:href="@{/api/imports/backups}">Database Backups</a></li>
+                                <li><a class="dropdown-item" th:href="@{/mvc/person/person-quiz}">Database Person Quiz</a></li>                  
                             </ul>
                         </li>
                     </ul>
@@ -67,6 +70,7 @@
                                 <li><a class="dropdown-item" th:href="@{/mvc/synergy/create-grade-request}">Create Grade Request</a></li>
                                 <li><a class="dropdown-item" th:href="@{/mvc/student/tablesper1}">Student Table Period 1</a><li>
                                 <li><a class="dropdown-item" th:href="@{/mvc/student/tablesper3}">Student Table Period 3</a><li>
+                                <li><a class="dropdown-item" th:href="@{/mvc/teamteach/teachergrading}">Teacher Grading Team Teach</a><li>
                             </ul>
                         </li>
                     </ul>
@@ -147,6 +151,12 @@
 
             <!-- Navigation bar JavaScript support -->
             <script>
+                if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+                    javaURI = "http://localhost:8085";
+                } else {
+                    javaURI = "https://spring2025.nighthawkcodingsociety.com";
+                }
+
                 const search = document.getElementById('search');
                 const google = 'https://www.google.com/search?q=site%3A+';
                 const site = 'https://nighthawkcodingsociety.com';
@@ -165,7 +175,7 @@
                 }
             
                 function fetchApprovalRequests() {
-                    fetch('http://127.0.0.1:8085/api/approval/pendingRequests')
+                    fetch(javaURI + '/api/approval/pendingRequests')
                         .then(response => response.json())
                         .then(data => {
                             console.log("Pending approval requests:", data);
@@ -242,7 +252,7 @@
 
                 }
                 function fetchStatus() {
-                    fetch('http://localhost:8085/api/queue/getActive')
+                    fetch(javaURI + '/api/queue/getActive')
                         .then(function (response) {
                             return response.json();
                         })
@@ -257,7 +267,7 @@
 
                 window.addEventListener('load', function () {
                     // Your document is loaded.
-                    var fetchInterval = 5000; // 5 seconds.
+                    var fetchInterval = 60000; // 60 seconds.
 
                     // Invoke the request every 5 seconds.
                     setInterval(fetchStatus, fetchInterval);

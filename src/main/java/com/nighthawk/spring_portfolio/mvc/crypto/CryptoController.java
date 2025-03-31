@@ -1,5 +1,7 @@
 package com.nighthawk.spring_portfolio.mvc.crypto;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
@@ -154,6 +155,40 @@ public class CryptoController {
         return ResponseEntity.ok("Successfully purchased " + cryptoAmount + " of " + selectedCrypto.getSymbol() + " for $" + usdAmount);
     }
     
+    @GetMapping("/search")
+    public ResponseEntity<?> searchCrypto(@RequestParam String cryptoId) {
+        // Fetch live cryptocurrency data
+        Crypto[] liveData = cryptoService.getCryptoData();
+        if (liveData == null || liveData.length == 0) {
+            return ResponseEntity.status(500).body("Failed to fetch live cryptocurrency data.");
+        }
+        // Search for the requested cryptocurrency by symbol or name
+        Crypto selectedCrypto = null;
+        for (Crypto crypto : liveData) {
+            if (crypto.getSymbol().equalsIgnoreCase(cryptoId) || crypto.getName().equalsIgnoreCase(cryptoId)) {
+                selectedCrypto = crypto;
+                break;
+            }
+        }
+        // Return error if crypto is not found
+        if (selectedCrypto == null) {
+            return ResponseEntity.status(404).body("Cryptocurrency not found: " + cryptoId);
+        }
+        // Return the cryptocurrency details
+        return ResponseEntity.ok(selectedCrypto);
+    }
+
+
+    @GetMapping("/holdings")
+    public ResponseEntity<?> getUserHoldings(@RequestParam String email) {
+        userStocksTable userStocks = userStocksRepo.findByEmail(email);
+
+        if (userStocks == null || userStocks.getCrypto() == null || userStocks.getCrypto().isEmpty()) {
+            return ResponseEntity.status(404).body("No crypto holdings found for email: " + email);
+        }
+
+        return ResponseEntity.ok("{ \"email\": \"" + email + "\", \"holdings\": \"" + userStocks.getCrypto().replace("\n", "\\n") + "\" }");
+    }
 
     
 
