@@ -81,9 +81,6 @@ public class Bank {
         return profitMap.getOrDefault(category, new ArrayList<>());
     }
 
-    public void addProfitToCategory(String category, Double profit) {
-        updateProfitMap(category, profit);
-    }
 
     public void requestLoan(double loanAmount) {
         this.loanAmount += loanAmount;  // Increase the loan amount
