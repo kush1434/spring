@@ -51,7 +51,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-
 /**
  * Person is a POJO, Plain Old Java Object.
  * --- @Data is Lombox annotation
