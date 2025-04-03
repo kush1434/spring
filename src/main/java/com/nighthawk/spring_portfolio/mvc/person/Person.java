@@ -196,7 +196,7 @@ public class Person implements Comparable<Person> {
         System.out.println("Profit: " + profit);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String timestamp = dateFormat.format(new Date());
-        this.banks.updateProfitMap(source, profit, timestamp);
+        this.banks.updateProfitMap(source, timestamp, profit);
         
         return this.balance; // Return the updated balance as a String
     }
