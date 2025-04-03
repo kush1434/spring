@@ -1,5 +1,7 @@
 package com.nighthawk.spring_portfolio.mvc.person;
 
+import static jakarta.persistence.FetchType.EAGER;
+
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
@@ -13,44 +15,38 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.PreRemove;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Convert;
-import static jakarta.persistence.FetchType.EAGER;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Transient;
-
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.nighthawk.spring_portfolio.mvc.assignments.AssignmentSubmission;
+import com.nighthawk.spring_portfolio.mvc.bank.Bank;
+import com.nighthawk.spring_portfolio.mvc.bathroom.Tinkle;
+import com.nighthawk.spring_portfolio.mvc.student.StudentInfo;
+import com.nighthawk.spring_portfolio.mvc.synergy.SynergyGrade;
 import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 
 import io.github.cdimascio.dotenv.Dotenv;
-
-import com.nighthawk.spring_portfolio.mvc.assignments.AssignmentSubmission;
-import com.nighthawk.spring_portfolio.mvc.bathroom.Tinkle;
-import com.nighthawk.spring_portfolio.mvc.bank.Bank;
-import com.nighthawk.spring_portfolio.mvc.student.StudentInfo;
-import com.nighthawk.spring_portfolio.mvc.synergy.SynergyGrade;
-
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PreRemove;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -198,7 +194,9 @@ public class Person implements Comparable<Person> {
         Double profit = updatedBalance - this.banks.getBalance();
         this.banks.setBalance(updatedBalance);
         System.out.println("Profit: " + profit);
-        this.banks.updateProfitMap(source, profit);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String timestamp = dateFormat.format(new Date());
+        this.banks.updateProfitMap(source, profit, timestamp);
         
         return this.balance; // Return the updated balance as a String
     }
