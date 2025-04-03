@@ -73,7 +73,7 @@ public class MinesApiController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        user.setBalanceString(updatedBalance, "casino");
+        user.setBalanceString(updatedBalance, "mines");
         personJpaRepository.save(user);
         board = new MinesBoard(stakes);
         
@@ -110,7 +110,7 @@ public class MinesApiController {
         }
 
         // Save updated balance
-        person.setBalanceString(updatedBalance, "casino");
+        person.setBalanceString(updatedBalance, "mines");
         personJpaRepository.save(person);
 
         // Return response

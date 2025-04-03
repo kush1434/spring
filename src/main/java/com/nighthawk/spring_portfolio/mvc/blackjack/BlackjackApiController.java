@@ -115,7 +115,7 @@ public class BlackjackApiController {
             // If player busts, update balance and end game
             if (playerScore > 21) {
                 double updatedBalance = person.getBalanceDouble() - game.getBetAmount();
-                person.setBalanceString(updatedBalance, "casino");
+                person.setBalanceString(updatedBalance, "blackjack");
                 game.setStatus("INACTIVE");
                 personJpaRepository.save(person);
             }
@@ -176,15 +176,15 @@ public class BlackjackApiController {
             if (playerScore > 21) {
                 result = "LOSE";
                 double updatedBalance = person.getBalanceDouble() - betAmount;
-                person.setBalanceString(updatedBalance, "casino");
+                person.setBalanceString(updatedBalance, "blackjack");
             } else if (dealerScore > 21 || playerScore > dealerScore) {
                 result = "WIN";
                 double updatedBalance = person.getBalanceDouble() + betAmount;
-                person.setBalanceString(updatedBalance, "casino");
+                person.setBalanceString(updatedBalance,  "blackjack");
             } else if (playerScore < dealerScore) {
                 result = "LOSE";
                 double updatedBalance = person.getBalanceDouble() - betAmount;
-                person.setBalanceString(updatedBalance, "casino");
+                person.setBalanceString(updatedBalance,  "blackjack");
             } else {
                 result = "DRAW";
             }
