@@ -1,6 +1,8 @@
 package com.nighthawk.spring_portfolio.mvc.bank;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +50,7 @@ public class Bank {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private Map<String, List<Double>> profitMap = new HashMap<>();
+    private Map<String, List<List<Object>>> profitMap = new HashMap<>();
 
     public Bank(Person person, double loanAmount) {
         this.person = person;
@@ -58,27 +60,18 @@ public class Bank {
 
         this.profitMap = new HashMap<>();
     }
-
-    public void updateProfitMap(String category, Double value) {
+    public void updateProfitMap(String category, String time, double profit) {
         if (this.profitMap == null) {
             this.profitMap = new HashMap<>();
         }
 
-        if (profitMap.containsKey(category)) {
-            profitMap.get(category).add(value);
-        } 
-        else {
-            List<Double> newList = new ArrayList<>();
-            newList.add(value);
-            profitMap.put(category, newList);
-        }
+        List<Object> transaction = Arrays.asList(time, profit);
+
+        this.profitMap.computeIfAbsent(category, k -> new ArrayList<>()).add(transaction);
     }
 
-    public List<Double> getProfitByCategory(String category) {
-        if (this.profitMap == null) {
-            this.profitMap = new HashMap<>();
-        }
-        return profitMap.getOrDefault(category, new ArrayList<>());
+    public List<List<Object>> getProfitByCategory(String category) {
+        return this.profitMap.getOrDefault(category, new ArrayList<>());
     }
 
 

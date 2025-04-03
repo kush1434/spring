@@ -1,4 +1,5 @@
 package com.nighthawk.spring_portfolio.mvc.bank;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,16 +28,16 @@ public class BankApiController {
     private BankJpaRepository bankJpaRepository;
 
     @GetMapping("/{id}/profitmap/{category}")
-    public ResponseEntity<List<Double>> getProfitByCategory(@PathVariable Long id, @PathVariable String category) {
+    public ResponseEntity<List<List<Object>>> getProfitByCategory(@PathVariable Long id, @PathVariable String category) {
         Bank bank = bankJpaRepository.findByPersonId(id);
         
         if (bank == null) {
             return ResponseEntity.notFound().build();
         }
-        
-        List<Double> profits = bank.getProfitByCategory(category);
+    
+        List<List<Object>> profits = bank.getProfitByCategory(category);
         return ResponseEntity.ok(profits);
-    }
+    }    
     
     // Request a loan for a bank account
     @PostMapping("/requestLoan")
