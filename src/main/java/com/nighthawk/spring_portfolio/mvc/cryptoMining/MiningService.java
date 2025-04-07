@@ -1,23 +1,20 @@
 package com.nighthawk.spring_portfolio.mvc.cryptoMining;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.scheduling.annotation.EnableScheduling;
-
-import jakarta.transaction.Transactional;
-
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import java.util.Map;
-import java.util.Date;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 
-// Add these imports
-import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
-import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
+import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
+
+import jakarta.transaction.Transactional;
 
 @Service
 @EnableScheduling
@@ -65,7 +62,7 @@ public class MiningService {
                 // Update Person's USD balance
                 Person person = miner.getPerson();
                 double currentBalance = person.getBalanceDouble();
-                person.setBalanceString(currentBalance + usdMined);
+                person.setBalanceString(currentBalance + usdMined, "cryptomining");
                 personRepository.save(person);
                 
                 // Update mining stats
