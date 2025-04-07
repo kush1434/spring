@@ -1,5 +1,5 @@
 package com.nighthawk.spring_portfolio.mvc.bank;
-import java.util.Map;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,9 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -60,6 +58,21 @@ public class BankApiController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
+    // POST endpoint to apply interest to all loan amounts
+    @PostMapping("/newLoanAmountInterest")
+    public String applyInterestToAllLoans() {
+        List<Bank> allBanks = bankJpaRepository.findAll();
+
+        for (Bank bank : allBanks) {
+            double newLoanAmount = bank.getLoanAmount() * 1.05;
+            bank.setLoanAmount(newLoanAmount);
+        }
+
+        bankJpaRepository.saveAll(allBanks);
+
+        return "Applied 5% interest to all loan amounts.";
+        }
+
 }
 
 // Request objects
