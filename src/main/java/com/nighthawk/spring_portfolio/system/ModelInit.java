@@ -115,7 +115,7 @@ public class ModelInit {
                 }
             }
 
-            studentService.initialization();
+            studentService.initialization(personArray);
 
 
             

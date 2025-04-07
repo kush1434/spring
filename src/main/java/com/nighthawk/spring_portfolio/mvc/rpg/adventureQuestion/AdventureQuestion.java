@@ -77,12 +77,12 @@ public class AdventureQuestion {
             {"Fidelity Quiz", "What is the purpose of Artificial Intelligence in FinTech?", "Fidelity", "10000", "null"},
             {"Fidelity Quiz", "Which tool is essential for version control in software projects?", "Fidelity", "10000", "null"},
             {"Fidelity Quiz", "Which of the following is a common cybersecurity threat?", "Fidelity", "10000", "null"},
-            {"Tech Quiz", "What is a benefit of using cloud computing in business?", "Tech", "10000", "null"},
-            {"Tech Quiz", "Why do developers use debugging tools?", "Tech", "10000", "null"},
-            {"Tech Quiz", "What does encryption do?", "Tech", "10000", "null"},
-            {"Tech Quiz", "What is the core idea behind Agile development?", "Tech", "10000", "null"},
-            {"Tech Quiz", "What does an API enable?", "Tech", "10000", "null"},
-            {"Tech Quiz", "What is the role of cybersecurity in business?", "Tech", "10000", "null"},
+            {"Tech Quiz", "What is a benefit of using cloud computing in business?", "Schwab", "10000", "null"},
+            {"Tech Quiz", "Why do developers use debugging tools?", "Schwab", "10000", "null"},
+            {"Tech Quiz", "What does encryption do?", "Schwab", "10000", "null"},
+            {"Tech Quiz", "What is the core idea behind Agile development?", "Schwab", "10000", "null"},
+            {"Tech Quiz", "What does an API enable?", "Schwab", "10000", "null"},
+            {"Tech Quiz", "What is the role of cybersecurity in business?", "Schwab", "10000", "null"},
             
 
             {"Finance Basics", "What is compound interest?", "Meteor", "10000", "null"},

@@ -87,11 +87,6 @@ public class MiningUser {
             gpuQuantities = new HashMap<>();
         }
 
-        // For starter GPU (ID 1), only allow one
-        if (gpu.getId() == 1 && ownsGPUById(1L)) {
-            throw new RuntimeException("You already own the starter GPU");
-        }
-
         // Update quantity
         gpuQuantities.merge(gpu.getId(), 1, Integer::sum);
 
@@ -222,5 +217,39 @@ public class MiningUser {
 
     public List<GPU> getOwnedGPUs() {
         return this.ownedGPUs;
-    } 
+    }
+
+    // Add this method to MiningUser class
+    public void removeGPUs(GPU gpu, int quantityToRemove) {
+        if (ownedGPUs == null || activeGPUs == null || gpuQuantities == null) {
+            throw new RuntimeException("User GPU collections not initialized");
+        }
+
+        int currentQuantity = gpuQuantities.getOrDefault(gpu.getId(), 0);
+        if (currentQuantity < quantityToRemove) {
+            throw new RuntimeException("Not enough GPUs to remove");
+        }
+
+        // Remove from active GPUs first
+        int activeCount = (int) activeGPUs.stream()
+            .filter(g -> g.getId().equals(gpu.getId()))
+            .count();
+        int toRemoveFromActive = Math.min(activeCount, quantityToRemove);
+        
+        // Remove from active GPUs
+        for (int i = 0; i < toRemoveFromActive; i++) {
+            activeGPUs.removeIf(g -> g.getId().equals(gpu.getId()));
+        }
+
+        // Update quantity
+        int newQuantity = currentQuantity - quantityToRemove;
+        if (newQuantity > 0) {
+            gpuQuantities.put(gpu.getId(), newQuantity);
+        } else {
+            gpuQuantities.remove(gpu.getId());
+            ownedGPUs.removeIf(g -> g.getId().equals(gpu.getId()));
+        }
+
+        updateHashrate();
+    }
 }

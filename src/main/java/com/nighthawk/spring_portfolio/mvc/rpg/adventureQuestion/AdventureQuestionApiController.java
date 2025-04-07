@@ -2,7 +2,6 @@
 package com.nighthawk.spring_portfolio.mvc.rpg.adventureQuestion;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -42,7 +41,7 @@ public class AdventureQuestionApiController {
         private Map<String, Object> stats; 
     }
 
-    @GetMapping("transitionToSiliconValley/{personid}")
+    @GetMapping("transitionToRetro/{personid}")
     public ResponseEntity<Integer> transitionToSiliconValley(@PathVariable Integer personid) {
         List<AdventureAnswer> useranswers = answerJpaRepository.findByPersonId(personid);
 
@@ -55,16 +54,22 @@ public class AdventureQuestionApiController {
 
     @GetMapping("transitionToParadise/{personid}")
     public ResponseEntity<Boolean> transitionToParadise(@PathVariable Long personid) {
-        Optional<AdventureQuestion> meteorQuestion = questionJpaRepository.findFirstByCategory("Meteor Game");
+        List<AdventureQuestion> meteorQuestions = questionJpaRepository.findByCategory("Meteor");
     
-        if (meteorQuestion.isPresent()) {
-            AdventureAnswer answer = answerJpaRepository.findByQuestionIdAndPersonId(meteorQuestion.get().getId(), personid);
-            if (answer != null) {
-                return ResponseEntity.ok(true); 
+        if (!meteorQuestions.isEmpty()) {
+            for (AdventureQuestion meteorQuestion : meteorQuestions) {
+                List<AdventureAnswer> answers = answerJpaRepository.findByQuestionIdAndPersonId(meteorQuestion.getId(), personid);
+    
+                boolean isCorrect = answers.stream().anyMatch(ans -> Boolean.TRUE.equals(ans.getIsCorrect()));
+                if (!isCorrect) {
+                    return ResponseEntity.ok(false);
+                }
             }
+            return ResponseEntity.ok(true);
         }
-        
+    
         return ResponseEntity.ok(false);
     }
+    
     
 }

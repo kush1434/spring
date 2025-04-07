@@ -204,7 +204,7 @@
                 <option value="p1t">Period 1 | By Table</option>
                 <option value="p3t">Period 3 | By Table</option>
                 <option value="p1g">Period 1 | By Group</option>
-                <option value="p3g">Period 3 | By Group</option>
+                <option value="Toolkit">Toolkit</option>
             </select>
             <button id="initializeQueue">Begin Presentations</button>
             <button id="resetQueue">Reset Assignment Queue</button>
@@ -316,46 +316,73 @@
     }
 
     async function handlePersonClick(event) {
-    const personName = event.target.textContent.trim(); // Get the clicked person's name
-    if (!personName) return;
-
-    try {
-        const response = await fetch(`${javaURI}/api/people/search`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ term: personName }) // Send search term in request body
-        });
-
-        if (!response.ok) {
-            console.error('Failed to fetch person data');
-            return;
-        }
-
-        const people = await response.json();
+        // Check if the clicked element is a specific name span
+        let targetElement = event.target;
         
-        if (people.length === 0) {
-            console.warn('No matching person found');
-            return;
+        // If the clicked element is not a span (or doesn't have a data-name attribute), then check its parent
+        if (!targetElement.dataset.name && targetElement.parentElement && targetElement.parentElement.dataset.name) {
+            targetElement = targetElement.parentElement;
         }
-
-        // Assume the first match is the correct person
-        const user = people[0]; 
-
-        if (!user || !user.uid) {
-            console.warn('User found, but UID is missing');
-            return;
+        
+        // If we have a data-name attribute, use that; otherwise, fallback to splitting the text.
+        let personName = targetElement.dataset.name;
+        
+        if (!personName) {
+            // Fallback: split the entire text content by commas and let the user choose if multiple names exist.
+            const names = event.currentTarget.textContent.split(",").map(n => n.trim()).filter(n => n);
+            if (names.length === 1) {
+                personName = names[0];
+            } else if (names.length > 1) {
+                personName = prompt("Please type the name you want to view:", names[0]);
+                if (!personName || !names.includes(personName)) {
+                    console.warn("Invalid selection or no name provided.");
+                    return;
+                }
+            } else {
+                return;
+            }
         }
+        
+        if (!personName) return;
 
-        // Construct student info URL
-        const studentInfoURL = `${javaURI}/mvc/student/studentinfo?username=${encodeURIComponent(user.uid)}&course=CSA&trimester=2&period=3`;
+        try {
+            const response = await fetch(`${javaURI}/api/people/search`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ term: personName })
+            });
 
-        // Open the student info in a popup window
-        window.open(studentInfoURL, "StudentInfoPopup", "width=800,height=600,scrollbars=yes,resizable=yes");
+            if (!response.ok) {
+                console.error('Failed to fetch person data');
+                return;
+            }
 
-    } catch (error) {
-        console.error('Error fetching person data:', error);
+            const people = await response.json();
+            
+            if (people.length === 0) {
+                console.warn('No matching person found');
+                return;
+            }
+
+            // Look for the person with an exact name match, or use the first if none match exactly.
+            const user = people.find(p => p.name === personName) || people[0];
+
+            if (!user || !user.uid) {
+                console.warn('User found, but UID is missing');
+                return;
+            }
+
+            // Construct student info URL using the found user's uid.
+            const studentInfoURL = `${javaURI}/mvc/student/studentinfo?username=${encodeURIComponent(user.uid)}&course=CSA&trimester=2&period=3`;
+
+            // Open the student info in a popup window.
+            window.open(studentInfoURL, "StudentInfoPopup", "width=800,height=600,scrollbars=yes,resizable=yes");
+
+        } catch (error) {
+            console.error('Error fetching person data:', error);
+        }
     }
-}
+
 
 
 
@@ -376,9 +403,9 @@
         doneList.innerHTML = queue.completed.map(person => `<div class="card">${person}</div>`).join('');
 
         // Add event listeners to the new cards
-        //document.querySelectorAll('.card').forEach(card => {
-         //   card.addEventListener('click', handlePersonClick);
-        //});
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('click', handlePersonClick);
+        });
     }
 
 
@@ -417,8 +444,8 @@
             peopleList = ["Hanlun | David | Sharon", "Beijan | Miheer | Eshaan", "Tanav | Saathvik | Sri", "Aidan | Nitin | Srini", "Dinesh | Josh | Matthew", "Ian | Trevor | Alisha"]
         } else if (document.getElementById("presenterInput").value == "p3t") {
             peopleList = ["Eric | Shuban | Aashray", "Anusha | Vibha | Avanthika", "Isabel | Trystan | Jason", "Tara | Lilian | Anika", "Arnav | Drishya | Tanuj", "Saaras | Rahul | Aadit", "Imaad | Tanay | Nisarg", "Arthur | Nikhil | Aditya", "Akhil | Tarun | Kayden", "Nandan | Torin | Dylan"]
-        } else if (document.getElementById("presenterInput").value == "p1g") {
-            peopleList = ["Ian | Matthew", "Saathvik | Aidan | Sri | Tanav", "Hanlun | Alisha", "Josh | David", "Dinesh", "Trevor", "Sharon | Miheer | Eshaan | Beijan", "Srini | Nitin"]
+        } else if (document.getElementById("presenterInput").value == "Toolkit") {
+            peopleList = ["Ian | Jon | Akhil", "Kayden | Aadit | Rahul", "Eshaan | Vibha | Sharon", "Nitin | Srini | Tarun", "Aditya | Josh | David", "Matthew | Anusha | Avanthika"]
         }
 
         await fetch(URL + `initQueue/${assignmentId}`, {

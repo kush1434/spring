@@ -16,6 +16,8 @@ import java.util.Date;
 // Add these imports
 import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
+import com.nighthawk.spring_portfolio.mvc.person.Person;
+import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 
 @Service
 @EnableScheduling
@@ -29,6 +31,9 @@ public class MiningService {
     @Autowired
     private UserStocksRepository userStocksRepo;
 
+    @Autowired
+    private PersonJpaRepository personRepository;
+
     // Fine-tune constants
     public static final double HASH_TO_BTC_RATE = 0.0001; // Current rate
     public static final double DIFFICULTY_FACTOR = 1.0;
@@ -40,48 +45,42 @@ public class MiningService {
     @Scheduled(fixedRate = MINING_INTERVAL)
     @Transactional
     public void processMining() {
-
-        
         List<MiningUser> activeMiners = miningUserRepository.findAll().stream()
             .filter(user -> user.isMining() && !user.getActiveGPUs().isEmpty())
             .collect(Collectors.toList());
 
-
         activeMiners.forEach(miner -> {
             double hashrate = miner.getCurrentHashrate();
             
-
-            if (hashrate <= 0) {
-                return;
+            if (hashrate > 0) {
+                // Calculate mining reward
+                double btcMined = hashrate * HASH_TO_BTC_RATE / 60.0;
+                
+                // Convert BTC to USD
+                double usdMined = btcMined * BTC_PRICE;
+                
+                // Update BTC balance
+                miner.setPendingBalance(miner.getPendingBalance() + btcMined);
+                
+                // Update Person's USD balance
+                Person person = miner.getPerson();
+                double currentBalance = person.getBalanceDouble();
+                person.setBalanceString(currentBalance + usdMined);
+                personRepository.save(person);
+                
+                // Update mining stats
+                miner.setTotalBtcEarned(miner.getTotalBtcEarned() + btcMined);
+                miner.setShares(miner.getShares() + 1);
+                miner.setTotalSharesMined(miner.getTotalSharesMined() + 1);
             }
-
-            // Calculate mining reward with more detailed logging
-            double btcMined = hashrate * HASH_TO_BTC_RATE / 60.0;
             
-            // Get current balances for logging
-            double oldPending = miner.getPendingBalance();
-            double newPending = oldPending + btcMined;
-            
-            // Update balances and stats
-            miner.setPendingBalance(newPending);
-            miner.setTotalBtcEarned(miner.getTotalBtcEarned() + btcMined);
-            miner.setShares(miner.getShares() + 1);
-            miner.setTotalSharesMined(miner.getTotalSharesMined() + 1);
-            
-            
-            // Save changes
-            try {
-                miningUserRepository.save(miner);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            miningUserRepository.save(miner);
         });
     }
 
     @Scheduled(fixedRate = BALANCE_TRANSFER_INTERVAL)
     @Transactional
     public void processPendingBalances() {
-        
         List<MiningUser> miners = miningUserRepository.findAll();
         
         miners.forEach(miner -> {
@@ -111,10 +110,8 @@ public class MiningService {
                     miner.setPendingBalance(0.0);
                     miningUserRepository.save(miner);
                     
-
-                    
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    // Silently handle error
                 }
             }
         });
@@ -152,7 +149,5 @@ public class MiningService {
         // Set values
         miner.setDailyRevenue(dailyUSD);
         miner.setPowerCost(dailyPowerCost);
-        
-
     }
 }

@@ -66,27 +66,13 @@
             text-align: center;
             font-weight: bold;
         }
-
-        .btn {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
     </style>
 </head>
 <body>
     <div class="navbar">Tinkle View Navbar</div>
 
-
     <div class="container" layout:fragment="body">
         <h2>User Entries</h2>
-
-        
- 
         <table id="userEntriesTable" class="display">
             <thead>
                 <tr>
@@ -99,17 +85,13 @@
             <tbody>
                 <tr th:each="entry : ${tinkleList}">
                     <td th:text="${entry.person_name}"></td>
-                    <td class="day-column" th:text="${#strings.substring(entry.timeIn, 0, 10)}"></td>
-                    <td class="time-in-cell" th:text="${entry.timeIn}"></td>
+                    <td class="day-column" th:text="${entry.day}"></td>
+                    <td class="time-in-cell" th:utext="${entry.timeIn}"></td>
                     <td th:text="${entry.duration}"></td>
                 </tr>
             </tbody>
         </table>
     
-        <div>
-            <button class="btn" onclick="sortByAverageDuration()">Sort by Average Weekly Duration</button>
-        </div>
-        
         <h2>Average Weekly Duration per User</h2>
         <table id="weeklyDurationTable" class="display">
             <thead>
@@ -140,40 +122,6 @@
 
         <script th:inline="javascript">
             $(document).ready(function () {
-                // Format time in cells for better readability
-                $('.time-in-cell').each(function() {
-                    const cellText = $(this).text().trim();
-                    if (!cellText) return;
-                    
-                    const pairs = cellText.split(',');
-                    const formattedPairs = pairs.map(pair => {
-                        let trimmed = pair.trim();
-                        let times = trimmed.split("--");
-                        
-                        if (times.length === 2) {
-                            // Extract just the time portion (HH:MM:SS) from each datetime
-                            const startTime = times[0].substring(11, 16); // Extract HH:MM
-                            const endTime = times[1].substring(11, 16);   // Extract HH:MM
-                            return `${startTime}--${endTime}`;
-                        }
-                        return trimmed;
-                    }).join(", ");
-                    
-                    $(this).text(formattedPairs);
-                });
-                
-                // Format day column to show MM-DD format
-                $('.day-column').each(function() {
-                    const dateText = $(this).text().trim();
-                    if (!dateText) return;
-                    
-                    // Convert YYYY-MM-DD to MM-DD
-                    const parts = dateText.split('-');
-                    if (parts.length === 3) {
-                        $(this).text(`${parts[1]}-${parts[2]}`);
-                    }
-                });
-
                 // Prepare bar chart data.
                 const labels = /*[[${chartLabels}]]*/ [];
                 const data = /*[[${chartData}]]*/ [];
@@ -288,30 +236,6 @@
                     $(this).html(newHTML);
                 });
             });
-            function sortByAverageDuration() {
-                const table = document.getElementById('weeklyDurationTable'); // Select the correct table
-                const tbody = table.tBodies[0];
-                const rows = Array.from(tbody.rows);
-            
-                function durationToSeconds(duration) {
-                    const parts = duration.split(":").map(Number);
-                    if (parts.length === 3) {
-                        return parts[0] * 3600 + parts[1] * 60 + parts[2]; // Convert HH:MM:SS to seconds
-                    }
-                    return 0;
-                }
-            
-                rows.sort((rowA, rowB) => {
-                    const durationA = durationToSeconds(rowA.cells[1].innerText.trim()); // Column index 1
-                    const durationB = durationToSeconds(rowB.cells[1].innerText.trim());
-                    return durationB - durationA; // Sort in descending order
-                });
-            
-                rows.forEach(row => tbody.appendChild(row)); // Append rows in new order
-            }
-            
-            
-            
         </script>
 
     </div>

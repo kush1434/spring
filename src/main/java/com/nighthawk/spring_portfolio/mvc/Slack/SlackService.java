@@ -11,7 +11,7 @@ import org.springframework.web.client.RestTemplate;
 public class SlackService {
 
     // Slack Incoming Webhook URL (replace this with your actual webhook URL)
-    private static final String SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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";
+    private static final String SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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";
 
     // Method to send a message to Slack
     public void sendMessage(String message) {

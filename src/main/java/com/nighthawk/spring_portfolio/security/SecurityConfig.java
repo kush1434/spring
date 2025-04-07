@@ -56,10 +56,10 @@ public class SecurityConfig {
                         
 
                         .requestMatchers(HttpMethod.DELETE, "/api/synergy/saigai/").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/calendar/add").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
-                        .requestMatchers(HttpMethod.POST, "/api/calendar/add_event").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
-                        .requestMatchers(HttpMethod.PUT, "/api/calendar/edit/{id}").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/calendar/delete/{id}").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
+                        .requestMatchers(HttpMethod.POST, "/api/calendar/add").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/calendar/add_event").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/calendar/edit/{id}").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/calendar/delete/{id}").permitAll()
                     
 
 
