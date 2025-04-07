@@ -52,9 +52,11 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink2">
                                 <li><a class="dropdown-item" th:href="@{/mvc/person/read}">SQL Person</a></li>
-                                <li><a class="dropdown-item" sec:authorize="hasRole('ROLE_ADMIN')" th:href="@{/api/imports/backups}">Database Backups</a></li>
+
+                                <li><a class="dropdown-item" th:href="@{/mvc/person/cookie-clicker}">Database Cookie Clicker</a></li>
+                      <li><a class="dropdown-item" sec:authorize="hasRole('ROLE_ADMIN')" th:href="@{/api/imports/backups}">Database Backups</a></li>
                                 <li><a class="dropdown-item" th:href="@{/mvc/person/person-quiz}">Database Person Quiz</a></li>                  
-                            </ul>
+              </ul>
                         </li>
                     </ul>
                 </div>
@@ -66,6 +68,7 @@
                                 Grading
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuGrading">
+                                <li><a class="dropdown-item" sec:authorize="hasRole('ROLE_TEACHER') or hasRole('ROLE_ADMIN')" th:href="@{/mvc/groups/group-tracker}">Group Tracker</a></li>
                                 <li><a class="dropdown-item" sec:authorize="hasRole('ROLE_TEACHER') or hasRole('ROLE_ADMIN')" th:href="@{/mvc/assignments/tracker}">Assignment Tracker</a></li>
                                 <li><a class="dropdown-item" sec:authorize="hasRole('ROLE_TEACHER') or hasRole('ROLE_ADMIN')" th:href="@{/mvc/synergy/gradebook}">Edit Student Grades</a></li>
                                 <li><a class="dropdown-item" sec:authorize="hasRole('ROLE_STUDENT')" th:href="@{/mvc/synergy/gradebook}">View Grades</a></li>
@@ -95,7 +98,6 @@
 
                 <div class="collapse navbar-collapse" id="navbarNavDarkDropdown0" sec:authorize="isAuthenticated()">
                     <ul class="navbar-nav">
-                        <a id="awayStudents" sec:authorize="hasRole('ROLE_TEACHER') or hasRole('ROLE_ADMIN')"></a>
                     </ul>
                 </div>
 
@@ -145,12 +147,6 @@
          
             </div>
 
-            <div class="collapse navbar-collapse" id="navbarNavDarkDropdown0" sec:authorize="isAuthenticated()">
-                <ul class="navbar-nav">
-                    <a id="approvalAlert" sec:authorize="hasRole('ROLE_TEACHER') or hasRole('ROLE_ADMIN')"></a>
-                </ul>
-            </div>
-
             <!-- Navigation bar JavaScript support -->
             <script>
                 if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
@@ -162,33 +158,6 @@
                 const search = document.getElementById('search');
                 const google = 'https://www.google.com/search?q=site%3A+';
                 const site = 'https://nighthawkcodingsociety.com';
-
-                function appendApprovalAlert(data) {
-                    let approvalAlert = document.getElementById('approvalAlert');
-            
-                    if (data.length > 0) {
-                        // Show alert with the number of pending approvals
-                        approvalAlert.innerHTML = `🔔 ${data.length} students need approval!`;
-                        approvalAlert.style.color = "red";
-                        approvalAlert.style.fontWeight = "bold";
-                    } else {
-                        approvalAlert.innerHTML = ""; // Clear alert if no pending requests
-                    }
-                }
-            
-                function fetchApprovalRequests() {
-                    fetch(javaURI + '/api/approval/pendingRequests')
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log("Pending approval requests:", data);
-                            appendApprovalAlert(data);
-                        })
-                        .catch(error => console.log('Error fetching approval requests:', error));
-                }
-            
-                window.addEventListener('load', function () {
-                    setInterval(fetchApprovalRequests, 5000); // Fetch every 5 seconds
-                });
 
                 function submitted(event) {
                     if (event.key === 'Enter') {
@@ -242,38 +211,6 @@
                         : localStorage.removeItem("darkSwitch");
                 }
                 // End Dark Mode Control
-
-                function appendStatus(data) {
-                    awayStudents = document.getElementById('awayStudents');
-
-                    if (data) {
-                        awayStudents.innerHTML = data + ' is currently in the bathroom';
-                    } else {
-                        awayStudents.innerHTML = "Nobody is in the bathroom as of right now"
-                    }
-
-                }
-                function fetchStatus() {
-                    fetch(javaURI + '/api/queue/getActive')
-                        .then(function (response) {
-                            return response.json();
-                        })
-                        .then(function (data) {
-                            console.log("Data received:", JSON.stringify(data[0], null, 2));  // Pretty print the object
-                            appendStatus(data[0].frontStudent);
-                        })
-                        .catch(function (err) {
-                            console.log('error: ' + err);
-                    });
-                }
-
-                window.addEventListener('load', function () {
-                    // Your document is loaded.
-                    var fetchInterval = 60000; // 60 seconds.
-
-                    // Invoke the request every 5 seconds.
-                    setInterval(fetchStatus, fetchInterval);
-                });
             </script>
 
         </div>

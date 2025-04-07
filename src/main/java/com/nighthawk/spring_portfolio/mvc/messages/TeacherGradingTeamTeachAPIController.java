@@ -31,6 +31,9 @@ public class TeacherGradingTeamTeachAPIController {
     @PostMapping("/submit")
     public ResponseEntity<TeacherGradingTeamTeach> createAssignment(@RequestBody TeacherGradingTeamTeach teamGrade) {
         teacherGradingTeamTeachRepo.save(teamGrade);
+
+        // new Assignment(name, "Team Teach", description, 1, duedate);
+
         return new ResponseEntity<>(teamGrade, HttpStatus.CREATED);
     }
 

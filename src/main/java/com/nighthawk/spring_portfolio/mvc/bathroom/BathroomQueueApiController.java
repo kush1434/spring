@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import lombok.Data;
 import lombok.Getter;
 
 // REST API controller for managing bathroom queues
@@ -91,7 +89,7 @@ public class BathroomQueueApiController {
     
     // Endpoint to remove a student from the queue
     @CrossOrigin(origins = {"http://localhost:8085", "https://nighthawkcoders.github.io/portfolio_2025"})
-    @DeleteMapping("/remove")
+    @PostMapping("/remove")
     public ResponseEntity<Object> removeFromQueue(@RequestBody QueueDto queueDto) {
         Optional<BathroomQueue> queueEntry = repository.findByTeacherEmail(queueDto.getTeacherEmail());
     
@@ -113,7 +111,7 @@ public class BathroomQueueApiController {
     
 
     @CrossOrigin(origins = {"http://localhost:8085", "https://nighthawkcoders.github.io/portfolio_2025"})
-    @DeleteMapping("/removefront/{teacher}")
+    @PostMapping("/removefront/{teacher}")
     public void removeFront(@PathVariable String teacher)
     {
         Optional<BathroomQueue> queueEntry = repository.findByTeacherEmail(teacher);

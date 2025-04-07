@@ -112,9 +112,9 @@ public class Person implements Comparable<Person> {
     @JsonIgnore
     private List<AssignmentSubmission> submissions;
 
-    @ManyToOne
-    @JoinColumn(name = "group_id")
-    private Groups group;
+    @ManyToMany(mappedBy = "groupMembers")
+    @JsonIgnore
+    private List<Groups> groups = new ArrayList<>();
     
     @ManyToMany(fetch = EAGER)
     @JoinTable(

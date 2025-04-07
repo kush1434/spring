@@ -131,13 +131,8 @@
     <div class="container">
             <!-- Assignment View -->
             <div id="assignmentView">
-
-                <h1>Assignment Teacher Grading Team Teach</h1>
-                <form onChange="selectTeamTeachAssignments(event)">
-
                 <h1>Teacher Grading Team Teach</h1>
                 <form onChange="selectTopic(event)">
-
                     <label for="cars">Choose a topic:</label>
                     <select id="topics">
                     </select><br><br>
@@ -159,66 +154,6 @@
                 <button class="btn" onclick="submitComment()">submit Comment</button>
             </div>
     </div>
-
-    <!-- timer -->
-    <h1>Custom Countdown Timer</h1>
-    
-    <label for="timeInput">Set Time (minutes): </label>
-    <input type="number" id="timeInput" min="1" value="1">
-    <br>
-
-    <div class="timer" id="displayTimer">01:00</div>
-
-    <button class"btn" onclick="startTimer()">Start</button>
-    <button class"btn" onclick="pauseTimer()">Pause</button>
-    <button class"btn" onclick="resetTimer()">Reset</button>
-
-    <script>
-        let countdown;
-        let timeLeft = 60; // Default 1 minute
-        let isPaused = true;
-
-        function updateDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            document.getElementById('displayTimer').textContent = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        function startTimer() {
-            if (!isPaused) return; // Prevent multiple timers
-            isPaused = false;
-            countdown = setInterval(() => {
-                if (timeLeft > 0) {
-                    timeLeft--;
-                    updateDisplay();
-                } else {
-                    clearInterval(countdown);
-                    alert("Time's up!");
-                }
-            }, 1000);
-        }
-
-        function pauseTimer() {
-            isPaused = true;
-            clearInterval(countdown);
-        }
-
-        function resetTimer() {
-            pauseTimer();
-            let minutes = parseInt(document.getElementById('timeInput').value, 10) || 1;
-            timeLeft = minutes * 60; // Convert minutes to seconds
-            updateDisplay();
-        }
-
-        document.getElementById('timeInput').addEventListener('change', () => {
-            resetTimer();
-        });
-
-        // Initialize the display
-        resetTimer();
-    </script>
-
 </th:block>
 </body>
 <th:block layout:fragment="script" th:remove="tag">
@@ -227,16 +162,6 @@
     var selectedTopic;
      // Default to Assignment View 
      document.addEventListener('DOMContentLoaded', () => {
-
-        fetchTeamTeachAssignments();
-    });
-
-    /**
-    * On loading of the page fetch all assginments and filter by teamteach;
-    */
-    function fetchTeamTeachAssignments(){
-        fetch('/api/assignments/')
-
         fectchtopics();
         fetchAssignments();
     });
@@ -248,48 +173,10 @@
 
     function fectchtopics(){
         fetch('/api/topics/all')
-
         .then(response => response.json())
         .then(grades => {
             data = grades;
             const selecttopics = document.getElementById('topics');
-
-
-            grades.forEach(teamteach => {
-                if(teamteach.type.includes("teamteach")){
-                    const option = document.createElement('option');
-                    option.value = teamteach.id
-                    option.text = teamteach.name
-                    selecttopics.appendChild(option);
-            }
-            });
-        });
-    }
-
-    /**
-    * Once Select Assginments get all the AssignmentSubmissions to get all the student names
-    */
-    function selectTeamTeachAssignments(event){
-        var selectElement = event.target;
-        var value = selectElement.value;
-        selectedTopic = value; 
-        //Clear table
-        const tableBody = document.getElementById('gradingList');
-        tableBody.innerHTML = ''; 
-        var submissions;
-        var url = "/api/submissions/assignment/"+selectedTopic;
-        fetch(url)
-        .then(response => response.json())
-        .then(grades => {
-            submissions = grades;
-                submissions.forEach(submission => {
-                    var studentName = submission.student.name;
-                    var submissionId = submission.id;
-                    const row = document.createElement('tr');
-                    row.id = submissionId;
-                    row.innerHTML = `
-                        <td id="name-studentName">${studentName}</td>
-                        <td><input type=text" id="input-${submissionId}"></td>
 
             grades.forEach(topic => {
                 const option = document.createElement('option');
@@ -336,31 +223,10 @@
                     row.innerHTML = `
                         <td>${grade.student}</td>
                         <td>${grade.grade}</td>
-
                     `;
                     tableBody.appendChild(row);
                 });
             });
-
-    }
-
-            
-    /**
-    * On submit comment get all the Assignmentsubmissions and iterate through 
-    * and save AssignmentSubmission with grade and feedback.
-    */
-    async function submitComment() {
-        const commentText = document.getElementById('comment').value.trim(); // Get comment text
-        
-        if (!commentText) { //check if comment is empty
-            alert("Comment cannot be empty!");
-            return;
-        }
-        const table = document.getElementById('gradingTable'); //grabe the table
-
-        for (let i = 0; i < table.rows.length; i++) {
-          if(i == 0){ // skip the header from table
-
         }
             
     // submit comment feature
@@ -375,7 +241,6 @@
 
         for (let i = 0; i < table.rows.length; i++) {
           if(i == 0){
-
             continue;
           }
           const row = table.rows[i];
@@ -383,43 +248,11 @@
           const input = document.getElementById("input-"+student);
           var grade = input.value;
           saveGradeforStudent(student, grade, commentText)
-
-          await delay(1000); // 1 second delay between each step help with SQL Lock
-        }
-    }
-
-    /**
-    * Save the AssignmentSubmission with grade and feedback;
-    */
-    async function saveGradeforStudent(submission, grade,feedback) {     
-        const postURL = "/api/submissions/grade/"+submission // Endpoint
-
-        const params = new URLSearchParams({
-            grade, feedback
-        });
-
-        // Fetch API options
-        const fetchOptions = {
-            method: 'POST',
-            body: params
-        };
-    
-        await fetch(postURL, fetchOptions)
-            .then(response => {
-                if (response.status === 200) {
-                     alert("success");
-                    return response;
-                } else {
-                    alert("Response not 200");
-                    throw new Error("Failed to submit comment: " + response.status);
-                }
-            })
-
         }
     }
 
     function saveGradeforStudent(student, grade,commentText) {     
-        const postURL = "/api/teachergradingteamteach/submit"; // Endpoint
+        const postURL = "/api/teachergradingteamteach/submit" // Endpoint
         const data = {
             comment: commentText,  // Ensure it matches the expected format
             topic_id: selectedTopic,
@@ -449,20 +282,11 @@
                 alert("Comment submitted successfully!");
                 document.getElementById('comment').value = ""; // Clear input
             })
-
             .catch(error => {
                 console.error(error);
                 alert("Error submitting comment. See console for details.");
             });
     }
-
-    /**
-    * Add a delay due to SQL Lock in the backend.
-    */
-    function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-      }
-
 </script>
 </th:block>
 </html>
