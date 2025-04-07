@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -58,7 +59,14 @@ public class BankApiController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
-    // POST endpoint to apply interest to all loan amounts
+    
+    // Schedule the interest application to run every 24 hours
+    @Scheduled(fixedRate = 86400000) // 24 hours in milliseconds
+    public void scheduledInterestApplication() {
+        applyInterestToAllLoans();
+    }
+    
+    // POST endpoint to apply interest to all loan amounts (kept for manual triggering if needed)
     @PostMapping("/newLoanAmountInterest")
     public String applyInterestToAllLoans() {
         List<Bank> allBanks = bankJpaRepository.findAll();
@@ -71,8 +79,7 @@ public class BankApiController {
         bankJpaRepository.saveAll(allBanks);
 
         return "Applied 5% interest to all loan amounts.";
-        }
-
+    }
 }
 
 // Request objects
