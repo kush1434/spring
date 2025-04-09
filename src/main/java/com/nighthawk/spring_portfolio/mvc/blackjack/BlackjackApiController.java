@@ -1,4 +1,3 @@
-
 package com.nighthawk.spring_portfolio.mvc.blackjack;
 
 import java.util.List;
@@ -18,12 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 
-import io.jsonwebtoken.lang.Arrays;
-
-/**
- * REST API Controller for the Blackjack game.
- * Handles player actions including starting the game, hitting, and standing.
- */
 @RestController
 @RequestMapping("/api/casino/blackjack")
 public class BlackjackApiController {
@@ -36,12 +29,6 @@ public class BlackjackApiController {
     @Autowired
     private PersonJpaRepository personJpaRepository;
 
-    /**
-     * Starts a new Blackjack game for a player.
-     *
-     * @param request A map containing "uid" (User ID) and "betAmount" (Bet amount for the game).
-     * @return A `ResponseEntity` with the game state if successful, or an error message.
-     */
     @PostMapping("/start")
     public ResponseEntity<Blackjack> startGame(@RequestBody Map<String, Object> request) {
         try {
@@ -53,7 +40,18 @@ public class BlackjackApiController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
             }
 
-            // Create a new game instance
+            // Check for existing active game
+            Optional<Blackjack> existingGame = repository.findFirstByPersonAndStatusOrderByIdDesc(person, "ACTIVE");
+            if (existingGame.isPresent()) {
+                return ResponseEntity.ok(existingGame.get());
+            }
+
+            // Check balance
+            if (person.getBalanceDouble() < betAmount) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
+
+            // Create new game
             Blackjack game = new Blackjack();
             game.setPerson(person);
             game.setStatus("ACTIVE");
@@ -62,6 +60,11 @@ public class BlackjackApiController {
             game.dealInitialHands();
 
             repository.save(game);
+            
+            // Add balance to response
+            game.getGameStateMap().put("balance", person.getBalanceDouble());
+            game.persistGameState();
+            
             return ResponseEntity.ok(game);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error starting game", e);
@@ -69,13 +72,6 @@ public class BlackjackApiController {
         }
     }
 
-    /**
-     * Handles the "Hit" action in Blackjack.
-     * The player requests an additional card.
-     *
-     * @param request A map containing "uid" (User ID).
-     * @return A `ResponseEntity` with the updated game state or an error message.
-     */
     @PostMapping("/hit")
     public ResponseEntity<Object> hit(@RequestBody Map<String, Object> request) {
         try {
@@ -101,7 +97,7 @@ public class BlackjackApiController {
                 return ResponseEntity.ok("Deck is empty");
             }
 
-            // Draw a card from the deck and add it to the player's hand
+            // Draw card and update score
             String drawnCard = deck.remove(0);
             playerHand.add(drawnCard);
             int playerScore = game.calculateScore(playerHand);
@@ -110,17 +106,31 @@ public class BlackjackApiController {
             game.getGameStateMap().put("playerHand", playerHand);
             game.getGameStateMap().put("playerScore", playerScore);
             game.getGameStateMap().put("deck", deck);
-            game.persistGameState();
 
-            // If player busts, update balance and end game
-            if (playerScore > 21) {
+            // Check for 5-card Charlie (automatic win)
+            boolean fiveCardCharlie = playerHand.size() >= 5 && playerScore <= 21;
+            
+            if (fiveCardCharlie) {
+                game.getGameStateMap().put("result", "WIN");
+                double updatedBalance = person.getBalanceDouble() + game.getBetAmount();
+                person.setBalanceString(updatedBalance, "blackjack");
+                game.setStatus("INACTIVE");
+            } 
+            // Check for bust
+            else if (playerScore > 21) {
+                game.getGameStateMap().put("result", "LOSE");
                 double updatedBalance = person.getBalanceDouble() - game.getBetAmount();
                 person.setBalanceString(updatedBalance, "blackjack");
                 game.setStatus("INACTIVE");
-                personJpaRepository.save(person);
             }
 
+            // Update balance in response
+            game.getGameStateMap().put("balance", person.getBalanceDouble());
+            game.persistGameState();
+            
             repository.save(game);
+            personJpaRepository.save(person);
+            
             return ResponseEntity.ok(game);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error processing hit", e);
@@ -128,13 +138,6 @@ public class BlackjackApiController {
         }
     }
 
-    /**
-     * Handles the "Stand" action in Blackjack.
-     * The dealer plays its turn and the game result is determined.
-     *
-     * @param request A map containing "uid" (User ID).
-     * @return A `ResponseEntity` with the updated game state or an error message.
-     */
     @PostMapping("/stand")
     public ResponseEntity<Object> stand(@RequestBody Map<String, Object> request) {
         try {
@@ -159,7 +162,7 @@ public class BlackjackApiController {
             int dealerScore = (int) game.getGameStateMap().getOrDefault("dealerScore", 0);
             double betAmount = game.getBetAmount();
 
-            // Dealer must draw until score is at least 17
+            // Dealer draws until score is at least 17
             while (dealerScore < 17 && deck != null && !deck.isEmpty()) {
                 String drawnCard = deck.remove(0);
                 dealerHand.add(drawnCard);
@@ -171,27 +174,37 @@ public class BlackjackApiController {
             game.getGameStateMap().put("dealerScore", dealerScore);
             game.getGameStateMap().put("deck", deck);
 
-            // Determine game result and update player balance
+            // Determine game result
             String result;
             if (playerScore > 21) {
                 result = "LOSE";
                 double updatedBalance = person.getBalanceDouble() - betAmount;
                 person.setBalanceString(updatedBalance, "blackjack");
-            } else if (dealerScore > 21 || playerScore > dealerScore) {
+            } 
+            // 5-card Charlie (already handled in hit, but just in case)
+            else if (playerScore <= 21 && ((List<String>)game.getGameStateMap().get("playerHand")).size() >= 5) {
                 result = "WIN";
                 double updatedBalance = person.getBalanceDouble() + betAmount;
-                person.setBalanceString(updatedBalance,  "blackjack");
+                person.setBalanceString(updatedBalance, "blackjack");
+            }
+            else if (dealerScore > 21 || playerScore > dealerScore) {
+                result = "WIN";
+                double updatedBalance = person.getBalanceDouble() + betAmount;
+                person.setBalanceString(updatedBalance, "blackjack");
             } else if (playerScore < dealerScore) {
                 result = "LOSE";
                 double updatedBalance = person.getBalanceDouble() - betAmount;
-                person.setBalanceString(updatedBalance,  "blackjack");
+                person.setBalanceString(updatedBalance, "blackjack");
             } else {
                 result = "DRAW";
             }
 
-            // Save game result and mark game as inactive
+            // Update game state and save
             game.getGameStateMap().put("result", result);
+            game.getGameStateMap().put("balance", person.getBalanceDouble());
             game.setStatus("INACTIVE");
+            game.persistGameState();
+            
             repository.save(game);
             personJpaRepository.save(person);
 
@@ -200,13 +213,5 @@ public class BlackjackApiController {
             LOGGER.log(Level.SEVERE, "Error processing stand", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private List<String> safeCastToList(Object obj) {
-        if (obj instanceof List) {
-            return (List<String>) obj;
-        }
-        return Arrays.asList(new String[0]);
     }
 }
