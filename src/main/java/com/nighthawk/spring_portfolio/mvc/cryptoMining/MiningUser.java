@@ -22,8 +22,10 @@ public class MiningUser {
     @JoinColumn(name = "person_id", unique = true)
     private Person person;
 
+    // Legacy fields - keeping for backward compatibility
     private double btcBalance = 0.0;
     private double pendingBalance = 0.0;
+    
     private boolean isMining = false;
     private String currentPool = "nicehash";
     private int shares = 0;
@@ -31,20 +33,29 @@ public class MiningUser {
     private double dailyRevenue;
     private double powerCost;
     
+    // New field for currently mined cryptocurrency
+    @ManyToOne
+    @JoinColumn(name = "current_crypto_id")
+    private Cryptocurrency currentCryptocurrency;
+    
+    // Relationship with CryptoBalance - this will replace btcBalance and pendingBalance
+    @OneToMany(mappedBy = "miningUser", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<CryptoBalance> cryptoBalances = new ArrayList<>();
+    
     @ManyToMany
     private List<GPU> ownedGPUs = new ArrayList<>();
 
     @ManyToMany
     private List<GPU> activeGPUs = new ArrayList<>();
 
-    // New mining statistics fields
+    // Mining statistics fields
     private long totalMiningTimeMinutes = 0;
     private long totalSharesMined = 0;
     private double totalBtcEarned = 0.0;
     private Date miningStartTime;
     private long miningSessionCount = 0;
     
-    // New getters for calculated statistics
+    // Getters for calculated statistics
     public long getCurrentSessionDuration() {
         if (!isMining || miningStartTime == null) {
             return 0;
@@ -198,6 +209,43 @@ public class MiningUser {
         }
     }
     
+    // New methods for cryptocurrency management
+    
+    // Get a CryptoBalance for a specific cryptocurrency
+    public CryptoBalance getBalanceForCrypto(Cryptocurrency crypto) {
+        return cryptoBalances.stream()
+            .filter(balance -> balance.getCryptocurrency().getId().equals(crypto.getId()))
+            .findFirst()
+            .orElse(null);
+    }
+    
+    // Add balance to a specific cryptocurrency
+    public void addCryptoBalance(Cryptocurrency crypto, double amount, boolean isPending) {
+        CryptoBalance balance = getBalanceForCrypto(crypto);
+        
+        if (balance == null) {
+            balance = new CryptoBalance(this, crypto);
+            cryptoBalances.add(balance);
+        }
+        
+        if (isPending) {
+            balance.setPendingBalance(balance.getPendingBalance() + amount);
+        } else {
+            balance.setConfirmedBalance(balance.getConfirmedBalance() + amount);
+        }
+    }
+    
+    // Get total USD value of all cryptocurrencies
+    public double getTotalCryptoValueUSD() {
+        return cryptoBalances.stream()
+            .mapToDouble(CryptoBalance::getTotalBalanceUSD)
+            .sum();
+    }
+    
+    // Set current cryptocurrency to mine
+    public void setCurrentCryptocurrency(Cryptocurrency crypto) {
+        this.currentCryptocurrency = crypto;
+    }
 
     public double getDailyRevenue() {
         return dailyRevenue;
@@ -219,7 +267,7 @@ public class MiningUser {
         return this.ownedGPUs;
     }
 
-    // Add this method to MiningUser class
+    // Remove GPUs method
     public void removeGPUs(GPU gpu, int quantityToRemove) {
         if (ownedGPUs == null || activeGPUs == null || gpuQuantities == null) {
             throw new RuntimeException("User GPU collections not initialized");

@@ -2,6 +2,7 @@
 package com.nighthawk.spring_portfolio.mvc.rpg.adventureAnswer;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,7 +169,9 @@ public class AdventureAnswerApiController {
                 choiceDTO.setIs_correct(choice.getIs_correct());
                 choiceDTOs.add(choiceDTO);
             }
-    
+            // Shuffle choices to avoid always putting the correct one first
+            Collections.shuffle(choiceDTOs);
+  
             Map<String, Object> questionEntry = new HashMap<>();
             questionEntry.put("question", question);
             questionEntry.put("choices", choiceDTOs);

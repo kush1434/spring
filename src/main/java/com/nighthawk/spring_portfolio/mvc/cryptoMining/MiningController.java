@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,14 +18,39 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
+import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.nighthawk.spring_portfolio.mvc.person.Person;
+import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
+import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
+
+import java.util.stream.Collectors;
+import java.text.SimpleDateFormat;
 
 
 @RestController
 @RequestMapping("/api/mining")
 @Transactional
+@CrossOrigin(origins = {"http://localhost:4100", "http://localhost:8084"})  // Enable CORS for frontend URLs
 public class MiningController {
     @Autowired
     private PersonJpaRepository personRepository;
@@ -649,13 +674,85 @@ public class MiningController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
                     "error", e.getMessage(),
                     "errorType", e.getClass().getSimpleName(),
                     "details", "Check server logs for more information"
                 ));
+        }
+    }
+
+    @GetMapping("/cryptocurrencies")
+    public ResponseEntity<?> getCryptocurrencies() {
+        try {
+            List<Map<String, Object>> cryptos = miningService.getAvailableCryptocurrencies();
+            return ResponseEntity.ok(cryptos);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/crypto/select/{symbol}")
+    public ResponseEntity<?> selectCryptocurrency(@PathVariable String symbol) {
+        try {
+            MiningUser user = getOrCreateMiningUser();
+            Map<String, Object> result = miningService.changeMiningCrypto(user, symbol);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/balances")
+    public ResponseEntity<?> getCryptoBalances() {
+        try {
+            MiningUser user = getOrCreateMiningUser();
+            
+            // Gather all crypto balances
+            List<Map<String, Object>> balances = new ArrayList<>();
+            
+            for (CryptoBalance balance : user.getCryptoBalances()) {
+                Cryptocurrency crypto = balance.getCryptocurrency();
+                
+                Map<String, Object> balanceInfo = new HashMap<>();
+                balanceInfo.put("name", crypto.getName());
+                balanceInfo.put("symbol", crypto.getSymbol());
+                balanceInfo.put("logoUrl", crypto.getLogoUrl());
+                balanceInfo.put("price", crypto.getPrice());
+                balanceInfo.put("confirmedBalance", String.format("%.8f", balance.getConfirmedBalance()));
+                balanceInfo.put("pendingBalance", String.format("%.8f", balance.getPendingBalance()));
+                balanceInfo.put("confirmedUSD", String.format("%.2f", balance.getConfirmedBalanceUSD()));
+                balanceInfo.put("pendingUSD", String.format("%.2f", balance.getPendingBalanceUSD()));
+                balanceInfo.put("totalUSD", String.format("%.2f", balance.getTotalBalanceUSD()));
+                
+                // Add pool details for this cryptocurrency
+                balanceInfo.put("algorithm", crypto.getMiningAlgorithm());
+                balanceInfo.put("difficulty", crypto.getDifficulty());
+                balanceInfo.put("minPayout", crypto.getMinPayout());
+                balanceInfo.put("blockReward", crypto.getBlockReward());
+                
+                balances.add(balanceInfo);
+            }
+            
+            // Include total USD value
+            Map<String, Object> response = new HashMap<>();
+            response.put("balances", balances);
+            response.put("totalUSD", String.format("%.2f", user.getTotalCryptoValueUSD()));
+            
+            // Add current mining cryptocurrency
+            if (user.getCurrentCryptocurrency() != null) {
+                response.put("currentMining", user.getCurrentCryptocurrency().getSymbol());
+            } else {
+                response.put("currentMining", "BTC");
+            }
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", e.getMessage()));
         }
     }
 }

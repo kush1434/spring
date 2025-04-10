@@ -4,162 +4,133 @@
 <head>
     <title>Tinkle View</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Container */
-        .container {
-            width: 80%; /* Keeps content width reasonable */
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Table Alignment */
-        table {
-            width: 100%; 
-            margin-left: 0;
-            margin-bottom: 40px; /* Increased from 30px to 40px for more space */
-            border-collapse: collapse;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-
-        /* Table Headings & Cells */
-        th, td {
-            padding: 12px;
-            text-align: left; /* Left-align text */
-            border: 1px solid #ddd;
-        }
-
-        /* Table Header Styling */
-        th {
-            background-color: #4CAF50;
-            color: white;
-            font-size: 14px;
-        }
-
-        /* Hover Effect */
-        tr:hover {
-            background-color: #575353;
-        }
-
-        /* Highlight excessive duration pairs */
-        .highlight-long {
-            background-color: #ec150e !important; /* Light red */
-            font-weight: bold;
-        }
-
-        /* Sort Arrows */
-        .sort-arrow {
-            font-size: 12px;
-            color: #4CAF50;
-            margin-left: 5px;
-            cursor: pointer;
-        }
-
-        /* Day column styling */
-        .day-column {
-            text-align: center;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" th:href="@{/assets/css/bathroom.css}" />
 </head>
 <body>
-    <div class="navbar">Tinkle View Navbar</div>
+    <!-- page title -->
+    <th:block layout:fragment="title" th:remove="tag">Bathroom Statistics</th:block>
+    <th:block layout:fragment="body" th:remove="tag">
+        <div class="container py-4 bg-primary rounded">
+            <!-- Main page content -->
+            <header class="pb-3 mb-4 border-bottom">
+                <a href="#" class="d-flex align-items-center text-light text-decoration-none">
+                    <span class="fs-4">Tinkle View</span>
+                </a>
+            </header>
 
-    <div class="container" layout:fragment="body">
-        <h2>User Entries</h2>
-        <table id="userEntriesTable" class="display">
-            <thead>
-                <tr>
-                    <th class="sortable-header">Person Name <span class="sort-arrow">↓</span></th>
-                    <th class="sortable-header">Day <span class="sort-arrow">↓</span></th>
-                    <th class="sortable-header">Time In <span class="sort-arrow">↓</span></th>
-                    <th class="sortable-header">Duration (HH:MM:SS) <span class="sort-arrow">↓</span></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="entry : ${tinkleList}">
-                    <td th:text="${entry.person_name}"></td>
-                    <td class="day-column" th:text="${entry.day}"></td>
-                    <td class="time-in-cell" th:utext="${entry.timeIn}"></td>
-                    <td th:text="${entry.duration}"></td>
-                </tr>
-            </tbody>
-        </table>
-    
-        <h2>Average Weekly Duration per User</h2>
-        <table id="weeklyDurationTable" class="display">
-            <thead>
-                <tr>
-                    <th class="sortable-header">Person Name <span class="sort-arrow">↓</span></th>
-                    <th class="sortable-header">Average weekly duration <span class="sort-arrow">↓</span></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="entry : ${averageWeeklyDurations}">
-                    <td th:text="${entry.key}"></td>
-                    <td th:text="${entry.value}"></td>
-                </tr>
-            </tbody>
-        </table>
+            <!-- Daily User Entries Section with Weekday Tabs -->
+            <div class="container py-4 text-light bg-success rounded">
+                <h2>User Entries by Day</h2>
+                
+                <!-- Current Week Indicator -->
+                <div class="current-week-indicator" th:text="${'Current Week: ' + currentWeekStart + ' to ' + currentWeekEnd}"></div>
+                
+                <!-- Weekday Tabs (Monday-Friday only) -->
+                <div class="weekday-tabs">
+                    <div class="weekday-tab" th:each="weekday : ${weekdays}" 
+                         th:text="${weekday.name}" 
+                         th:classappend="${weekday.isToday} ? 'active' : ''" 
+                         th:data-day="${weekday.date}"></div>
+                </div>
+                
+                <!-- Weekday Content Sections -->
+                <div id="weekdayContent">
+                    <div th:each="weekday : ${weekdays}" class="weekday-content" 
+                         th:classappend="${weekday.isToday} ? 'active' : ''" 
+                         th:id="${'content-' + weekday.date}">
+                        
+                        <div th:if="${weekday.entries != null and !weekday.entries.isEmpty()}">
+                            <div class="table-responsive">
+                                <table class="table dailyTable">
+                                    <thead>
+                                        <tr>
+                                            <th class="sortable-header">Person Name</th>
+                                            <th class="sortable-header">Time In</th>
+                                            <th class="sortable-header">Duration (HH:MM:SS)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="entry : ${weekday.entries}">
+                                            <td th:text="${entry.person_name}"></td>
+                                            <td th:text="${entry.timeIn}"></td>
+                                            <td th:text="${entry.duration}"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div th:if="${weekday.entries == null or weekday.entries.isEmpty()}" class="text-center py-3">
+                            <p>No entries for this day</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Existing Duration by week section and Data Visualization remain the same -->
+            <div class="container py-4 bg-primary rounded mt-4">
+                <header class="pb-3 mb-4 border-bottom">
+                    <a href="#" class="d-flex align-items-center text-light text-decoration-none">
+                        <span class="fs-4">Duration by week</span>
+                    </a>
+                </header>
 
-        <h2>Average Weekly Duration Visualization</h2>
-        <div class="chart-container">
-            <canvas id="weeklyDurationChart"></canvas>
+                <div class="container py-4 text-light bg-success rounded">
+                    <h2>Average Weekly Duration per User</h2>
+
+                    <div class="row align-items-md-stretch">
+                        <div class="table-responsive">
+                            <table id="weeklyDurationTable" class="table">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable-header">Person Name</th>
+                                        <th class="sortable-header">Average weekly duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="entry : ${averageWeeklyDurations}">
+                                        <td th:text="${entry.key}"></td>
+                                        <td th:text="${entry.value}"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container py-4 bg-primary rounded mt-4">
+                <header class="pb-3 mb-4 border-bottom">
+                    <a href="#" class="d-flex align-items-center text-light text-decoration-none">
+                        <span class="fs-4">Data Visualization</span>
+                    </a>
+                </header>
+
+                <div class="container py-4 text-light bg-success rounded">
+                    <h2>Average Weekly Duration Visualization</h2>
+
+                    <div class="row align-items-md-stretch">
+                        <div class="chart-container">
+                            <canvas id="weeklyDurationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <!-- DataTables CSS -->
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-        <!-- jQuery -->
+        
         <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-        <!-- DataTables JS -->
-        <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
 
         <script th:inline="javascript">
             $(document).ready(function () {
-                // Prepare bar chart data.
-                const labels = /*[[${chartLabels}]]*/ [];
-                const data = /*[[${chartData}]]*/ [];
-                const formattedData = data.map(seconds => (seconds / 60).toFixed(2));
-
-                const ctx = $('#weeklyDurationChart')[0].getContext('2d');
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Average Weekly Duration (Minutes)',
-                            data: formattedData,
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: { display: true, text: 'Duration (Minutes)' }
-                            },
-                            x: { title: { display: true, text: 'Users' } }
-                        }
-                    }
-                });
-
-                // Initialize DataTables with pagination, sorting, and searching
-                $('#userEntriesTable').DataTable({
-                    paging: true,           // Enable pagination
-                    searching: true,        // Enable search box
-                    ordering: true,         // Enable column sorting
-                    lengthMenu: [5, 10, 25, 50], // Number of rows per page options
-                    pageLength: 5,          // Default rows per page
-                    responsive: true,       // Responsive table
+                // Initialize DataTables for each daily table
+                $('.dailyTable').DataTable({
+                    paging: true,
+                    searching: true,
+                    ordering: true,
+                    lengthMenu: [5, 10, 25, 50],
+                    pageLength: 5,
+                    responsive: true,
                     autoWidth: false,
                     language: {
                         search: "🔍 Search:",
@@ -168,20 +139,15 @@
                         info: "Showing _START_ to _END_ of _TOTAL_ entries",
                         infoFiltered: "(filtered from _MAX_ total entries)",
                         paginate: {
-                            first: "<<",
-                            last: ">>",
-                            next: ">",
-                            previous: "<"
+                            first: '<i class="bi bi-chevron-double-left"></i>',
+                            last: '<i class="bi bi-chevron-double-right"></i>',
+                            next: '<i class="bi bi-chevron-right"></i>',
+                            previous: '<i class="bi bi-chevron-left"></i>'
                         }
-                    },
-                    columnDefs: [
-                        { targets: 1, type: 'date' }, // Day column
-                        { targets: 2, type: 'string' }, // Time In column
-                        { targets: 3, type: 'num' }   // Duration column
-                    ]
+                    }
                 });
-
-                // Initialize DataTables for the average duration table
+                
+                // DataTables for the weekly duration table remains the same
                 $('#weeklyDurationTable').DataTable({
                     paging: true,
                     searching: true,
@@ -197,47 +163,84 @@
                         info: "Showing _START_ to _END_ of _TOTAL_ entries",
                         infoFiltered: "(filtered from _MAX_ total entries)",
                         paginate: {
-                            first: "<<",
-                            last: ">>",
-                            next: ">",
-                            previous: "<"
+                            first: '<i class="bi bi-chevron-double-left"></i>',
+                            last: '<i class="bi bi-chevron-double-right"></i>',
+                            next: '<i class="bi bi-chevron-right"></i>',
+                            previous: '<i class="bi bi-chevron-left"></i>'
                         }
-                    },
+                    }
                 });
 
-                // Highlight excessive duration pairs
+                // Initialize Chart.js for Average Weekly Duration Visualization
+                const labels = /*[[${chartLabels}]]*/ [];
+                const data = /*[[${chartData}]]*/ [];
+                const formattedData = data.map(seconds => (seconds / 60).toFixed(2));
+
+                const ctx = $('#weeklyDurationChart')[0].getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Average Weekly Duration (Minutes)',
+                            data: formattedData,
+                            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                            borderColor: 'rgba(40, 167, 69, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Duration (Minutes)' }
+                            },
+                            x: { title: { display: true, text: 'Users' } }
+                        }
+                    }
+                });
+
+                // Weekday tabs functionality
+                $('.weekday-tab').click(function() {
+                    // Remove active class from all tabs and content
+                    $('.weekday-tab').removeClass('active');
+                    $('.weekday-content').removeClass('active');
+                    
+                    // Add active class to clicked tab
+                    $(this).addClass('active');
+                    
+                    // Show corresponding content
+                    const dayDate = $(this).data('day');
+                    $('#content-' + dayDate).addClass('active');
+                });
+
+                // (Optional) Highlight excessive duration pairs similar to your current code
                 const thresholdMinutes = 15;
                 $('.time-in-cell').each(function () {
                     const cellText = $(this).text().trim();
                     if (!cellText) return;
-
                     const pairs = cellText.split(',');
                     const newHTML = pairs.map(pair => {
                         let trimmed = pair.trim();
                         let times = trimmed.split("--");
-
                         if (times.length === 2) {
-                            // Convert HH:MM to minutes for comparison
                             const startParts = times[0].split(':');
                             const endParts = times[1].split(':');
-                            
                             const startMinutes = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
                             const endMinutes = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
-                            
                             const diffMinutes = endMinutes - startMinutes;
-                            
                             if (diffMinutes > thresholdMinutes) {
                                 return `<span class="highlight-long">${trimmed}</span>`;
                             }
                         }
                         return trimmed;
                     }).join(", ");
-
                     $(this).html(newHTML);
                 });
             });
         </script>
-
-    </div>
+    </th:block>
 </body>
 </html>

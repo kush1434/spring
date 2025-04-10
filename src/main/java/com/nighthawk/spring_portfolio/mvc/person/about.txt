@@ -5,5 +5,5 @@ It has 3 kinds of classes:
 2- Controllers
 3- Jpa Repositories
 
-THe "Person" Enitity is main class for the users.
+The "Person" Enitity is main class for the users.
 

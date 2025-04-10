@@ -59,9 +59,9 @@ public class AssignmentSubmission {
 
     private String comment;
 
-    private long assignmentid;
+    private Long assignmentid;
 
-    private boolean isLate;
+    private Boolean isLate;
 
     @PreRemove
     private void removeStudentsFromSubmission() {
@@ -85,54 +85,8 @@ public class AssignmentSubmission {
 
     }
 
-    // Getters and Setters (if not using Lombok)
-    public Long getId() {
-        return id;
-    }
-
-    public Long getAssignmentId1() {
-        return assignmentid;
-    }
-
-    public Assignment getAssignment() {
-        return assignment;
-    }
-
-    public List<Person> getStudents() {
-        return students;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public String getFeedback() {
-        return feedback;
-    }
-
     // Getter for assignment_id (foreign key column)
     public Long getAssignmentId2() {
         return assignment != null ? assignment.getId() : null;
-    }
-
-    public Double getGrade() {
-        return grade;
-    }
-
-    public Boolean getIsLate() {
-        return this.isLate;
-    }
-
-    public void setFeedback(String feedback) {
-        this.feedback = feedback;
-    }
-
-    public void setGrade(Double grade) {
-        this.grade = grade;
-    }
-    
+    }    
 }
