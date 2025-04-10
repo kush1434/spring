@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Date;
 
+import com.nighthawk.spring_portfolio.mvc.person.Person;
+import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 // Add these imports
 import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
