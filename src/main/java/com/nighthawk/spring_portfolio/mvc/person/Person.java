@@ -166,9 +166,6 @@ public class Person implements Comparable<Person> {
     /**
      * user_stocks and balance describe properties used by the gamify application
      */
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
-    @JsonIgnore
-    private userStocksTable user_stocks;
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
     @JsonIgnore
@@ -367,10 +364,6 @@ public class Person implements Comparable<Person> {
 /// getter methods
 
 
-    public double getBalanceDouble() {
-        var balance_tmp = getBalance();
-        return Double.parseDouble(balance_tmp);
-    }
 
 
     /** Custom getter to return age from dob attribute
