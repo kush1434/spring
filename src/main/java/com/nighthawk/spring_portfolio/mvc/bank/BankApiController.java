@@ -61,7 +61,7 @@ public class BankApiController {
     }
     
     // Schedule the interest application to run every 24 hours
-    @Scheduled(fixedRate = 10000) // 24 hours in milliseconds
+    @Scheduled(fixedRate = 86400000) // 24 hours in milliseconds
     public void scheduledInterestApplication() {
         applyInterestToAllLoans();
     }
