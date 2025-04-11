@@ -48,6 +48,19 @@ public class BankApiController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan request failed: " + e.getMessage());
         }
     }
+    
+    // Repay a loan for a bank account
+    @PostMapping("/repayLoan")
+    public ResponseEntity<String> repayLoan(@RequestBody RepaymentRequest request) {
+        try {
+            Bank bank = bankService.repayLoan(request.getPersonId(), request.getRepaymentAmount());
+            return ResponseEntity.ok("Loan repayment of amount " + request.getRepaymentAmount() + 
+                    " processed for user with Person ID: " + request.getPersonId() + 
+                    ". Remaining loan amount: " + bank.getLoanAmount());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan repayment failed: " + e.getMessage());
+        }
+    }
 
     // Get the loan amount for a bank account
     @GetMapping("/{personId}/loanAmount")
@@ -89,4 +102,12 @@ public class BankApiController {
 class LoanRequest {
     private Long personId;
     private double loanAmount;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class RepaymentRequest {
+    private Long personId;
+    private double repaymentAmount;
 }
