@@ -104,7 +104,9 @@ public class Bank {
 
     public void requestLoan(double loanAmount) {
         this.loanAmount += loanAmount;  // Increase the loan amount
-        this.balance += loanAmount;     // Add the loan amount to the balance
+        double currentBalance = Double.parseDouble(this.person.getBalance());
+        this.person.setBalance(Double.toString(currentBalance+loanAmount));  
+        balance += loanAmount;   // Add the loan amount to the balance
         
         // Re-assess risk using ML model
         assessRiskUsingML();
