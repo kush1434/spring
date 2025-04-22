@@ -95,6 +95,14 @@ public class PersonApiController {
         return new ResponseEntity<>( repository.findAllByOrderByNameAsc(), HttpStatus.OK);
     }
 
+    /**The get feature above does not work unless the fetch request is in a HTML file (who knows) 
+     * the function below works everywhere (including .md files and postman)
+    */
+    @GetMapping("/peopleget")
+    public ResponseEntity<List<Person>> findPeople() {
+        return new ResponseEntity<>( repository.findAllByOrderByNameAsc(), HttpStatus.OK);
+    }
+
     /**
      * Retrieves a Person entity by its ID.
      *
@@ -171,7 +179,7 @@ public class PersonApiController {
         }
         // A person object WITHOUT ID will create a new record in the database
         String startingBalance = "100000";
-        Person person = new Person(personDto.getEmail(), personDto.getUid(),personDto.getPassword(),personDto.getSid(), personDto.getName(), dob, "pfp1", startingBalance, true, personDetailsService.findRole("USER"));
+        Person person = new Person(personDto.getEmail(), personDto.getUid(),personDto.getPassword(),personDto.getSid(), personDto.getName(), dob, "/images/default.png", startingBalance, true, personDetailsService.findRole("USER"));
 
         personDetailsService.save(person);
 
