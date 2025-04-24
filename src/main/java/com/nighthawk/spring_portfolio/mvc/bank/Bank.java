@@ -130,6 +130,7 @@ public class Bank {
         
         // Process the repayment
         balance -= repaymentAmount;
+        person.setBalance(Double.toString(balance));
         loanAmount -= repaymentAmount;
         
         // Record transaction
