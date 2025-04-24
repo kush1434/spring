@@ -1,4 +1,5 @@
 package com.nighthawk.spring_portfolio.mvc.bank;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -8,12 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,50 +25,74 @@ public class BankApiController {
     @Autowired
     private BankJpaRepository bankJpaRepository;
     
+    // Get top 10 leaderboard
     @GetMapping("/leaderboard")
     public ResponseEntity<Map<String, Object>> getLeaderboard() {
         try {
-            // Get top 10 banks ordered by balance
             List<Bank> topBanks = bankJpaRepository.findTop10ByOrderByBalanceDesc();
-            
-            // Transform to leaderboard entries
             List<LeaderboardEntry> leaderboard = new ArrayList<>();
+            
             for (int i = 0; i < topBanks.size(); i++) {
                 Bank bank = topBanks.get(i);
                 leaderboard.add(new LeaderboardEntry(
-                    i + 1,  // rank
+                    i + 1,
                     bank.getId(),
-                    bank.getUsername() != null ? bank.getUsername() : "User " + bank.getId(),  // Handle null usernames
+                    bank.getUsername() != null ? bank.getUsername() : "User " + bank.getId(),
                     bank.getBalance()
                 ));
             }
             
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", leaderboard);
-            
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", leaderboard
+            ));
         } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("error", "Error fetching leaderboard data: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "error", "Error fetching leaderboard: " + e.getMessage()
+            ));
+        }
+    }
+    
+    // Search leaderboard
+    @GetMapping("/leaderboard/search")
+    public ResponseEntity<Map<String, Object>> searchLeaderboard(@RequestParam String query) {
+        try {
+            List<Bank> matchedBanks = bankJpaRepository.findByUsernameContainingIgnoreCase(query);
+            List<LeaderboardEntry> leaderboard = new ArrayList<>();
+            
+            for (int i = 0; i < matchedBanks.size(); i++) {
+                Bank bank = matchedBanks.get(i);
+                leaderboard.add(new LeaderboardEntry(
+                    i + 1,
+                    bank.getId(),
+                    bank.getUsername() != null ? bank.getUsername() : "User " + bank.getId(),
+                    bank.getBalance()
+                ));
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", leaderboard
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "error", "Error searching leaderboard: " + e.getMessage()
+            ));
         }
     }
 
+    // Existing endpoints remain unchanged below this point
     @GetMapping("/{id}/profitmap/{category}")
     public ResponseEntity<List<List<Object>>> getProfitByCategory(@PathVariable Long id, @PathVariable String category) {
         Bank bank = bankJpaRepository.findByPersonId(id);
-        
         if (bank == null) {
             return ResponseEntity.notFound().build();
         }
-    
-        List<List<Object>> profits = bank.getProfitByCategory(category);
-        return ResponseEntity.ok(profits);
+        return ResponseEntity.ok(bank.getProfitByCategory(category));
     }    
     
-    // Request a loan for a bank account
     @PostMapping("/requestLoan")
     public ResponseEntity<String> requestLoan(@RequestBody LoanRequest request) {
         try {
@@ -83,7 +103,6 @@ public class BankApiController {
         }
     }
     
-    // Repay a loan for a bank account
     @PostMapping("/repayLoan")
     public ResponseEntity<String> repayLoan(@RequestBody RepaymentRequest request) {
         try {
@@ -96,7 +115,6 @@ public class BankApiController {
         }
     }
 
-    // Get the loan amount for a bank account
     @GetMapping("/{personId}/loanAmount")
     public ResponseEntity<Double> getLoanAmount(@PathVariable Long personId) {
         try {
@@ -107,29 +125,22 @@ public class BankApiController {
         }
     }
     
-    // Schedule the interest application to run every 24 hours
-    @Scheduled(fixedRate = 86400000) // 24 hours in milliseconds
+    @Scheduled(fixedRate = 86400000)
     public void scheduledInterestApplication() {
         applyInterestToAllLoans();
     }
     
-    // POST endpoint to apply interest to all loan amounts (kept for manual triggering if needed)
     @PostMapping("/newLoanAmountInterest")
     public String applyInterestToAllLoans() {
         List<Bank> allBanks = bankJpaRepository.findAll();
-
         for (Bank bank : allBanks) {
-            double newLoanAmount = bank.getLoanAmount() * 1.05;
-            bank.setLoanAmount(newLoanAmount);
+            bank.setLoanAmount(bank.getLoanAmount() * 1.05);
         }
-
         bankJpaRepository.saveAll(allBanks);
-
         return "Applied 5% interest to all loan amounts.";
     }
 }
 
-// Request objects
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -146,13 +157,12 @@ class RepaymentRequest {
     private double repaymentAmount;
 }
 
-// Leaderboard entry class
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 class LeaderboardEntry {
     private int rank;
     private Long userId;
-    private String username;  // Fixed typo from 'usernanme' to 'username'
+    private String username;
     private double balance;
 }

@@ -10,4 +10,5 @@ public interface BankJpaRepository extends JpaRepository<Bank, Long> {
     
     // Find top 10 banks ordered by balance in descending order (for leaderboard)
     List<Bank> findTop10ByOrderByBalanceDesc();
+    List<Bank> findByUsernameContainingIgnoreCase(String username);
 }
