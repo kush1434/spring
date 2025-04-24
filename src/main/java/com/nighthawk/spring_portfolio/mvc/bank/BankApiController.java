@@ -41,7 +41,8 @@ public class BankApiController {
                 Bank bank = topBanks.get(i);
                 leaderboard.add(new LeaderboardEntry(
                     i + 1,  // rank
-                    bank.getId(),  // Changed from getPersonId() to getId()
+                    bank.getId(),
+                    bank.getUsername() != null ? bank.getUsername() : "User " + bank.getId(),  // Handle null usernames
                     bank.getBalance()
                 ));
             }
@@ -152,5 +153,6 @@ class RepaymentRequest {
 class LeaderboardEntry {
     private int rank;
     private Long userId;
+    private String username;  // Fixed typo from 'usernanme' to 'username'
     private double balance;
 }
