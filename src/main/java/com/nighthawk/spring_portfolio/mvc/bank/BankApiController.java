@@ -1,5 +1,8 @@
 package com.nighthawk.spring_portfolio.mvc.bank;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,6 +28,36 @@ public class BankApiController {
     
     @Autowired
     private BankJpaRepository bankJpaRepository;
+    
+    @GetMapping("/leaderboard")
+    public ResponseEntity<Map<String, Object>> getLeaderboard() {
+        try {
+            // Get top 10 banks ordered by balance
+            List<Bank> topBanks = bankJpaRepository.findTop10ByOrderByBalanceDesc();
+            
+            // Transform to leaderboard entries
+            List<LeaderboardEntry> leaderboard = new ArrayList<>();
+            for (int i = 0; i < topBanks.size(); i++) {
+                Bank bank = topBanks.get(i);
+                leaderboard.add(new LeaderboardEntry(
+                    i + 1,  // rank
+                    bank.getId(),  // Changed from getPersonId() to getId()
+                    bank.getBalance()
+                ));
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", leaderboard);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", "Error fetching leaderboard data: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
 
     @GetMapping("/{id}/profitmap/{category}")
     public ResponseEntity<List<List<Object>>> getProfitByCategory(@PathVariable Long id, @PathVariable String category) {
@@ -110,4 +143,14 @@ class LoanRequest {
 class RepaymentRequest {
     private Long personId;
     private double repaymentAmount;
+}
+
+// Leaderboard entry class
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class LeaderboardEntry {
+    private int rank;
+    private Long userId;
+    private double balance;
 }
