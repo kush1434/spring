@@ -91,7 +91,16 @@ public class BankApiController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(bank.getProfitByCategory(category));
-    }    
+    }  
+
+    @GetMapping("/{id}/interestRate")
+    public ResponseEntity<Double> getInterestRate(@PathVariable Long id) {
+        Bank bank = bankJpaRepository.findByPersonId(id);
+        if (bank == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(bank.getDailyInterestRate());
+    }     
     
     @PostMapping("/requestLoan")
     public ResponseEntity<String> requestLoan(@RequestBody LoanRequest request) {
@@ -125,7 +134,7 @@ public class BankApiController {
         }
     }
     
-    @Scheduled(fixedRate = 86400000)
+    @Scheduled(fixedRate = 864)
     public void scheduledInterestApplication() {
         applyInterestToAllLoans();
     }

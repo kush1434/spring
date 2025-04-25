@@ -50,7 +50,7 @@ public class Bank {
     private double loanAmount;
     
     // Add a field for personalized interest rate
-    private double dailyInterestRate = 0.03; // Default 3%
+    private double dailyInterestRate = 5.0; // Default 3%
     
     // Risk category (0=low, 1=medium, 2=high)
     private int riskCategory = 1;
