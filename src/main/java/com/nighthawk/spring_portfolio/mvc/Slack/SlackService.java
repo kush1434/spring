@@ -14,7 +14,7 @@ public class SlackService {
     private static final String SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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";
 
     // Method to send a message to Slack
-    public void sendMessage(String message) {
+    public void sendMessage(String message, String SLACK_WEBHOOK_URL) {
         // Create the JSON payload for the Slack message
         String payload = "{\"text\":\"" + message + "\"}";
 

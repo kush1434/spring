@@ -3,9 +3,7 @@
 <html xmlns:layout="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml" lang="en">
 
 <head>
-    <title>
-        <th:block layout:fragment="title" th:remove="tag">Page Title</th:block>
-    </title>
+   
 
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -35,11 +33,6 @@
     <th:block layout:fragment="removable-header" th:remove="tag">
         <!-- Header Section -->
         <div class="container py-4" info="header">
-            <header class="container pb-3 mb-4 border-bottom border-primary text-light">
-                <span class="fs-4">
-                    <th:block layout:fragment="title" th:remove="tag">Page Title</th:block>
-                </span>
-            </header>
         </div>
     </th:block>
 

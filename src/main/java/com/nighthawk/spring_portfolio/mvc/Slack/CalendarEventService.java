@@ -18,7 +18,10 @@ public class CalendarEventService {
 
     @Autowired
     private SlackService slackService; // Assuming you have a Slack service to send messages
-
+    private final String CSA_WEBHOOK_URL = "https://hooks.slack.com/services/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"; 
+    private final String CSP_WEBHOOK_URL = "https://hooks.slack.com/services/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";
+    private final String CSSE_WEBHOOK_URL = "https://hooks.slack.com/services/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"; 
+    private String SLACK_WEBHOOK_URL = CSA_WEBHOOK_URL;
     // Save a new event
     public CalendarEvent saveEvent(CalendarEvent event) {
         CalendarEvent savedEvent = calendarEventRepository.save(event);
@@ -27,7 +30,7 @@ public class CalendarEventService {
                 "Description: " + savedEvent.getDescription() + "\n" +
                 "Date: " + savedEvent.getDate() + "\n" +
                 "Type: " + savedEvent.getType() + "\n" +
-                "Period: " + savedEvent.getPeriod());
+                "Period: " + savedEvent.getPeriod(), SLACK_WEBHOOK_URL);
         return savedEvent;
     }
 
@@ -59,7 +62,7 @@ public class CalendarEventService {
                     "Type: " + event.getType() + "\n" +
                     "Period: " + event.getPeriod();
 
-            slackService.sendMessage("Event Updated:\n" + oldDetails + "\n\n" + newDetails);
+            slackService.sendMessage("Event Updated:\n" + oldDetails + "\n\n" + newDetails, SLACK_WEBHOOK_URL);
             return true;
         }
         return false;
@@ -75,7 +78,7 @@ public class CalendarEventService {
                     "Description: " + event.getDescription() + "\n" +
                     "Date: " + event.getDate() + "\n" +
                     "Type: " + event.getType() + "\n" +
-                    "Period: " + event.getPeriod());
+                    "Period: " + event.getPeriod(), SLACK_WEBHOOK_URL);
             return true;
         }
         return false;
@@ -120,22 +123,26 @@ public class CalendarEventService {
 
     // Parse Slack message and create events
     public void parseSlackMessage(Map<String, String> jsonMap, LocalDate weekStartDate) {
-        String text = jsonMap.get("text");
-        List<CalendarEvent> events = extractEventsFromText(text, weekStartDate);
+        List<CalendarEvent> events = extractEventsFromText(jsonMap, weekStartDate);
         for (CalendarEvent event : events) {
             saveEvent(event); // Save each parsed event
         }
     }
 
-    // Extract events and calculate date for each day of the week
-    private List<CalendarEvent> extractEventsFromText(String text, LocalDate weekStartDate) {
+    // Test ID's
+    //final String CSP_CHANNEL_ID = "C07SJSF6RQA";
+    //final String CSA_CHANNEL_ID = "C07RRJDU5M5";
+    //final String CSSE_CHANNEL_ID = "C07RRJ5GECX";
+    // Official
+    private final String CSP_CHANNEL_ID = "CUS8E3M6Z";
+    private final String CSA_CHANNEL_ID = "CRRJL1F1D";
+    private final String CSSE_CHANNEL_ID = "C05MNRWC2A1";
+
+    private List<CalendarEvent> extractEventsFromText(Map<String, String> jsonMap, LocalDate weekStartDate) {
+        String text = jsonMap.get("text");
         List<CalendarEvent> events = new ArrayList<>();
         Pattern dayPattern = Pattern.compile("\\[(Mon|Tue|Wed|Thu|Fri|Sat|Sun)(?: - (Mon|Tue|Wed|Thu|Fri|Sat|Sun))?\\]:\\s*(\\*\\*|\\*)?\\s*(.+)");
         Pattern descriptionPattern = Pattern.compile("(\\*\\*|\\*)?\\s*\\u2022\\s*(.+)");
-
-        boolean hasPeriod1 = text.toLowerCase().contains("period 1");
-        boolean hasPeriod3 = text.toLowerCase().contains("period 3");
-
         String[] lines = text.split("\\n");
         CalendarEvent lastEvent = null;
 
@@ -147,16 +154,21 @@ public class CalendarEventService {
                 String endDay = dayMatcher.group(2) != null ? dayMatcher.group(2) : startDay;
                 String asterisks = dayMatcher.group(3);
                 String currentTitle = dayMatcher.group(4).trim();
-                String period;
-                // Append period info if found anywhere in the text
-                if (hasPeriod1) {
-                    period = "1";
-                } else if (hasPeriod3) {
-                    period = "3";
-                } else {
-                    period = "0";
+                String period = "0";
+                switch(jsonMap.get("channel")) {
+                    case(CSP_CHANNEL_ID):
+                        period = "CSP";
+                        SLACK_WEBHOOK_URL = CSP_WEBHOOK_URL;
+                        break;
+                    case(CSA_CHANNEL_ID):
+                        period = "CSA";
+                        SLACK_WEBHOOK_URL = CSA_WEBHOOK_URL;    
+                        break;
+                    case(CSSE_CHANNEL_ID):
+                        period = "CSSE";
+                        SLACK_WEBHOOK_URL = CSSE_WEBHOOK_URL;
+                        break;
                 }
-
                 String type = "daily plan";
                 if ("*".equals(asterisks)) {
                     type = "check-in";

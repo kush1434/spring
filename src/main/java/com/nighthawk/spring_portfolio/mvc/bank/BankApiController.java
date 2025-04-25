@@ -134,7 +134,7 @@ public class BankApiController {
         }
     }
     
-    @Scheduled(fixedRate = 864)
+    @Scheduled(fixedRate = 86400000)
     public void scheduledInterestApplication() {
         applyInterestToAllLoans();
     }

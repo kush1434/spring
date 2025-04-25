@@ -178,7 +178,6 @@ public class CryptoController {
         return ResponseEntity.ok(selectedCrypto);
     }
 
-
     @GetMapping("/holdings")
     public ResponseEntity<?> getUserHoldings(@RequestParam String email) {
         userStocksTable userStocks = userStocksRepo.findByEmail(email);
