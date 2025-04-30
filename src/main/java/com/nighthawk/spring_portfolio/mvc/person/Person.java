@@ -32,6 +32,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.PostPersist;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -304,6 +305,9 @@ public class Person implements Comparable<Person> {
         this.submissions = new ArrayList<>();
 
         this.timeEntries = new Tinkle(this, "");
+        
+        // Create a Bank for this person
+        this.banks = new Bank(this, 0);
     }
 
 
@@ -357,6 +361,18 @@ public class Person implements Comparable<Person> {
 
     private static Person createPerson(String name, String email, String uid, String password, Boolean kasmServerNeeded, String balance, String dob, List<String> asList) {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
+    
+    /**
+     * JPA lifecycle hook to ensure a Bank is created after a Person is persisted
+     * if one doesn't already exist
+     */
+    @PostPersist
+    private void ensureBankExists() {
+        if (this.banks == null) {
+            this.banks = new Bank(this, 0);
+        }
     }
 
 
