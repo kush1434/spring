@@ -5,6 +5,7 @@
 <!-- page style -->
 <th:block layout:fragment="style" th:remove="tag">
     <link rel="stylesheet" type="text/css" th:href="@{/assets/mortevision/css/queue_management.css}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 </th:block>
 
 <!-- page title -->
@@ -31,6 +32,7 @@
                     </div>
                 </div>
                 <button id="initializeQueue" class="btn btn-primary">Begin Presentations</button>
+                <button id="initializeIndividualQueue" class="btn btn-primary">Begin Individual Presentations</button>
                 <button id="resetQueue" class="btn btn-secondary">Reset Assignment Queue</button>
             </div>
 
@@ -59,11 +61,6 @@
     </div>
     <div class="queue-container">
         <div class="column">
-            <h2>Completed</h2>
-            <ul id="doneList">
-            </ul>
-        </div>
-        <div class="column">
             <h2>Waiting</h2>
             <ul id="waitingList">
             </ul>
@@ -74,12 +71,20 @@
             </ul>
         </div>
     </div>
+    <div id="completedWrapper">
+        <div class="column" id="expandableCompleted" onclick="toggleCompletedExpander()">
+            <div id="completedTitle"> <h2 id="header2">Completed</h2> <span id="completedStatus" class="material-symbols-outlined">
+                visibility_off
+                </span></div>
+            <ul id="doneList">
+            </ul>
+        </div>
+    </div>
 
     <script th:src="@{/assets/mortevision/js/queue_management.js}">
        
     </script>
 </th:block>
-
 <th:block layout:fragment="script" th:remove="tag">
    
 </th:block>

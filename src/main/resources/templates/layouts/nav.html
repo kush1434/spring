@@ -73,7 +73,6 @@
                             <ul class="dropdown-menu dropdown-menu-dark"
                                 aria-labelledby="navbarDarkDropdownMenuGrading">
                                 <li><a class="dropdown-item"
-                                        sec:authorize="hasRole('ROLE_TEACHER') or hasRole('ROLE_ADMIN')"
                                         th:href="@{/mvc/groups/group-tracker}">Group Tracker</a></li>
                                 <li><a class="dropdown-item"
                                         sec:authorize="hasRole('ROLE_TEACHER') or hasRole('ROLE_ADMIN')"
@@ -94,6 +93,8 @@
                                 <li><a class="dropdown-item" th:href="@{/mvc/teamteach/teachergrading}">Teacher Grading
                                         Team Teach</a>
                                 <li>
+                                <li><a class="dropdown-item"
+                                    th:href="@{/mvc/assignments/queue-management}">Assignment Queue</a></li>
                             </ul>
                         </li>
                     </ul>
