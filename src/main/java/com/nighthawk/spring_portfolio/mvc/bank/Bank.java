@@ -23,6 +23,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -68,12 +69,41 @@ public class Bank {
     public Bank(Person person, double loanAmount) {
         this.person = person;
         this.username = person.getName();
-        this.balance = person.getBalanceDouble();
+        
+        // Safely parse balance from Person
+        try {
+            if (person.getBalance() != null) {
+                this.balance = Double.parseDouble(person.getBalance());
+            } else {
+                this.balance = 0.0;
+            }
+        } catch (NumberFormatException e) {
+            this.balance = 0.0;
+        }
+        
         this.loanAmount = loanAmount;
 
         this.profitMap = new HashMap<>();
         this.featureImportance = new HashMap<>();
         initializeFeatureImportance();
+    }
+    
+    /**
+     * Ensure username and balance are set before persistence
+     */
+    @PrePersist
+    public void prePersist() {
+        if (person != null) {
+            this.username = person.getName();
+            
+            try {
+                if (person.getBalance() != null) {
+                    this.balance = Double.parseDouble(person.getBalance());
+                }
+            } catch (NumberFormatException e) {
+                // Keep the default value
+            }
+        }
     }
     
     private void initializeFeatureImportance() {

@@ -3,10 +3,6 @@
 <html xmlns:layout="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml" lang="en">
 
 <head>
-    <title>
-        <th:block layout:fragment="title" th:remove="tag">Page Title</th:block>
-    </title>
-
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -34,40 +30,7 @@
 </head>
 
 <body>
-    <th:block th:replace="~{layouts/overlay :: overlay}" th:remove="tag">Standard Overlay</th:block>
-</body>
-
-<body>
-    <th:block th:replace="~{layouts/nav :: header}" th:remove="tag">Standard header and Navigation</th:block>
-
-
-    <!-- define block for optional layout removal-->
-    <th:block layout:fragment="removable-header" th:remove="tag">
-        <!-- Header Section -->
-        <div class="container py-4" info="header">
-            <header class="container pb-3 mb-4 border-bottom border-primary text-light">
-                <span class="fs-4">
-                    <th:block layout:fragment="title" th:remove="tag">Page Title</th:block>
-                </span>
-            </header>
-        </div>
-    </th:block>
-
-    <!-- define block for optional layout removal-->
-    <th:block layout:fragment="removable-body" th:remove="tag">
-
-        <!-- Body Section -->
-        <div class="container py-4 text-light bg-primary rounded" info="content">
-            <div class="container bg-secondary py-4 rounded">
-                <div class="row justify-content-md-center"></div>
-                <div class="p-5 mb-4 bg-success text-light rounded-3">
-                    <th:block layout:fragment="body" th:remove="tag">Body details are added by ThymeLeaf layout consumer</th:block>
-                </div>
-            </div>
-        </div>
-    </th:block>
-
-    <th:block th:replace="~{layouts/footer :: footer}" th:remove="tag">Standard footer</th:block>
+    <th:block layout:fragment="body" th:remove="tag">Body details are added by ThymeLeaf layout consumer</th:block>
 
     <!-- Bootstrap 5.0 Bundle with Popper -->
     <script th:src="@{https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js}"
@@ -79,7 +42,5 @@
         integrity="sha384-cDXquhvkdBprgcpTQsrhfhxXRN4wfwmWauQ3wR5ZTyYtGrET2jd68wvJ1LlDqlQG" 
         crossorigin="anonymous"></script>
 </body>
-
-<th:block layout:fragment="script" th:remove="tag"></th:block>
 
 </html>

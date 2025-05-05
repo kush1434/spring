@@ -143,6 +143,9 @@ public class PersonViewController {
         if (person.getName() != null && !person.getName().isBlank() && !person.getName().equals(personToUpdate.getName())) {
             personToUpdate.setName(person.getName());
         }
+        if (person.getEmail() != null && !person.getEmail().isBlank() && !person.getEmail().equals(personToUpdate.getEmail())) {
+            personToUpdate.setEmail(person.getEmail());
+        }
         if (person.getKasmServerNeeded() != null && !person.getKasmServerNeeded().equals(personToUpdate.getKasmServerNeeded())) {
             personToUpdate.setKasmServerNeeded(person.getKasmServerNeeded());
         }
@@ -217,12 +220,25 @@ public class PersonViewController {
         model.addAttribute("person", repository.get(id));
         return "person/update";
     }
+    
+    @GetMapping("/update/roles/{id}")
+    public String personUpdateRoles(@PathVariable("id") int id, Model model) {
+        model.addAttribute("person", repository.get(id));
+        return "person/update-roles";
+    }
 
     @GetMapping("/update/user")
     public String personUpdate(Authentication authentication, Model model) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         model.addAttribute("person", repository.getByUid(userDetails.getUsername()));  // Add the person to the model
         return "person/update";  // Return the template for the update form
+    }
+
+    @GetMapping("/update/roles/user")
+    public String personUpdateRoles(Authentication authentication, Model model) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        model.addAttribute("person", repository.getByUid(userDetails.getUsername()));  // Add the person to the model
+        return "person/update-roles";
     }
 
 ///////////////////////////////////////////////////////////////////////////////////////////

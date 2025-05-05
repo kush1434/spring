@@ -157,10 +157,8 @@ async function initializeQueue() {
     const selectedGroups = allGroups.filter(group => selectedGroupIds.includes(group.id));
 
     const queueArray = selectedGroups.map(group =>
-        group.members.map(member => member.name).join(' | ')
+        `${group.name}: ${group.members.map(member => member.name).join(' | ')}`
     );
-    console.log(selectedGroups);
-    console.log(queueArray);
 
     peopleList = queueArray;
 
