@@ -48,8 +48,7 @@ public class AdventureAnswerApiController {
     private final Dotenv dotenv = Dotenv.load();
     private final String apiUrl = dotenv.get("GAMIFY_API_URL"); // store api url
     private final String apiKey = dotenv.get("GAMIFY_API_KEY"); // store api key
-    @Autowired
-    private PersonJpaRepository repository;
+
     // autowire jpa repositories for database interactions
     @Autowired
     private AdventureAnswerJpaRepository answerJpaRepository;
@@ -78,7 +77,7 @@ public class AdventureAnswerApiController {
     // added endpoint to match python user to java user
     @GetMapping("/person/{uid}")
     public ResponseEntity<Person> getPersonByUid(@PathVariable String uid) {
-        Person person = repository.findByUid(uid);
+        Person person = personJpaRepository.findByUid(uid);
         if (person != null) { // Good ID
             return new ResponseEntity<>(person, HttpStatus.OK); // OK HTTP response: status code, headers, and body
         }
@@ -141,7 +140,9 @@ public class AdventureAnswerApiController {
         if (isAnswerCorrect) {
             double questionPoints = question.getPoints();
             double updatedBalance = person.getBalanceDouble() + questionPoints;
+            
             person.setBalanceString(updatedBalance, "adventuregame");
+            personJpaRepository.save(person);
         }
     
         return ResponseEntity.ok(true);
