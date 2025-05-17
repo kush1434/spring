@@ -82,15 +82,16 @@ public class userStocksTableApiController {
      * @return Success or error message.
      */
     @PostMapping("/removeStock")
-    @ResponseBody
-    public String removeStock(@RequestBody StockRequest request) {
-        try {
-            userService.removeStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
-            return "Stock removed successfully!";
-        } catch (Exception e) {
-            return "An error occurred: " + e.getMessage();
-        }
+@ResponseBody
+public ResponseEntity<String> removeStock(@RequestBody StockRequest request) {
+    try {
+        userService.removeStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
+        return ResponseEntity.ok("Stock removed successfully!");
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                             .body("An error occurred: " + e.getMessage());
     }
+}
 
     /**
      * API endpoint to get all stocks for a user.
