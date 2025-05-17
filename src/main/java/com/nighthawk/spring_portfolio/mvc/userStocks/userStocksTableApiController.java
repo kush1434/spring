@@ -297,7 +297,9 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
      * @return Total value of the portfolio.
      */
     public double calculatePortfolioValue(String username) {
-        userStocksTable user = userRepository.findById(username);
+        Long userId = Long.parseLong(username);
+userStocksTable user = userRepository.findById(userId)
+    .orElseThrow(() -> new RuntimeException("User not found"));userStocksTable user = userRepository.findById(username);
                 if (user == null) {
                     throw new RuntimeException("User not found");
                 }
