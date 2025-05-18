@@ -229,16 +229,21 @@ class UserStocksTableService implements UserDetailsService {
      * @throws UsernameNotFoundException If user is not found.
      */
     @Override
-    public org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        userStocksTable user = userRepository.findByEmail(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found");
-        }
+public org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    try {
+        Long userId = Long.parseLong(username); // Parse the username as a userId
+        userStocksTable user = userRepository.findById(userId)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getPerson_name())
+                .password(user.getPassword()) // Include password if needed for authentication
+                .authorities("USER") // You can set roles/authorities as needed
                 .build();
+    } catch (NumberFormatException e) {
+        throw new UsernameNotFoundException("Invalid user ID format");
     }
+}
 
     /**
      * Fetches the current stock price for a given stock symbol from Yahoo Finance.
