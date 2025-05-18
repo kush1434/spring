@@ -297,7 +297,7 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
      * @return Total value of the portfolio.
      */
     public double calculatePortfolioValue(String username) {
-        userStocksTable user = userRepository.findByEmail(username);
+        userStocksTable user = userRepository.findById(username);
                 if (user == null) {
                     throw new RuntimeException("User not found");
                 }
@@ -327,7 +327,7 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
      * @param stockSymbol The symbol of the stock to add.
      */
     public void addStock(String username, int quantity, String stockSymbol) {
-        userStocksTable user = userRepository.findByEmail(username);
+        userStocksTable user = userRepository.findById(username);
                 if (user == null) {
                     throw new RuntimeException("User not found");
                 }
@@ -392,7 +392,7 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
      * @param stockSymbol The symbol of the stock to remove.
      */
     public void removeStock(String username, int quantity, String stockSymbol) {
-        userStocksTable user = userRepository.findByEmail(username);
+        userStocksTable user = userRepository.findById(username);
         if (user == null) {
             throw new RuntimeException("User not found");
         }
@@ -456,7 +456,7 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
      * @return A list of UserStockInfo.
      */
     public List<UserStockInfo> getUserStocks(String username) {
-        userStocksTable user = userRepository.findByEmail(username);
+        userStocksTable user = userRepository.findById(username);
         if (user == null) {
             throw new RuntimeException("User not found");
         }
@@ -482,7 +482,7 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
  */
 public void simulateStockValueChange(String username, List<UserStockInfo> stocks) {
     // Force fetch the latest user data to avoid caching issues
-    userStocksTable user = userRepository.findByEmail(username);
+    userStocksTable user = userRepository.findById(username);
     if (user == null) {
         throw new RuntimeException("User not found");
     }
