@@ -69,7 +69,7 @@ public class PokerApiController {
             return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);  // Person not found
         }
 
-        double currentBalance = person.getBalanceDouble();
+        double currentBalance = bank.getBalance();
         double bet = pokerRequest.getBet();
 
         // Check if the player has enough balance to place the bet

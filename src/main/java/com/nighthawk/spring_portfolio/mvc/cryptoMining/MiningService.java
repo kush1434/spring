@@ -104,7 +104,7 @@ public class MiningService {
                 
                 // Update Person's USD balance
                 Person person = miner.getPerson();
-                double currentBalance = person.getBalanceDouble();
+                double currentBalance = bank.getBalance();
                 person.setBalanceString(currentBalance + usdMined, "cryptomining");
                 personRepository.save(person);
                 

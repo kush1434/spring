@@ -70,17 +70,6 @@ public class Bank {
         this.person = person;
         this.username = person.getName();
         
-        // Safely parse balance from Person
-        try {
-            if (person.getBalance() != null) {
-                this.balance = Double.parseDouble(person.getBalance());
-            } else {
-                this.balance = 0.0;
-            }
-        } catch (NumberFormatException e) {
-            this.balance = 0.0;
-        }
-        
         this.loanAmount = loanAmount;
 
         this.profitMap = new HashMap<>();
@@ -95,14 +84,6 @@ public class Bank {
     public void prePersist() {
         if (person != null) {
             this.username = person.getName();
-            
-            try {
-                if (person.getBalance() != null) {
-                    this.balance = Double.parseDouble(person.getBalance());
-                }
-            } catch (NumberFormatException e) {
-                // Keep the default value
-            }
         }
     }
     
@@ -134,8 +115,7 @@ public class Bank {
 
     public void requestLoan(double loanAmount) {
         this.loanAmount += loanAmount;  // Increase the loan amount
-        double currentBalance = Double.parseDouble(this.person.getBalance());
-        this.person.setBalance(Double.toString(currentBalance+loanAmount));  
+        balance = (balance+loanAmount);  
         balance += loanAmount;   // Add the loan amount to the balance
         
         // Re-assess risk using ML model
@@ -160,7 +140,6 @@ public class Bank {
         
         // Process the repayment
         balance -= repaymentAmount;
-        person.setBalance(Double.toString(balance));
         loanAmount -= repaymentAmount;
         
         // Record transaction

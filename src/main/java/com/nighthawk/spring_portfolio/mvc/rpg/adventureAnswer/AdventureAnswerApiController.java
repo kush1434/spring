@@ -139,7 +139,7 @@ public class AdventureAnswerApiController {
         // Update the person’s balance only if the answer is correct
         if (isAnswerCorrect) {
             double questionPoints = question.getPoints();
-            double updatedBalance = person.getBalanceDouble() + questionPoints;
+            double updatedBalance = bank.getBalance() + questionPoints;
             
             person.setBalanceString(updatedBalance, "adventuregame");
             personJpaRepository.save(person);
@@ -263,7 +263,7 @@ public class AdventureAnswerApiController {
         answerJpaRepository.save(answer); // save the answer to the database
 
         double questionPoints = question.getPoints();
-        double updatedBalance = person.getBalanceDouble() + questionPoints;
+        double updatedBalance = bank.getBalance() + questionPoints;
         person.setBalanceString(updatedBalance, "adventure");
         
         personJpaRepository.save(person); // save the updated person object

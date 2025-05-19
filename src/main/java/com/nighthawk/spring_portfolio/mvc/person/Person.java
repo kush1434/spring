@@ -163,43 +163,6 @@ public class Person implements Comparable<Person> {
 
     @Column(nullable=true)
     private String sid;
-    
-    /**
-     * user_stocks and balance describe properties used by the gamify application
-     */
-
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
-    @JsonIgnore
-    private Bank banks;
-
-
- 
-    @Column
-    private String balance;
-
-    public double getBalanceDouble() {
-        var balance_tmp = getBalance();
-        return Double.parseDouble(balance_tmp);
-    }
-
-    public String setBalanceString(double updatedBalance, String source) {
-        this.balance = String.valueOf(updatedBalance); // Update the balance as a String
-        Double profit = updatedBalance - this.banks.getBalance();
-        this.banks.setBalance(updatedBalance);
-        System.out.println("Profit: " + profit);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String timestamp = dateFormat.format(new Date());
-        this.banks.updateProfitMap(source, timestamp, profit);
-        
-        return this.balance; // Return the updated balance as a String
-    }
-
-    public void setName(String name) {
-        this.name = name;
-        if (this.banks != null) {
-            this.banks.setUsername(name);
-        }
-    }
 
     /**
      * stats is used to store JSON for daily stats
@@ -269,7 +232,15 @@ public class Person implements Comparable<Person> {
 
 
     /**
-     * user_stocks and balance describe properties used by the gamify application
+     * Relationship with Bank
+     */
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
+    @JsonIgnore
+    private Bank banks;
+
+
+    /**
+     * Relationship with userStocksTable
      */
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
     @JsonIgnore
@@ -288,10 +259,9 @@ public class Person implements Comparable<Person> {
      * @param email, a String
      * @param password, a String
      * @param name, a String
-     * @param balance,
      * @param dob, a Date
      */
-    public Person(String email, String uid, String password, String sid, String name, Date dob, String pfp, String balance,  Boolean kasmServerNeeded, PersonRole role) {
+    public Person(String email, String uid, String password, String sid, String name, Date dob, String pfp, String balance, Boolean kasmServerNeeded, PersonRole role) {
         this.email = email;
         this.uid = uid;
         this.password = password;
@@ -300,14 +270,13 @@ public class Person implements Comparable<Person> {
         this.dob = dob;
         this.kasmServerNeeded = kasmServerNeeded;
         this.pfp = pfp;
-        this.balance = balance;
         this.roles.add(role);
         this.submissions = new ArrayList<>();
 
         this.timeEntries = new Tinkle(this, "");
         
         // Create a Bank for this person
-        this.banks = new Bank(this, 0);
+        this.banks = new Bank(this, balance, 0);
     }
 
 
@@ -338,7 +307,6 @@ public class Person implements Comparable<Person> {
         person.setPassword(password);
         person.setSid(sid);
         person.setKasmServerNeeded(kasmServerNeeded);
-        person.setBalance(balance);
         person.setPfp(pfp);
         try {
             Date date = new SimpleDateFormat("MM-dd-yyyy").parse(dob);
@@ -353,7 +321,7 @@ public class Person implements Comparable<Person> {
             roles.add(role);
         }
         person.setRoles(roles);
-        person.setBanks(new Bank(person, 0));
+        person.setBanks(new Bank(person, balance, 0));
 
         return person;
     }
@@ -371,15 +339,13 @@ public class Person implements Comparable<Person> {
     @PostPersist
     private void ensureBankExists() {
         if (this.banks == null) {
-            this.banks = new Bank(this, 0);
+            this.banks = new Bank(this, "0", 0);
         }
     }
 
 
 //////////////////////////////////////////////////////////////////////////////////
 /// getter methods
-
-
 
 
     /** Custom getter to return age from dob attribute
@@ -391,20 +357,6 @@ public class Person implements Comparable<Person> {
             return Period.between(birthDay, LocalDate.now()).getYears();
         }
         return -1;
-    }
-
-
-//////////////////////////////////////////////////////////////////////////////////
-/// setter methods
-
-
-    /** Custom setBalanceString method to set balance (string) using a double
-     * @param updatedBalance, a double with the amount to set as the user balance
-     * @return String, the updated String
-     */
-    public String setBalanceString(double updatedBalance) {
-        this.balance = String.valueOf(updatedBalance); // Update the balance as a String
-        return this.balance; // Return the updated balance as a String
     }
 
 
@@ -615,7 +567,7 @@ public class Person implements Comparable<Person> {
         output += "\"dob\":\""+ String.valueOf(this.getDob())+"\","; // date of birth
         output += "\"pfp\":\""+ "--possible image string here--"+"\","; //profile picture
         output += "\"kasmServerNeeded\":\""+ String.valueOf(this.getKasmServerNeeded())+"\","; // kasm server needed
-        output += "\"balance\":"+ String.valueOf(this.getBalance())+","; //balance
+        output += "\"balance\":"+ (this.getBanks() != null ? String.valueOf(this.getBanks().getBalance()) : "0") +","; // get balance from Bank
         output += "\"stats\":"+ String.valueOf(this.getStats())+","; //stats (I think this is unused)
         output += "}";
 

@@ -125,12 +125,12 @@ public class CryptoController {
         double cryptoAmount = usdAmount / cryptoPrice;
     
         // Check for sufficient balance
-        if (person.getBalanceDouble() < usdAmount) {
+        if (bank.getBalance() < usdAmount) {
             return ResponseEntity.badRequest().body("Insufficient balance.");
         }
     
         // Deduct balance and update user's holdings
-        double updatedBalance = person.getBalanceDouble() - usdAmount;
+        double updatedBalance = bank.getBalance() - usdAmount;
         person.setBalanceString(updatedBalance, "crypto");
     
         userStocksTable userStocks = person.getUser_stocks();
@@ -238,7 +238,7 @@ public class CryptoController {
     
         // Update balance
         double totalValueSold = cryptoPrice * cryptoAmount;
-        double updatedBalance = person.getBalanceDouble() + totalValueSold;
+        double updatedBalance = bank.getBalance() + totalValueSold;
         person.setBalanceString(updatedBalance, "crypto");
         userStocks.setCrypto(updatedCrypto);
         userStocks.setBalance(String.valueOf(updatedBalance));

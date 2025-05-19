@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nighthawk.spring_portfolio.mvc.person.Person;
+import com.nighthawk.spring_portfolio.mvc.bank.Bank;
+import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 
 @RestController
@@ -29,6 +31,9 @@ public class BlackjackApiController {
     @Autowired
     private PersonJpaRepository personJpaRepository;
 
+    @Autowired
+    private BankJpaRepository bankJpaRepository;
+
     @PostMapping("/start")
     public ResponseEntity<Blackjack> startGame(@RequestBody Map<String, Object> request) {
         try {
@@ -36,6 +41,7 @@ public class BlackjackApiController {
             double betAmount = Double.parseDouble(request.get("betAmount").toString());
 
             Person person = personJpaRepository.findByUid(uid);
+            Bank bank = bankJpaRepository.findByUsername(uid);
             if (person == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
             }
@@ -47,7 +53,7 @@ public class BlackjackApiController {
             }
 
             // Check balance
-            if (person.getBalanceDouble() < betAmount) {
+            if (bank.getBalance() < betAmount) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
 
@@ -62,7 +68,7 @@ public class BlackjackApiController {
             repository.save(game);
             
             // Add balance to response
-            game.getGameStateMap().put("balance", person.getBalanceDouble());
+            game.getGameStateMap().put("balance", bank.getBalance());
             game.persistGameState();
             
             return ResponseEntity.ok(game);
@@ -112,20 +118,20 @@ public class BlackjackApiController {
             
             if (fiveCardCharlie) {
                 game.getGameStateMap().put("result", "WIN");
-                double updatedBalance = person.getBalanceDouble() + game.getBetAmount();
+                double updatedBalance = bank.getBalance() + game.getBetAmount();
                 person.setBalanceString(updatedBalance, "blackjack");
                 game.setStatus("INACTIVE");
             } 
             // Check for bust
             else if (playerScore > 21) {
                 game.getGameStateMap().put("result", "LOSE");
-                double updatedBalance = person.getBalanceDouble() - game.getBetAmount();
+                double updatedBalance = bank.getBalance() - game.getBetAmount();
                 person.setBalanceString(updatedBalance, "blackjack");
                 game.setStatus("INACTIVE");
             }
 
             // Update balance in response
-            game.getGameStateMap().put("balance", person.getBalanceDouble());
+            game.getGameStateMap().put("balance", bank.getBalance());
             game.persistGameState();
             
             repository.save(game);
@@ -178,22 +184,22 @@ public class BlackjackApiController {
             String result;
             if (playerScore > 21) {
                 result = "LOSE";
-                double updatedBalance = person.getBalanceDouble() - betAmount;
+                double updatedBalance = bank.getBalance() - betAmount;
                 person.setBalanceString(updatedBalance, "blackjack");
             } 
             // 5-card Charlie (already handled in hit, but just in case)
             else if (playerScore <= 21 && ((List<String>)game.getGameStateMap().get("playerHand")).size() >= 5) {
                 result = "WIN";
-                double updatedBalance = person.getBalanceDouble() + betAmount;
+                double updatedBalance = bank.getBalance() + betAmount;
                 person.setBalanceString(updatedBalance, "blackjack");
             }
             else if (dealerScore > 21 || playerScore > dealerScore) {
                 result = "WIN";
-                double updatedBalance = person.getBalanceDouble() + betAmount;
+                double updatedBalance = bank.getBalance() + betAmount;
                 person.setBalanceString(updatedBalance, "blackjack");
             } else if (playerScore < dealerScore) {
                 result = "LOSE";
-                double updatedBalance = person.getBalanceDouble() - betAmount;
+                double updatedBalance = bank.getBalance() - betAmount;
                 person.setBalanceString(updatedBalance, "blackjack");
             } else {
                 result = "DRAW";
@@ -201,7 +207,7 @@ public class BlackjackApiController {
 
             // Update game state and save
             game.getGameStateMap().put("result", result);
-            game.getGameStateMap().put("balance", person.getBalanceDouble());
+            game.getGameStateMap().put("balance", bank.getBalance());
             game.setStatus("INACTIVE");
             game.persistGameState();
             

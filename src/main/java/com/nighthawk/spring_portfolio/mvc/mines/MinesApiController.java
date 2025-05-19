@@ -115,7 +115,7 @@ public class MinesApiController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        double currentBalance = person.getBalanceDouble();
+        double currentBalance = bank.getBalance();
         double updatedBalance = currentBalance + minesRequest.getBet();
         
         if (updatedBalance < 0) {
