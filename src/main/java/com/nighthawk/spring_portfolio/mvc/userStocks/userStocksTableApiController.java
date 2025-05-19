@@ -181,15 +181,22 @@ class SimulationRequest {
 /**
  * DTO to represent the details for adding/removing stocks (username, quantity, stock symbol, balance).
  */
+import jakarta.validation.constraints.*;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 class StockRequest {
+    @NotBlank(message = "Username is required")
     private String username;
+
+    @Min(value = 1, message = "Quantity must be at least 1")
     private int quantity;
+
+    @NotBlank(message = "Stock symbol is required")
     private String stockSymbol;
-    private String balance;
 }
+
 
 /**
  * DTO for user login request (username and password).
@@ -231,20 +238,16 @@ class UserStocksTableService implements UserDetailsService {
      */
     @Override
 public org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    try {
-        Long userId = Long.parseLong(username); // Parse the username as a userId
-        userStocksTable user = userRepository.findById(userId)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    userStocksTable user = userRepository.findByPerson_name(username)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getPerson_name())
-                .password(user.getPassword()) // Include password if needed for authentication
-                .authorities("USER") // You can set roles/authorities as needed
-                .build();
-    } catch (NumberFormatException e) {
-        throw new UsernameNotFoundException("Invalid user ID format");
-    }
+    return org.springframework.security.core.userdetails.User
+            .withUsername(user.getPerson_name())
+            .password(user.getPassword())
+            .authorities("USER")
+            .build();
 }
+
 
     /**
      * Fetches the current stock price for a given stock symbol from Yahoo Finance.
