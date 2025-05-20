@@ -58,6 +58,9 @@ public class MiningController {
     private PersonJpaRepository personRepository;
     
     @Autowired
+    private BankJpaRepository bankRepository;
+
+    @Autowired
     private MiningUserRepository miningUserRepository;
     
     @Autowired
@@ -95,6 +98,7 @@ public class MiningController {
 
             // Find person by UID with detailed logging
             Person person = personRepository.findByUid(uid);
+            Bank bank = bankRepository.findByUsername(uid);
             
             if (person == null) {
                 throw new RuntimeException("Person not found for UID: " + uid);
@@ -222,8 +226,10 @@ public class MiningController {
 
             // Deduct total GPU price from balance
             double newBalance = currentBalance - gpu.getPrice() * quantity;
-            bank.setBalanceString(newBalance, "cryptomining");
+            bank.setBalance(newBalance, "cryptomining");
             personRepository.save(person);
+            bankRepository.save(bank);
+
             
             // Add GPUs to user's inventory
             for (int i = 0; i < quantity; i++) {
@@ -555,8 +561,10 @@ public class MiningController {
             // Update user's balance using Person
             Person person = user.getPerson();
             double currentBalance = bank.getBalance();
-            person.setBalance(String.format("%.2f", currentBalance + sellPrice));
+            person.setBalance(currentBalance + sellPrice, "cryptomining");
             personRepository.save(person);
+            bankRepository.save(bank);
+
 
             // Remove GPUs from user's inventory
             user.removeGPUs(gpu, quantityToSell);

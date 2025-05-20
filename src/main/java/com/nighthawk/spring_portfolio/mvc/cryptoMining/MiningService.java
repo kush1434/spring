@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Date;
 
+import com.nighthawk.spring_portfolio.mvc.bank.Bank;
+import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 // Add these imports
@@ -42,6 +44,9 @@ public class MiningService {
 
     @Autowired
     private PersonJpaRepository personRepository;
+
+    @Autowired
+    private BankJpaRepository bankRepository;
 
     @Autowired
     private CryptocurrencyRepository cryptocurrencyRepository;
@@ -104,9 +109,11 @@ public class MiningService {
                 
                 // Update Person's USD balance
                 Person person = miner.getPerson();
+                String uid = person.getUid();
+                Bank bank = bankRepository.findByUsername(uid);
                 double currentBalance = bank.getBalance();
-                person.setBalanceString(currentBalance + usdMined, "cryptomining");
-                personRepository.save(person);
+                bank.setBalance(currentBalance + usdMined, "cryptomining");
+                bankRepository.save(bank);
                 
                 // Update mining stats
                 if ("BTC".equals(currentCrypto.getSymbol())) {
