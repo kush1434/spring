@@ -27,6 +27,8 @@ import jakarta.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -97,6 +99,16 @@ public class Bank {
         this.featureImportance.put("crypto_activity", -0.28);
         this.featureImportance.put("volatility", 0.15);
         this.featureImportance.put("balance_trend", 0.22);
+    }
+    
+    public double setBalance(double updatedBalance, String source) {
+        this.balance = updatedBalance; // Update the balance as a String
+        Double profit = updatedBalance - this.balance;
+        System.out.println("Profit: " + profit);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String timestamp = dateFormat.format(new Date());
+        updateProfitMap(source, timestamp, profit);
+        return this.balance; // Return the updated balance as a String
     }
     
     public void updateProfitMap(String category, String time, double profit) {

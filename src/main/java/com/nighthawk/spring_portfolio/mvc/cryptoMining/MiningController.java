@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.bank.Bank;
+import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
 
@@ -220,7 +222,7 @@ public class MiningController {
 
             // Deduct total GPU price from balance
             double newBalance = currentBalance - gpu.getPrice() * quantity;
-            person.setBalanceString(newBalance, "cryptomining");
+            bank.setBalanceString(newBalance, "cryptomining");
             personRepository.save(person);
             
             // Add GPUs to user's inventory
@@ -617,7 +619,7 @@ public class MiningController {
             Person person = user.getPerson();
             double currentBalance = bank.getBalance();
             double newBalance = currentBalance + totalSellPrice;
-            person.setBalanceString(newBalance, "cryptomining");
+            bank.setBalance(newBalance, "cryptomining");
             personRepository.save(person);
 
             // Save changes
