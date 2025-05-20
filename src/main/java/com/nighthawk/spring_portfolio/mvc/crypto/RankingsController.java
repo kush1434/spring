@@ -13,15 +13,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nighthawk.spring_portfolio.mvc.person.Person;
-import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.bank.Bank;
+import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
 
 @RestController
 @RequestMapping("/api/rankings")
 public class RankingsController {
 
     @Autowired
-    private PersonJpaRepository repository;
+    private BankJpaRepository repository;
 
     /**
      * Get top 10 users by balance.
@@ -31,17 +31,17 @@ public class RankingsController {
     @GetMapping("/leaderboard")
     public ResponseEntity<List<Map<String, Object>>> getTopUsers() {
         // Fetch all people from the database
-        List<Person> people = repository.findAll();
+        List<Bank> people = repository.findAll();
 
         // Sort users by balance (descending) and take the top 10
         List<Map<String, Object>> topUsers = people.stream()
-                .sorted(Comparator.comparingDouble(Person::getBalanceDouble).reversed())
+                .sorted(Comparator.comparingDouble(Bank::getBalance).reversed())
                 .limit(10)
-                .map(person -> {
+                .map(bank -> {
                     Map<String, Object> userMap = new HashMap<>();
-                    userMap.put("id", person.getId());
-                    userMap.put("name", person.getName());
-                    userMap.put("balance", person.getBalance());
+                    userMap.put("id", bank.getId());
+                    userMap.put("name", bank.getUsername());
+                    userMap.put("balance", bank.getBalance());
                     return userMap;
                 })
                 .collect(Collectors.toList());
@@ -57,14 +57,14 @@ public class RankingsController {
     // @GetMapping("/teamRankings")
     // public ResponseEntity<List<Map<String, Object>>> getTeamRankings() {
     //     // Fetch all people from the database
-    //     List<Person> people = repository.findAll();
+    //     List<Bank> people = repository.findAll();
 
     //     // Group by team and calculate team balances
     //     Map<String, Double> teamBalances = new HashMap<>();
-    //     for (Person person : people) {
-    //         String team = person.getTeam();
+    //     for (Bank bank : people) {
+    //         String team = bank.getTeam();
     //         if (team != null && !team.isEmpty()) {
-    //             teamBalances.put(team, teamBalances.getOrDefault(team, 0.0) + person.getBalance());
+    //             teamBalances.put(team, teamBalances.getOrDefault(team, 0.0) + bank.getBalance());
     //         }
     //     }
 
