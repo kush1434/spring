@@ -261,7 +261,7 @@ public class Person implements Comparable<Person> {
      * @param name, a String
      * @param dob, a Date
      */
-    public Person(String email, String uid, String password, String sid, String name, Date dob, String pfp, String balance, Boolean kasmServerNeeded, PersonRole role) {
+    public Person(String email, String uid, String password, String sid, String name, Date dob, String pfp, Boolean kasmServerNeeded, PersonRole role) {
         this.email = email;
         this.uid = uid;
         this.password = password;
@@ -276,7 +276,7 @@ public class Person implements Comparable<Person> {
         this.timeEntries = new Tinkle(this, "");
         
         // Create a Bank for this person
-        this.banks = new Bank(this, balance, 0);
+        this.banks = new Bank(this, 0);
     }
 
 
@@ -284,13 +284,12 @@ public class Person implements Comparable<Person> {
      * @param name
      * @param email
      * @param password
-     * @param balance
      * @param dob
      * @return Person
      */
-    public static Person createPerson(String name, String email, String uid, String password, String sid, Boolean kasmServerNeeded, String balance, String dob, List<String> asList) {
+    public static Person createPerson(String name, String email, String uid, String password, String sid, Boolean kasmServerNeeded, String dob, List<String> asList) {
         // By default, Spring Security expects roles to have a "ROLE_" prefix.
-        return createPerson(name, email, uid, password, sid, kasmServerNeeded, balance, dob, Arrays.asList("ROLE_USER", "ROLE_STUDENT"));
+        return createPerson(name, email, uid, password, sid, kasmServerNeeded, dob, Arrays.asList("ROLE_USER", "ROLE_STUDENT"));
     }
 
 
@@ -299,7 +298,7 @@ public class Person implements Comparable<Person> {
      * 
      * @param roles
      */
-    public static Person createPerson(String name, String uid,  String email, String password, String sid,  String pfp, Boolean kasmServerNeeded, String balance, String dob, List<String> roleNames) {
+    public static Person createPerson(String name, String uid,  String email, String password, String sid,  String pfp, Boolean kasmServerNeeded, String dob, List<String> roleNames) {
         Person person = new Person();
         person.setName(name);
         person.setUid(uid);
@@ -321,13 +320,13 @@ public class Person implements Comparable<Person> {
             roles.add(role);
         }
         person.setRoles(roles);
-        person.setBanks(new Bank(person, balance, 0));
+        person.setBanks(new Bank(person, 0));
 
         return person;
     }
     
 
-    private static Person createPerson(String name, String email, String uid, String password, Boolean kasmServerNeeded, String balance, String dob, List<String> asList) {
+    private static Person createPerson(String name, String email, String uid, String password, Boolean kasmServerNeeded, String dob, List<String> asList) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     
@@ -427,7 +426,6 @@ public class Person implements Comparable<Person> {
                 Map.entry("sid", "1"),
                 Map.entry("pfp", "/images/toby.png"),
                 Map.entry("kasmServerNeeded", true),
-                Map.entry("balance", startingBalance),
                 Map.entry("dob", "01-01-1840"),
                 Map.entry("roles", Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER", "ROLE_TEACHER")),
                 Map.entry("stocks", "BTC,ETH")
@@ -440,7 +438,6 @@ public class Person implements Comparable<Person> {
                 Map.entry("sid", "1"),
                 Map.entry("pfp", "/images/lex.png"),
                 Map.entry("kasmServerNeeded", true),
-                Map.entry("balance", startingBalance),
                 Map.entry("dob", "01-01-1847"),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
                 Map.entry("stocks", "BTC,ETH")
@@ -453,7 +450,6 @@ public class Person implements Comparable<Person> {
                 Map.entry("sid", "1"),
                 Map.entry("pfp", "/images/niko.png"),
                 Map.entry("kasmServerNeeded", true),
-                Map.entry("balance", startingBalance),
                 Map.entry("dob", "01-01-1850"),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
                 Map.entry("stocks", "BTC,ETH")
@@ -466,7 +462,6 @@ public class Person implements Comparable<Person> {
                 Map.entry("sid", "1"),
                 Map.entry("pfp", "/images/madam.png"),
                 Map.entry("kasmServerNeeded", true),
-                Map.entry("balance", startingBalance),
                 Map.entry("dob", "01-01-1860"),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
                 Map.entry("stocks", "BTC,ETH")
@@ -479,7 +474,6 @@ public class Person implements Comparable<Person> {
                 Map.entry("sid", "123"),
                 Map.entry("pfp", "/images/hop.png"),
                 Map.entry("kasmServerNeeded", true),
-                Map.entry("balance", startingBalance),
                 Map.entry("dob", "12-09-1906"),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
                 Map.entry("stocks", "BTC,ETH")
@@ -492,7 +486,6 @@ public class Person implements Comparable<Person> {
                 Map.entry("sid", "1"),
                 Map.entry("pfp", "/images/jm1021.png"),
                 Map.entry("kasmServerNeeded", true),
-                Map.entry("balance", startingBalance),
                 Map.entry("dob", "10-21-1959"),
                 Map.entry("roles", Arrays.asList("ROLE_ADMIN", "ROLE_TEACHER")),
                 Map.entry("stocks", "BTC,ETH")
@@ -505,7 +498,6 @@ public class Person implements Comparable<Person> {
                 Map.entry("sid", "2"),
                 Map.entry("pfp", "/images/alan.png"),
                 Map.entry("kasmServerNeeded", false),
-                Map.entry("balance", startingBalance),
                 Map.entry("dob", "06-23-1912"),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_TESTER", "ROLE_STUDENT")),
                 Map.entry("stocks", "BTC,ETH")
@@ -522,7 +514,6 @@ public class Person implements Comparable<Person> {
                 (String) data.get("sid"),
                 (String) data.get("pfp"),
                 (Boolean) data.get("kasmServerNeeded"),
-                (String) data.get("balance"),
                 (String) data.get("dob"),
                 (List<String>) data.get("roles")
             );
@@ -531,7 +522,6 @@ public class Person implements Comparable<Person> {
             userStocksTable stock = new userStocksTable(
                 null,
                 (String) data.get("stocks"),
-                (String) data.get("balance"),
                 person.getEmail(),
                 person,
                 false,
@@ -567,7 +557,6 @@ public class Person implements Comparable<Person> {
         output += "\"dob\":\""+ String.valueOf(this.getDob())+"\","; // date of birth
         output += "\"pfp\":\""+ "--possible image string here--"+"\","; //profile picture
         output += "\"kasmServerNeeded\":\""+ String.valueOf(this.getKasmServerNeeded())+"\","; // kasm server needed
-        output += "\"balance\":"+ (this.getBanks() != null ? String.valueOf(this.getBanks().getBalance()) : "0") +","; // get balance from Bank
         output += "\"stats\":"+ String.valueOf(this.getStats())+","; //stats (I think this is unused)
         output += "}";
 
