@@ -83,6 +83,81 @@ public class BankApiController {
         }
     }
 
+    // Get individual user analytics data
+    @GetMapping("/analytics/{userId}")
+    public ResponseEntity<Map<String, Object>> getUserAnalytics(@PathVariable Long userId) {
+        try {
+            Bank bank = bankJpaRepository.findById(userId).orElse(null);
+            if (bank == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "success", false,
+                    "error", "User not found"
+                ));
+            }
+
+            // Prepare analytics data
+            Map<String, Object> analyticsData = new HashMap<>();
+            analyticsData.put("userId", bank.getId());
+            analyticsData.put("username", bank.getUsername() != null ? bank.getUsername() : "User " + bank.getId());
+            analyticsData.put("balance", bank.getBalance());
+            analyticsData.put("loanAmount", bank.getLoanAmount());
+            analyticsData.put("dailyInterestRate", bank.getDailyInterestRate());
+            analyticsData.put("riskCategory", bank.getRiskCategory());
+            analyticsData.put("riskCategoryString", bank.getRiskCategoryString());
+            analyticsData.put("profitMap", bank.getProfitMap());
+            analyticsData.put("featureImportance", bank.getFeatureImportance());
+            analyticsData.put("featureExplanations", bank.getFeatureImportanceExplanations());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", analyticsData
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "error", "Error fetching user analytics: " + e.getMessage()
+            ));
+        }
+    }
+
+    // Get user analytics by person ID (alternative endpoint)
+    @GetMapping("/analytics/person/{personId}")
+    public ResponseEntity<Map<String, Object>> getUserAnalyticsByPersonId(@PathVariable Long personId) {
+        try {
+            Bank bank = bankJpaRepository.findByPersonId(personId);
+            if (bank == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "success", false,
+                    "error", "User not found"
+                ));
+            }
+
+            // Prepare analytics data
+            Map<String, Object> analyticsData = new HashMap<>();
+            analyticsData.put("userId", bank.getId());
+            analyticsData.put("personId", bank.getPerson().getId());
+            analyticsData.put("username", bank.getUsername() != null ? bank.getUsername() : "User " + bank.getId());
+            analyticsData.put("balance", bank.getBalance());
+            analyticsData.put("loanAmount", bank.getLoanAmount());
+            analyticsData.put("dailyInterestRate", bank.getDailyInterestRate());
+            analyticsData.put("riskCategory", bank.getRiskCategory());
+            analyticsData.put("riskCategoryString", bank.getRiskCategoryString());
+            analyticsData.put("profitMap", bank.getProfitMap());
+            analyticsData.put("featureImportance", bank.getFeatureImportance());
+            analyticsData.put("featureExplanations", bank.getFeatureImportanceExplanations());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", analyticsData
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "error", "Error fetching user analytics: " + e.getMessage()
+            ));
+        }
+    }
+
     // Existing endpoints remain unchanged below this point
     @GetMapping("/{id}/profitmap/{category}")
     public ResponseEntity<List<List<Object>>> getProfitByCategory(@PathVariable Long id, @PathVariable String category) {
