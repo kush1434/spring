@@ -126,67 +126,113 @@
 
         <script th:inline="javascript">
             $(document).ready(function () {
-                // Initialize DataTables for each daily table
-                $('.dailyTable').DataTable({
-                    paging: true,
-                    searching: true,
-                    ordering: true,
-                    lengthMenu: [5, 10, 25, 50],
-                    pageLength: 5,
-                    responsive: true,
-                    autoWidth: false,
-                    language: {
-                        search: "🔍 Search:",
-                        lengthMenu: "Show _MENU_ entries per page",
-                        zeroRecords: "No matching records found",
-                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                        infoFiltered: "(filtered from _MAX_ total entries)",
-                        paginate: {
-                            first: '<i class="bi bi-chevron-double-left"></i>',
-                            last: '<i class="bi bi-chevron-double-right"></i>',
-                            next: '<i class="bi bi-chevron-right"></i>',
-                            previous: '<i class="bi bi-chevron-left"></i>'
-                        }
+                // Check if tables exist and have rows before initializing
+                if ($('.dailyTable').length > 0) {
+                    try {
+                        $('.dailyTable').DataTable({
+                            paging: true,
+                            searching: true,
+                            ordering: true,
+                            // Start with no initial ordering to avoid potential issues
+                            order: [], 
+                            lengthMenu: [5, 10, 25, 50],
+                            pageLength: 10,
+                            responsive: true,
+                            autoWidth: false,
+                            language: {
+                                search: "🔍 Search:",
+                                lengthMenu: "Show _MENU_ entries per page",
+                                zeroRecords: "No matching records found",
+                                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                                infoFiltered: "(filtered from _MAX_ total entries)",
+                                paginate: {
+                                    first: '<i class="bi bi-chevron-double-left"></i>',
+                                    last: '<i class="bi bi-chevron-double-right"></i>',
+                                    next: '<i class="bi bi-chevron-right"></i>',
+                                    previous: '<i class="bi bi-chevron-left"></i>'
+                                }
+                            }
+                        });
+                        
+                        // Only apply ordering after DataTable is initialized successfully
+                        // This separates initialization from ordering application
+                        setTimeout(function() {
+                            try {
+                                $('.dailyTable').DataTable().order([1, 'desc']).draw();
+                            } catch(e) {
+                                console.error("Error applying order to dailyTable:", e);
+                            }
+                        }, 200);
+                    } catch(e) {
+                        console.error("Error initializing dailyTable:", e);
                     }
-                });
-                
-                // DataTables for the weekly duration table remains the same
-                $('#weeklyDurationTable').DataTable({
-                    paging: true,
-                    searching: true,
-                    ordering: true,
-                    lengthMenu: [5, 10, 25, 50],
-                    pageLength: 5,
-                    responsive: true,
-                    autoWidth: false,
-                    language: {
-                        search: "🔍 Search:",
-                        lengthMenu: "Show _MENU_ entries per page",
-                        zeroRecords: "No matching records found",
-                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                        infoFiltered: "(filtered from _MAX_ total entries)",
-                        paginate: {
-                            first: '<i class="bi bi-chevron-double-left"></i>',
-                            last: '<i class="bi bi-chevron-double-right"></i>',
-                            next: '<i class="bi bi-chevron-right"></i>',
-                            previous: '<i class="bi bi-chevron-left"></i>'
-                        }
-                    }
-                });
+                }
 
-                // Initialize Chart.js for Average Weekly Duration Visualization
+                // Similar defensive approach for weekly duration table
+                if ($('#weeklyDurationTable').length > 0) {
+                    try {
+                        $('#weeklyDurationTable').DataTable({
+                            paging: true,
+                            searching: true,
+                            ordering: true,
+                            order: [], // Start with no ordering
+                            lengthMenu: [5, 10, 25, 50],
+                            pageLength: 10,
+                            responsive: true,
+                            autoWidth: false,
+                            language: {
+                                search: "🔍 Search:",
+                                lengthMenu: "Show _MENU_ entries per page",
+                                zeroRecords: "No matching records found",
+                                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                                infoFiltered: "(filtered from _MAX_ total entries)",
+                                paginate: {
+                                    first: '<i class="bi bi-chevron-double-left"></i>',
+                                    last: '<i class="bi bi-chevron-double-right"></i>',
+                                    next: '<i class="bi bi-chevron-right"></i>',
+                                    previous: '<i class="bi bi-chevron-left"></i>'
+                                }
+                            }
+                        });
+                        
+                        // Apply ordering after initialization
+                        setTimeout(function() {
+                            try {
+                                $('#weeklyDurationTable').DataTable().order([1, 'desc']).draw();
+                            } catch(e) {
+                                console.error("Error applying order to weeklyDurationTable:", e);
+                            }
+                        }, 200);
+                    } catch(e) {
+                        console.error("Error initializing weeklyDurationTable:", e);
+                    }
+                }
+
+
                 const labels = /*[[${chartLabels}]]*/ [];
                 const data = /*[[${chartData}]]*/ [];
                 const formattedData = data.map(seconds => (seconds / 60).toFixed(2));
 
+                // Sort the data from greatest to least
+                const sortedEntries = labels
+                    .map((label, index) => ({ label, value: parseFloat(formattedData[index]) }))
+                    .sort((a, b) => b.value - a.value);
+
+                // Pagination variables
+                const pageSize = 15;
+                let currentPage = 0;
+
+                const totalPages = Math.ceil(sortedEntries.length / pageSize);
+
+                // Create Chart instance
                 const ctx = $('#weeklyDurationChart')[0].getContext('2d');
-                new Chart(ctx, {
+                const chart = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: labels,
+                        labels: [],
                         datasets: [{
                             label: 'Average Weekly Duration (Minutes)',
-                            data: formattedData,
+                            data: [],
                             backgroundColor: 'rgba(40, 167, 69, 0.2)',
                             borderColor: 'rgba(40, 167, 69, 1)',
                             borderWidth: 1
@@ -204,6 +250,45 @@
                         }
                     }
                 });
+
+                function updateChartPage(page) {
+                    const start = page * pageSize;
+                    const end = start + pageSize;
+                    const pageData = sortedEntries.slice(start, end);
+
+                    chart.data.labels = pageData.map(entry => entry.label);
+                    chart.data.datasets[0].data = pageData.map(entry => entry.value);
+                    chart.update();
+
+                    $('#chartPagination').text(`Page ${page + 1} of ${totalPages}`);
+                }
+
+                // Add pagination controls
+                const paginationControls = `
+                    <div class="text-center mt-3">
+                        <button id="prevPage" class="btn btn-light btn-sm me-2">Prev</button>
+                        <span id="chartPagination"></span>
+                        <button id="nextPage" class="btn btn-light btn-sm ms-2">Next</button>
+                    </div>
+                `;
+                $('.chart-container').after(paginationControls);
+
+                $('#prevPage').click(() => {
+                    if (currentPage > 0) {
+                        currentPage--;
+                        updateChartPage(currentPage);
+                    }
+                });
+
+                $('#nextPage').click(() => {
+                    if (currentPage < totalPages - 1) {
+                        currentPage++;
+                        updateChartPage(currentPage);
+                    }
+                });
+
+                // Initialize first page
+                updateChartPage(currentPage);
 
                 // Weekday tabs functionality
                 $('.weekday-tab').click(function() {

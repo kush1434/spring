@@ -32,8 +32,11 @@ public class Tinkle {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Column(name = "uid")
+    private String uid;
+
     @OneToOne
-    @JoinColumn(name = "person_id")
+    @JoinColumn(name = "uid", referencedColumnName = "uid", insertable = false, updatable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonBackReference
     private Person person;
@@ -54,6 +57,11 @@ public class Tinkle {
         this.personName = person.getName();
         this.timeIn = statsInput;
         parseAndStoreTimeInOut(statsInput);
+    }
+
+    public void setPerson(Person person) {
+        this.person = person;
+        this.uid = person != null ? person.getUid() : null;
     }
 
     public void addTimeIn(String timeInOutPairs) {
@@ -135,6 +143,15 @@ public class Tinkle {
                 }
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Tinkle{" +
+                "id=" + id +
+                ", personName='" + personName + '\'' +
+                ", timeInOutPairs size=" + (timeInOutPairs != null ? timeInOutPairs.size() : 0) +
+                '}';
     }
 
     public static Tinkle[] init(Person[] persons) {

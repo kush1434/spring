@@ -2,99 +2,38 @@
 <html xmlns:layout="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml"
     layout:decorate="~{layouts/style-only}" lang="en">
 
-<head>
-    <script>
-
-        window.addEventListener("load", () => {
-            document.getElementById("addRoleButton").addEventListener("click", () => {
-                var roleNames = [];
-                if (document.getElementById("addRole1").checked == true) {
-                    roleNames.push("ROLE_USER");
-                }
-                if (document.getElementById("addRole2").checked == true) {
-                    roleNames.push("ROLE_ADMIN");
-                }
-                if (document.getElementById("addRole3").checked == true) {
-                    roleNames.push("ROLE_TESTER");
-                }
-                if (document.getElementById("addRole4").checked == true) {
-                    roleNames.push("ROLE_TEACHER");
-                }
-                if (document.getElementById("addRole5").checked == true) {
-                    roleNames.push("ROLE_STUDENT");
-                }
-                if (roleNames.length == 0) { return; }
-                var body = {
-                    uid: document.getElementById("uid").value,
-                    roleNames: roleNames,
-                }
-                fetch("/mvc/person/update/roles", {
-                    method: "POST",
-                    credentials: "include",
-                    body: JSON.stringify(body),
-                    cache: "no-cache",
-                    headers: new Headers({
-                        "content-type": "application/json"
-                    })
-                }).then(function (response) {
-                    if (response.status !== 200) {
-                        const errorMsg = 'Database response error: ' + response.status;
-                        console.error(errorMsg);
-                        document.getElementById("footerInfo").style.color = "red";
-                        document.getElementById("footerInfo").innerText = "Failed to update roles.";
-                        if (response.status = 403) {
-                            document.getElementById("footerInfo").innerText = "Unauthorized action, you must be an admin to update roles.";
-                        }
-                        return;
-                    }
-                    else {
-                        document.getElementById("footerInfo").style.color = "green";
-                        document.getElementById("footerInfo").innerText = "Successfully updated roles";
-                        return;
-                    }
-                })
-            })
-        });
-    </script>
-</head>
-
 <th:block layout:fragment="body" th:remove="tag">
     <div class="container py-4">
-        <div style="display: none;" th:object="${person}">
-            <div style="display: none;">
-                <input type="text" th:field="*{uid}" id="uid"
-                    placeholder="Uid Address" required>
-            </div>
-        </div>
-
         <!-- Roles Input Section -->
-        <h3>Add Roles</h3> <!-- Header for Roles section -->
-        <table>
-            <tbody>
-                <tr>
-                    <td>User</td>
-                    <td><input class="form-check-input mb-2 mr-sm-2" type="checkbox" id="addRole1"></td>
-                </tr>
-                <tr>
-                    <td>Admin</td>
-                    <td><input class="form-check-input mb-2 mr-sm-2" type="checkbox" id="addRole2"></td>
-                </tr>
-                <tr>
-                    <td>Tester</td>
-                    <td><input class="form-check-input mb-2 mr-sm-2" type="checkbox" id="addRole3"></td>
-                </tr>
-                <tr>
-                    <td>Teacher</td>
-                    <td><input class="form-check-input mb-2 mr-sm-2" type="checkbox" id="addRole4"></td>
-                </tr>
-                <tr>
-                    <td>Student</td>
-                    <td><input class="form-check-input mb-2 mr-sm-2" type="checkbox" id="addRole5"></td>
-                </tr>
-            </tbody>
-        </table>
-        <button class="btn btn-secondary btn-sm" type="button" id="addRoleButton">Add Roles</button>
-        <div id="footerInfo"></div>
+        <h3>Add Role to User</h3> <!-- Header for Roles section -->
+
+        <form class="form-inline" action="#" th:object="${roleDto}" th:action="@{/mvc/person/update/role}" method="POST"
+            onsubmit="(function(event){event.submitter.innerHTML='<span class=\'spinner-border spinner-border-sm\' role=\'status\' aria-hidden=\'true\'></span>';})(event)">
+
+            <div style="display: none;">
+                <input type="text" th:field="*{uid}" id="uid" placeholder="Uid Address" required>
+            </div>
+
+            <div class="form-group mb-2 mr-sm-2" style="margin-bottom: 10px;">
+
+                <input type="radio" name="roleName" id="role-user" value="ROLE_USER" checked>
+                <label for="role-user">User</label><br>
+
+                <input type="radio" id="role-admin" name="roleName" value="ROLE_ADMIN">
+                <label for="role-admin">Admin</label><br>
+
+                <input type="radio" id="role-tester" name="roleName" value="ROLE_TESTER">
+                <label for="role-tester">Tester</label><br>
+
+                <input type="radio" id="role-teacher" name="roleName" value="ROLE_TEACHER">
+                <label for="role-teacher">Teacher</label><br>
+
+                <input type="radio" id="role-student" name="roleName" value="ROLE_STUDENT">
+                <label for="role-student">Student</label><br>
+
+            </div>
+            <button class="btn btn-secondary btn-sm" type="submit">Add Role</button>
+        </form>
     </div>
 </th:block>
 

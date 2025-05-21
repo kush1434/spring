@@ -132,6 +132,7 @@ public class TinkleViewController {
             // Group formatted entries by day (for the original view)
             Map<String, List<Map<String, Object>>> dailyTinkleData = 
                 tinkleDataFormatted.stream()
+                    .filter(row -> row.get("day") != null)
                     .collect(Collectors.groupingBy(row -> (String) row.get("day")));
             
             // Calculate average weekly durations

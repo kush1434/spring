@@ -46,8 +46,6 @@ import com.nighthawk.spring_portfolio.mvc.rpg.adventureRubric.AdventureRubric;
 import com.nighthawk.spring_portfolio.mvc.rpg.adventureRubric.AdventureRubricJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.rpg.gamifyGame.Game;
 import com.nighthawk.spring_portfolio.mvc.rpg.gamifyGame.GameJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.student.StudentInfo.StudentService;
-import com.nighthawk.spring_portfolio.mvc.student.StudentInfoJPARepository;
 import com.nighthawk.spring_portfolio.mvc.student.StudentQueue;
 import com.nighthawk.spring_portfolio.mvc.student.StudentQueueJPARepository;
 import com.nighthawk.spring_portfolio.mvc.synergy.SynergyGrade;
@@ -75,10 +73,8 @@ public class ModelInit {
     @Autowired UserJpaRepository userJpaRepository;
     @Autowired AssignmentJpaRepository assignmentJpaRepository;
     @Autowired AssignmentSubmissionJPA submissionJPA;
-    @Autowired StudentInfoJPARepository studentInfoJPA;
     @Autowired SynergyGradeJpaRepository gradeJpaRepository;
     @Autowired StudentQueueJPARepository studentQueueJPA;
-    @Autowired StudentService studentService;
     @Autowired BankJpaRepository bankJpaRepository;
     @Autowired BankService bankService;
     @Autowired AdventureRubricJpaRepository rubricJpaRepository;
@@ -117,10 +113,6 @@ public class ModelInit {
                     noteRepo.save(n);
                 }
             }
-
-            studentService.initialization(personArray);
-
-
             
             List<Announcement> announcements = Announcement.init();
             for (Announcement announcement : announcements) {
@@ -207,14 +199,14 @@ public class ModelInit {
                 }
             }
 
-            Tinkle[] tinkleArray = Tinkle.init(personArray);
-            for(Tinkle tinkle: tinkleArray) {
-                // List<Tinkle> tinkleFound = 
-                Optional<Tinkle> tinkleFound = tinkleJPA.findByPersonName(tinkle.getPersonName());
-                if(tinkleFound.isEmpty()) {
-                    tinkleJPA.save(tinkle);
-                }
-            }
+            // Tinkle[] tinkleArray = Tinkle.init(personArray);
+            // for(Tinkle tinkle: tinkleArray) {
+            //     // List<Tinkle> tinkleFound = 
+            //     Optional<Tinkle> tinkleFound = tinkleJPA.findByPersonName(tinkle.getPersonName());
+            //     if(tinkleFound.isEmpty()) {
+            //         tinkleJPA.save(tinkle);
+            //     }
+            // }
 
             BathroomQueue[] queueArray = BathroomQueue.init();
             for(BathroomQueue queue: queueArray) {
@@ -259,6 +251,7 @@ public class ModelInit {
 
                     // create sample submission
                     submissionJPA.save(new AssignmentSubmission(newAssignment, List.of(personJpaRepository.findByUid("madam")), "test submission","test comment", false));
+
                 }
             }
 

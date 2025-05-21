@@ -19,6 +19,7 @@ public interface GroupsJpaRepository extends JpaRepository<Groups, Long> {
     
     // Find all groups
     List<Groups> findAll();
+    List<Groups> findAllByOrderByNameAsc();
     
     // Find groups containing a specific person by uid
     @Query("SELECT g FROM Groups g JOIN g.groupMembers p WHERE p.uid = :personUid")
