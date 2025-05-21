@@ -28,6 +28,10 @@ public class BankApiController {
     @Autowired
     private BankJpaRepository bankJpaRepository;
     
+
+    @Autowired
+    private PersonJpaRepository personJpaRepository;
+
     // Get top 10 leaderboard
     @GetMapping("/leaderboard")
     public ResponseEntity<Map<String, Object>> getLeaderboard() {
