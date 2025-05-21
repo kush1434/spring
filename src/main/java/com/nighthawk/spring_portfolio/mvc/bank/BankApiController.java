@@ -274,7 +274,28 @@ public class BankApiController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
+    // Add this method to your existing BankApiController class
+// Place it after your other bulk endpoints
+
+    @DeleteMapping("/bulk/clear")
+    public ResponseEntity<?> clearTable() {
+        try {
+            // Delete all records
+            bankJpaRepository.deleteAll();
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "All bank records have been cleared");
+            
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("status", "error");
+            errorResponse.put("message", "Failed to clear table: " + e.getMessage());
+            
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     // Bulk create/update bank accounts
     @PostMapping("/bulk/create")
     public ResponseEntity<Object> bulkCreateBanks(@RequestBody List<BankDto> bankDtos) {
