@@ -156,7 +156,6 @@ public class PersonApiController {
 
   
         // A person object WITHOUT ID will create a new record in the database
-        String startingBalance = "100000";
         Person person = new Person(personDto.getEmail(), personDto.getUid(),personDto.getPassword(),personDto.getSid(), personDto.getName(), "/images/default.png", true, personDetailsService.findRole("USER"));
 
         personDetailsService.save(person);

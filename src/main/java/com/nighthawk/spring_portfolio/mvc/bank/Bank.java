@@ -122,8 +122,9 @@ public class Bank {
     }
     
     public double setBalance(double updatedBalance, String source) {
-        this.balance = updatedBalance; // Update the balance as a String
+         // Update the balance as a String
         Double profit = updatedBalance - this.balance;
+        this.balance = updatedBalance;
         System.out.println("Profit: " + profit);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String timestamp = dateFormat.format(new Date());
