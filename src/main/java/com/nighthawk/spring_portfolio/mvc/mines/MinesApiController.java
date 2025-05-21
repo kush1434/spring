@@ -78,7 +78,7 @@ public class MinesApiController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Person not found"));
             }
 
-            Bank bank = bankJpaRepository.findByUsername(uid);
+            Bank bank = bankJpaRepository.findByUid(uid);
             if (bank == null) {
                 LOGGER.warning("Bank account not found for uid: " + uid);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Bank account not found"));
@@ -124,7 +124,7 @@ public class MinesApiController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Person not found"));
             }
 
-            Bank bank = bankJpaRepository.findByUsername(uid);
+            Bank bank = bankJpaRepository.findByUid(uid);
             if (bank == null) {
                 LOGGER.warning("Bank account not found for uid: " + uid);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Bank account not found"));
@@ -177,7 +177,7 @@ public class MinesApiController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Person not found"));
             }
 
-            Bank bank = bankJpaRepository.findByUsername(uid);
+            Bank bank = bankJpaRepository.findByUid(uid);
             if (bank == null) {
                 LOGGER.warning("Bank account not found for uid: " + uid);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Bank account not found"));
@@ -203,7 +203,7 @@ public class MinesApiController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Person not found"));
             }
 
-            Bank bank = bankJpaRepository.findByUsername(uid);
+            Bank bank = bankJpaRepository.findByUid(uid);
             if (bank == null) {
                 LOGGER.warning("Bank account not found for uid: " + uid);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Bank account not found"));

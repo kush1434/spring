@@ -110,7 +110,7 @@ public class MiningService {
                 // Update Person's USD balance
                 Person person = miner.getPerson();
                 String uid = person.getUid();
-                Bank bank = bankRepository.findByUsername(uid);
+                Bank bank = bankRepository.findByUid(uid);
                 double currentBalance = bank.getBalance();
                 bank.setBalance(currentBalance + usdMined, "cryptomining");
                 bankRepository.save(bank);

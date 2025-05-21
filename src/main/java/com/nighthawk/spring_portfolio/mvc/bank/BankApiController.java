@@ -58,7 +58,7 @@ public class BankApiController {
     @GetMapping("/leaderboard/search")
     public ResponseEntity<Map<String, Object>> searchLeaderboard(@RequestParam String query) {
         try {
-            List<Bank> matchedBanks = bankJpaRepository.findByUsernameContainingIgnoreCase(query);
+            List<Bank> matchedBanks = bankJpaRepository.findByUidContainingIgnoreCase(query);
             List<LeaderboardEntry> leaderboard = new ArrayList<>();
             
             for (int i = 0; i < matchedBanks.size(); i++) {

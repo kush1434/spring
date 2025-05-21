@@ -61,7 +61,7 @@ public class PokerApiController {
         }
 
         // Fetch bank account by username
-        Bank bank = bankJpaRepository.findByUsername(pokerRequest.getUid());
+        Bank bank = bankJpaRepository.findByUid(pokerRequest.getUid());
         if (bank == null) {
             return new ResponseEntity<>("Bank account not found.", HttpStatus.NOT_FOUND);
         }

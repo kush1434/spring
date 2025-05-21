@@ -41,6 +41,8 @@ public class Bank {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    private String uid;
+
     @Column(unique = true, nullable = false)
     private String username;
 
@@ -77,7 +79,7 @@ public class Bank {
     public Bank(Person person, double loanAmount) {
         this.person = person;
         this.username = person.getName();
-        
+        this.uid = person.getUid();
         this.loanAmount = loanAmount;
 
         this.profitMap = new HashMap<>();

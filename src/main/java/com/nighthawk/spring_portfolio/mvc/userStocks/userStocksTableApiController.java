@@ -374,7 +374,7 @@ class UserStocksTableService implements UserDetailsService {
         // Update balance in the person table
         com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
         String uid = person.getUid();
-        Bank bank = bankJpaRepository.findByUsername(uid);
+        Bank bank = bankJpaRepository.findByUid(uid);
         bank.setBalance(Double.parseDouble(user.getBalance()), "stocks");
         bankJpaRepository.save(bank);
     }
@@ -440,7 +440,7 @@ class UserStocksTableService implements UserDetailsService {
 
         com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
         String uid = person.getUid();
-        Bank bank = bankJpaRepository.findByUsername(uid);
+        Bank bank = bankJpaRepository.findByUid(uid);
         bankJpaRepository.save(bank);
     }
 
@@ -534,7 +534,7 @@ public void simulateStockValueChange(String username, List<UserStockInfo> stocks
     // Ensure the updated value is saved in the person table as well
     com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
     String uid = person.getUid();
-    Bank bank = bankJpaRepository.findByUsername(uid);
+    Bank bank = bankJpaRepository.findByUid(uid);
     bank.setBalance(Double.parseDouble(user.getBalance()), "stocks");
     bankJpaRepository.save(bank);
 }

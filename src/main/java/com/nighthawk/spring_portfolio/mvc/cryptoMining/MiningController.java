@@ -98,7 +98,7 @@ public class MiningController {
 
             // Find person by UID with detailed logging
             Person person = personRepository.findByUid(uid);
-            Bank bank = bankRepository.findByUsername(uid);
+            Bank bank = bankRepository.findByUid(uid);
             
             if (person == null) {
                 throw new RuntimeException("Person not found for UID: " + uid);

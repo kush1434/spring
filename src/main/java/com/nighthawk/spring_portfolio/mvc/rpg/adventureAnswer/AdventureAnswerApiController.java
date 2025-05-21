@@ -131,7 +131,7 @@ public class AdventureAnswerApiController {
         
         Person person = personOpt.get();
         String uid = person.getUid();
-        Bank bank = bankJpaRepository.findByUsername(uid);
+        Bank bank = bankJpaRepository.findByUid(uid);
         AdventureQuestion question = questionOpt.get();
         AdventureChoice choice = choiceOpt.get();
     
@@ -216,7 +216,7 @@ public class AdventureAnswerApiController {
         Optional<Person> optional = personJpaRepository.findById(personid);
         Person personOpt = optional.get(); // get the person object from optional
         String uid = personOpt.getUid();
-        Bank bank = bankJpaRepository.findByUsername(uid);
+        Bank bank = bankJpaRepository.findByUid(uid);
 
         // retrieve the balance of the person
         Double balance = bank.getBalance();
@@ -244,7 +244,7 @@ public class AdventureAnswerApiController {
         AdventureQuestion question = questionOpt.get();
         Person person = personOpt.get();
         String uid = person.getUid();
-        Bank bank = bankJpaRepository.findByUsername(uid);
+        Bank bank = bankJpaRepository.findByUid(uid);
         AdventureChoice choice = choiceOpt.get();
 
         // log the question for debugging

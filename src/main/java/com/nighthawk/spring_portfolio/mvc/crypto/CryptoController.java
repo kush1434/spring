@@ -102,7 +102,7 @@ public class CryptoController {
     
         // Fetch user
         Person person = personRepository.findByEmail(email);
-        Bank bank = bankRepository.findByUsername(personRepository.findByEmail(email).getUid());
+        Bank bank = bankRepository.findByUid(personRepository.findByEmail(email).getUid());
         if (person == null) {
             return ResponseEntity.badRequest().body("User not found");
         }
@@ -206,7 +206,7 @@ public class CryptoController {
     
         // Fetch user
         Person person = personRepository.findByEmail(email);
-        Bank bank = bankRepository.findByUsername(personRepository.findByEmail(email).getUid());
+        Bank bank = bankRepository.findByUid(personRepository.findByEmail(email).getUid());
         if (person == null) {
             return ResponseEntity.badRequest().body("User not found");
         }

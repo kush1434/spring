@@ -48,7 +48,7 @@ public class DiceApiController {
             
             // Find user and bank account
             Person person = personJpaRepository.findByUid(uid);
-            Bank bank = bankJpaRepository.findByUsername(uid);
+            Bank bank = bankJpaRepository.findByUid(uid);
             
             if (person == null || bank == null) {
                 LOGGER.warning("Person or bank account not found for uid: " + uid);

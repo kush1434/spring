@@ -41,7 +41,7 @@ public class BlackjackApiController {
             double betAmount = Double.parseDouble(request.get("betAmount").toString());
 
             Person person = personJpaRepository.findByUid(uid);
-            Bank bank = bankJpaRepository.findByUsername(uid);
+            Bank bank = bankJpaRepository.findByUid(uid);
             
             if (person == null || bank == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -84,7 +84,7 @@ public class BlackjackApiController {
         try {
             String uid = request.get("uid").toString();
             Person person = personJpaRepository.findByUid(uid);
-            Bank bank = bankJpaRepository.findByUsername(uid);
+            Bank bank = bankJpaRepository.findByUid(uid);
 
             if (person == null || bank == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Person or bank account not found");
@@ -152,7 +152,7 @@ public class BlackjackApiController {
         try {
             String uid = request.get("uid").toString();
             Person person = personJpaRepository.findByUid(uid);
-            Bank bank = bankJpaRepository.findByUsername(uid);
+            Bank bank = bankJpaRepository.findByUid(uid);
 
             if (person == null || bank == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Person or bank account not found");
