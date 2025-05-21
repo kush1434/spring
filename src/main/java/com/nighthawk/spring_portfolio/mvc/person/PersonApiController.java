@@ -177,13 +177,10 @@ public class PersonApiController {
             return new ResponseEntity<>(personDto.getDob() + " error; try MM-dd-yyyy", HttpStatus.BAD_REQUEST);
         }
         // A person object WITHOUT ID will create a new record in the database
-        String startingBalance = "100000";
-        Person person = new Person(personDto.getEmail(), personDto.getUid(),personDto.getPassword(),personDto.getSid(), personDto.getName(), dob, "/images/default.png", startingBalance, true, personDetailsService.findRole("USER"));
+        Person person = new Person(personDto.getEmail(), personDto.getUid(),personDto.getPassword(),personDto.getSid(), personDto.getName(), dob, "/images/default.png", "0", true, personDetailsService.findRole("USER"));
 
         personDetailsService.save(person);
 
-        userStocksTable userStocks = new userStocksTable(null, "BTC", "1000", person.getEmail(), person, false, true, "");
-        userStocksRepository.save(userStocks);
 
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.APPLICATION_JSON);
