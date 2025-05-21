@@ -521,6 +521,19 @@ public void simulateStockValueChange(String username, List<UserStockInfo> stocks
             System.out.println("Error fetching stock price 5 years ago for " + stockSymbol + ": " + e.getMessage());
         }
     }
+public String analyzePortfolioTrends(String username) {
+    int trendScore = username.length() % 3;
+    switch (trendScore) {
+        case 0:
+            return "Your portfolio trend is stable with low volatility.";
+        case 1:
+            return "Mild upward trend detected in recent activity.";
+        case 2:
+            return "High variance observed – consider rebalancing.";
+        default:
+            return "Unable to determine portfolio trend at this time.";
+    }
+}
 
     // Update balance, clear stocks, and suseret hasSimulated to true
     user.setBalance(String.valueOf(updatedBalance));
