@@ -249,7 +249,6 @@ public class PersonApiController {
             personDto.setPassword(person.getPassword()); // Optional: You may want to exclude passwords for security reasons
             personDto.setName(person.getName());
             personDto.setPfp(person.getPfp());
-            personDto.setBalance(Double.parseDouble(person.getBalance())); // Assuming balance is stored as a String
             personDto.setKasmServerNeeded(person.getKasmServerNeeded());
             personDtos.add(personDto);
         }
@@ -440,7 +439,7 @@ public class PersonApiController {
     //         Map<String, Object> response = new HashMap<>();
     //         response.put("id", person.getId());
     //         response.put("name", person.getName());
-    //         response.put("balance", person.getBalance()); // Replace with actual logic if needed
+    //         response.put("balance", person.getBanks().getBalance()); // Replace with actual logic if needed
 
     //         return new ResponseEntity<>(response, HttpStatus.OK);
     //     }

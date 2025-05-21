@@ -244,7 +244,7 @@ public class Person implements Comparable<Person> {
      * @param name, a String
      * @param dob, a Date
      */
-    public Person(String email, String uid, String password, String sid, String name, String pfp, String balance,  Boolean kasmServerNeeded, PersonRole role) {
+    public Person(String email, String uid, String password, String sid, String name, String pfp, Boolean kasmServerNeeded, PersonRole role) {
         this.email = email;
         this.uid = uid;
         this.password = password;
@@ -270,9 +270,9 @@ public class Person implements Comparable<Person> {
      * @param dob
      * @return Person
      */
-    public static Person createPerson(String name, String email, String uid, String password, String sid, Boolean kasmServerNeeded, String balance,  List<String> asList) {
+    public static Person createPerson(String name, String email, String uid, String password, String sid, Boolean kasmServerNeeded, List<String> asList) {
         // By default, Spring Security expects roles to have a "ROLE_" prefix.
-        return createPerson(name, email, uid, password, sid, kasmServerNeeded, balance, Arrays.asList("ROLE_USER", "ROLE_STUDENT"));
+        return createPerson(name, email, uid, password, sid, kasmServerNeeded, Arrays.asList("ROLE_USER", "ROLE_STUDENT"));
     }
 
 
@@ -281,7 +281,7 @@ public class Person implements Comparable<Person> {
      * 
      * @param roles
      */
-    public static Person createPerson(String name, String uid,  String email, String password, String sid,  String pfp, Boolean kasmServerNeeded, String balance, List<String> roleNames) {
+    public static Person createPerson(String name, String uid,  String email, String password, String sid,  String pfp, Boolean kasmServerNeeded, List<String> roleNames) {
         Person person = new Person();
         person.setName(name);
         person.setUid(uid);
@@ -302,7 +302,7 @@ public class Person implements Comparable<Person> {
     }
     
 
-    private static Person createPerson(String name, String email, String uid, String password, Boolean kasmServerNeeded, String balance,  List<String> asList) {
+    private static Person createPerson(String name, String email, String uid, String password, Boolean kasmServerNeeded, List<String> asList) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     
@@ -389,7 +389,7 @@ public class Person implements Comparable<Person> {
                 Map.entry("password", adminPassword),
                 Map.entry("sid", "1"),
                 Map.entry("pfp", "/images/toby.png"),
-                Map.entry("kasmServerNeeded", true)
+                Map.entry("kasmServerNeeded", true),
                 Map.entry("roles", Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER", "ROLE_TEACHER")),
                 Map.entry("stocks", "BTC,ETH")
             ),

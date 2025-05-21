@@ -41,12 +41,6 @@ public class MiningService {
     @Autowired
     private BankJpaRepository bankRepository;
 
-    @Autowired
-    private CryptocurrencyRepository cryptocurrencyRepository;
-
-    @Autowired
-    private CryptoBalanceRepository cryptoBalanceRepository;
-
     // Fine-tune constants
     public static final double HASH_TO_BTC_RATE = 0.0001; // Current rate
     public static final double DIFFICULTY_FACTOR = 1.0;

@@ -242,6 +242,8 @@ public class MiningController {
             
             // Get user's crypto balance
             Person person = user.getPerson();
+            String uid = person.getUid();
+            Bank bank = bankRepository.findByUid(uid);
             double currentBalance = bank.getBalance();
             
             if (currentBalance < gpu.getPrice() * quantity) {
@@ -592,6 +594,8 @@ public class MiningController {
             
             // Get user's crypto balance
             Person person = user.getPerson();
+            String uid = person.getUid();
+            Bank bank = bankRepository.findByUid(uid);
             double currentBalance = bank.getBalance();
             
             Map<String, Object> status = new HashMap<>();
@@ -738,8 +742,11 @@ public class MiningController {
 
             // Update user's balance using Person with source
             Person person = user.getPerson();
+            String uid = person.getUid();
+            Bank bank = bankRepository.findByUid(uid);
             double currentBalance = bank.getBalance();
-            person.setBalance(currentBalance + sellPrice, "cryptomining");
+            double newBalance = currentBalance - gpu.getPrice() * quantityToSell;
+            bank.setBalance(currentBalance + sellPrice, "cryptomining");
             personRepository.save(person);
             bankRepository.save(bank);
 
@@ -798,6 +805,8 @@ public class MiningController {
 
             // Update user's balance using Person with source
             Person person = user.getPerson();
+            String uid = person.getUid();
+            Bank bank = bankRepository.findByUid(uid);
             double currentBalance = bank.getBalance();
             double newBalance = currentBalance + totalSellPrice;
             bank.setBalance(newBalance, "cryptomining");
