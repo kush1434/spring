@@ -274,11 +274,14 @@ public class BankApiController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    // Add this method to your existing BankApiController class
-// Place it after your other bulk endpoints
-
     @DeleteMapping("/bulk/clear")
-    public ResponseEntity<?> clearTable() {
+    public ResponseEntity<?> clearTable(HttpServletRequest request) {
+        // Check for admin authentication
+        String role = (String) request.getAttribute("role");
+        if (role == null || !role.equals("ADMIN")) {
+            return new ResponseEntity<>("Unauthorized - Admin access required", HttpStatus.UNAUTHORIZED);
+        }
+
         try {
             // Delete all records
             bankJpaRepository.deleteAll();
