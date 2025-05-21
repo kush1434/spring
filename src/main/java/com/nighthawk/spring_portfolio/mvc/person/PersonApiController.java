@@ -157,7 +157,6 @@ public class PersonApiController {
         private String name;
         private String dob;
         private String pfp;
-        private double balance;
         private Boolean kasmServerNeeded; 
     }
 
@@ -368,22 +367,22 @@ public class PersonApiController {
      * @param id The ID of the Person entity whose balance is to be fetched.
      * @return A ResponseEntity containing the balance if found, or a NOT_FOUND status if the person does not exist.
      */
-    @GetMapping("/person/{id}/balance")
-    public ResponseEntity<Object> getBalance(@PathVariable long id) {
-        Optional<Person> optional = repository.findById(id);
-        if (optional.isPresent()) {
-            Person person = optional.get();
+    // @GetMapping("/person/{id}/balance")
+    // public ResponseEntity<Object> getBalance(@PathVariable long id) {
+    //     Optional<Person> optional = repository.findById(id);
+    //     if (optional.isPresent()) {
+    //         Person person = optional.get();
 
-        // Assuming there is a getBalance() method or a balance field in Person
-            Map<String, Object> response = new HashMap<>();
-            response.put("id", person.getId());
-            response.put("name", person.getName());
-            response.put("balance", person.getBalance()); // Replace with actual logic if needed
+    //     // Assuming there is a getBalance() method or a balance field in Person
+    //         Map<String, Object> response = new HashMap<>();
+    //         response.put("id", person.getId());
+    //         response.put("name", person.getName());
+    //         response.put("balance", person.getBalance()); // Replace with actual logic if needed
 
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }
-        return new ResponseEntity<>("Person not found", HttpStatus.NOT_FOUND);
-    }
+    //         return new ResponseEntity<>(response, HttpStatus.OK);
+    //     }
+    //     return new ResponseEntity<>("Person not found", HttpStatus.NOT_FOUND);
+    // }
 
     /**
      * Adds stats to the Person table

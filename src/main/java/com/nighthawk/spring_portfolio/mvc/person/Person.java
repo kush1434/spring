@@ -517,11 +517,13 @@ public class Person implements Comparable<Person> {
                 (String) data.get("dob"),
                 (List<String>) data.get("roles")
             );
-    
+            
+            
             // Create userStocksTable and set the one-to-one relationship
             userStocksTable stock = new userStocksTable(
                 null,
                 (String) data.get("stocks"),
+                0,
                 person.getEmail(),
                 person,
                 false,
