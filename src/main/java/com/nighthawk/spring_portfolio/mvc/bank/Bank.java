@@ -101,14 +101,11 @@ public class Bank {
     
     private void initializeNpcProgress() {
         this.npcProgress.put("Stock-NPC", false);
-        this.npcProgress.put("Crypto-NPC", false);
-        this.npcProgress.put("Casino-NPC", false);
-        this.npcProgress.put("Investor", false);
-        this.npcProgress.put("Market Computer", false);
-        this.npcProgress.put("Schwab", false);
         this.npcProgress.put("Fidelity", false);
+        this.npcProgress.put("Schwab", false);
+        this.npcProgress.put("Casino-NPC", false);
+        this.npcProgress.put("Crypto-NPC", false);
         this.npcProgress.put("Bank-NPC", false);
-        this.npcProgress.put("Pilot", false);
     }
     
     private void initializeFeatureImportance() {

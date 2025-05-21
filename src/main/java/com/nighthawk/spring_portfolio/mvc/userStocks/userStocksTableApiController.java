@@ -536,6 +536,7 @@ public void simulateStockValueChange(String username, List<UserStockInfo> stocks
     String uid = person.getUid();
     Bank bank = bankJpaRepository.findByUid(uid);
     bank.setBalance(Double.parseDouble(user.getBalance()), "stocks");
+    bank.getNpcProgress().put("Stock-NPC", true);
     bankJpaRepository.save(bank);
 }
 

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
-
+import java.util.LinkedHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -225,14 +225,15 @@ public class BankApiController {
     }
 
     @GetMapping("/{personId}/npcProgress")
-    public ResponseEntity<Map<String, Boolean>> getNpcProgress(@PathVariable Long personId) {
+    public ResponseEntity<LinkedHashMap<String, Boolean>> getNpcProgress(@PathVariable Long personId) {
         try {
             Bank bank = bankService.findByPersonId(personId);
-            return ResponseEntity.ok(bank.getNpcProgress());
+            return ResponseEntity.ok((LinkedHashMap<String, Boolean>) bank.getNpcProgress());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
+
 
     
 }
