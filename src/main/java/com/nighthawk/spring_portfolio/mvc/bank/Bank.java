@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.LinkedHashMap;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
@@ -68,6 +69,11 @@ public class Bank {
     @Column(columnDefinition = "jsonb")
     private Map<String, Double> featureImportance = new HashMap<>();
 
+    // Track NPC progress
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Boolean> npcProgress = new LinkedHashMap<>();
+
     public Bank(Person person, double loanAmount) {
         this.person = person;
         this.username = person.getName();
@@ -76,6 +82,8 @@ public class Bank {
 
         this.profitMap = new HashMap<>();
         this.featureImportance = new HashMap<>();
+        this.npcProgress = new LinkedHashMap<>();
+        initializeNpcProgress();
         initializeFeatureImportance();
     }
     
@@ -87,6 +95,18 @@ public class Bank {
         if (person != null) {
             this.username = person.getName();
         }
+    }
+    
+    private void initializeNpcProgress() {
+        this.npcProgress.put("Stock-NPC", false);
+        this.npcProgress.put("Crypto-NPC", false);
+        this.npcProgress.put("Casino-NPC", false);
+        this.npcProgress.put("Investor", false);
+        this.npcProgress.put("Market Computer", false);
+        this.npcProgress.put("Schwab", false);
+        this.npcProgress.put("Fidelity", false);
+        this.npcProgress.put("Bank-NPC", false);
+        this.npcProgress.put("Pilot", false);
     }
     
     private void initializeFeatureImportance() {

@@ -223,6 +223,18 @@ public class BankApiController {
         bankJpaRepository.saveAll(allBanks);
         return "Applied 5% interest to all loan amounts.";
     }
+
+    @GetMapping("/{personId}/npcProgress")
+    public ResponseEntity<Map<String, Boolean>> getNpcProgress(@PathVariable Long personId) {
+        try {
+            Bank bank = bankService.findByPersonId(personId);
+            return ResponseEntity.ok(bank.getNpcProgress());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    
 }
 
 @Data
