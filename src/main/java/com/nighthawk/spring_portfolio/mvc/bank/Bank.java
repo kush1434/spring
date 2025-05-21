@@ -76,11 +76,11 @@ public class Bank {
     @Column(columnDefinition = "jsonb")
     private Map<String, Boolean> npcProgress = new LinkedHashMap<>();
 
-    public Bank(Person person, double loanAmount) {
+    public Bank(Person person) {
         this.person = person;
         this.username = person.getName();
         this.uid = person.getUid();
-        this.loanAmount = loanAmount;
+        this.loanAmount = 0.0; // Default to 0
         this.balance = 100000.0;
         this.profitMap = new HashMap<>();
         this.featureImportance = new HashMap<>();
@@ -426,7 +426,7 @@ public class Bank {
         ArrayList<Bank> bankList = new ArrayList<>();
 
         for (Person person : persons) {
-            Bank bank = new Bank(person, 0);
+            Bank bank = new Bank(person);
             bank.assessRiskUsingML(); // Set initial rate based on ML model
             bankList.add(bank);
         }

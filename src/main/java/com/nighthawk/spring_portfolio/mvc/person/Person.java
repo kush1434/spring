@@ -274,7 +274,7 @@ public class Person implements Comparable<Person> {
         this.timeEntries = new Tinkle(this, "");
         
         // Create a Bank for this person
-        this.banks = new Bank(this, 0);
+        this.banks = new Bank(this);
     }
 
 
@@ -318,7 +318,7 @@ public class Person implements Comparable<Person> {
             roles.add(role);
         }
         person.setRoles(roles);
-        person.setBanks(new Bank(person, 0));
+        person.setBanks(new Bank(person));
 
         return person;
     }
@@ -336,7 +336,7 @@ public class Person implements Comparable<Person> {
     @PostPersist
     private void ensureBankExists() {
         if (this.banks == null) {
-            this.banks = new Bank(this, 0);
+            this.banks = new Bank(this);
         }
     }
 

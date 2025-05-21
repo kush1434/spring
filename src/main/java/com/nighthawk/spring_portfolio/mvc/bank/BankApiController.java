@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -233,7 +234,178 @@ public class BankApiController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
+    
+    // Extract all bank accounts data into DTOs
+    @GetMapping("/bulk/extract")
+    public ResponseEntity<List<BankDto>> bulkExtract() {
+        try {
+            // Fetch all Bank entries from the database
+            List<Bank> bankList = bankJpaRepository.findAll();
+            
+            // Map Bank entities to BankDto objects
+            List<BankDto> bankDtos = new ArrayList<>();
+            for (Bank bank : bankList) {
+                BankDto bankDto = new BankDto();
+                bankDto.setId(bank.getId());
+                bankDto.setUsername(bank.getUsername());
+                bankDto.setUid(bank.getUid());
+                bankDto.setBalance(bank.getBalance());
+                bankDto.setLoanAmount(bank.getLoanAmount());
+                bankDto.setDailyInterestRate(bank.getDailyInterestRate());
+                bankDto.setRiskCategory(bank.getRiskCategory());
+                
+                // Add person ID if available
+                if (bank.getPerson() != null) {
+                    bankDto.setPersonId(bank.getPerson().getId());
+                }
+                
+                bankDtos.add(bankDto);
+            }
+            
+            // Return the list of BankDto objects
+            return new ResponseEntity<>(bankDtos, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    // Bulk create/update bank accounts
+    @PostMapping("/bulk/create")
+    public ResponseEntity<Object> bulkCreateBanks(@RequestBody List<BankDto> bankDtos) {
+        List<String> createdBanks = new ArrayList<>();
+        List<String> updatedBanks = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
 
+        for (BankDto bankDto : bankDtos) {
+            try {
+                // If ID is provided, try to find existing bank
+                Bank bank = null;
+                
+                if (bankDto.getId() != null) {
+                    bank = bankJpaRepository.findById(bankDto.getId()).orElse(null);
+                } else if (bankDto.getPersonId() != null) {
+                    // Otherwise try to find by person ID
+                    bank = bankJpaRepository.findByPersonId(bankDto.getPersonId());
+                } else if (bankDto.getUsername() != null) {
+                    // Or by username
+                    bank = bankJpaRepository.findByUsername(bankDto.getUsername());
+                }
+                
+                if (bank != null) {
+                    // Update existing bank
+                    if (bankDto.getBalance() > 0) {
+                        bank.setBalance(bankDto.getBalance(), "bulk_update");
+                    }
+                    
+                    if (bankDto.getLoanAmount() >= 0) {
+                        bank.setLoanAmount(bankDto.getLoanAmount());
+                    }
+                    
+                    if (bankDto.getDailyInterestRate() > 0) {
+                        bank.setDailyInterestRate(bankDto.getDailyInterestRate());
+                    }
+                    
+                    bankJpaRepository.save(bank);
+                    updatedBanks.add(bank.getUsername() != null ? bank.getUsername() : "Bank ID: " + bank.getId());
+                } else if (bankDto.getPersonId() != null) {
+                    // Create new bank account if person exists
+                    Person person = personJpaRepository.findById(bankDto.getPersonId()).orElse(null);
+                    
+                    if (person != null) {
+                        // Create new bank account using the modified constructor
+                        bank = new Bank(person);
+                        
+                        // Set loan amount if provided
+                        if (bankDto.getLoanAmount() >= 0) {
+                            bank.setLoanAmount(bankDto.getLoanAmount());
+                        }
+                        
+                        if (bankDto.getBalance() > 0) {
+                            bank.setBalance(bankDto.getBalance(), "bulk_create");
+                        }
+                        
+                        if (bankDto.getDailyInterestRate() > 0) {
+                            bank.setDailyInterestRate(bankDto.getDailyInterestRate());
+                        }
+                        
+                        bank.assessRiskUsingML();
+                        bankJpaRepository.save(bank);
+                        createdBanks.add(bank.getUsername());
+                    } else {
+                        errors.add("Person not found with ID: " + bankDto.getPersonId());
+                    }
+                } else if (bankDto.getUsername() != null) {
+                    // Try to find person by username (name)
+                    Person person = personJpaRepository.findByName(bankDto.getUsername());
+                    
+                    if (person != null) {
+                        // Create new bank account
+                        bank = new Bank(person);
+                        
+                        // Set properties if provided
+                        if (bankDto.getLoanAmount() >= 0) {
+                            bank.setLoanAmount(bankDto.getLoanAmount());
+                        }
+                        
+                        if (bankDto.getBalance() > 0) {
+                            bank.setBalance(bankDto.getBalance(), "bulk_create");
+                        }
+                        
+                        if (bankDto.getDailyInterestRate() > 0) {
+                            bank.setDailyInterestRate(bankDto.getDailyInterestRate());
+                        }
+                        
+                        bank.assessRiskUsingML();
+                        bankJpaRepository.save(bank);
+                        createdBanks.add(bank.getUsername());
+                    } else {
+                        errors.add("Person not found with username: " + bankDto.getUsername());
+                    }
+                } else if (bankDto.getUid() != null) {
+                    // Try to find person by UID
+                    Person person = personJpaRepository.findByUid(bankDto.getUid());
+                    
+                    if (person != null) {
+                        // Create new bank account
+                        bank = new Bank(person);
+                        
+                        // Set properties if provided
+                        if (bankDto.getLoanAmount() >= 0) {
+                            bank.setLoanAmount(bankDto.getLoanAmount());
+                        }
+                        
+                        if (bankDto.getBalance() > 0) {
+                            bank.setBalance(bankDto.getBalance(), "bulk_create");
+                        }
+                        
+                        if (bankDto.getDailyInterestRate() > 0) {
+                            bank.setDailyInterestRate(bankDto.getDailyInterestRate());
+                        }
+                        
+                        bank.assessRiskUsingML();
+                        bankJpaRepository.save(bank);
+                        createdBanks.add(bank.getUsername());
+                    } else {
+                        errors.add("Person not found with UID: " + bankDto.getUid());
+                    }
+                } else {
+                    errors.add("Cannot create bank account: missing identification information (personId, username, or uid)");
+                }
+            } catch (Exception e) {
+                errors.add("Exception for bank: " + 
+                          (bankDto.getUsername() != null ? bankDto.getUsername() : "ID: " + bankDto.getId()) + 
+                          " - " + e.getMessage());
+            }
+        }
+
+        // Prepare the response
+        Map<String, Object> response = new HashMap<>();
+        response.put("created", createdBanks);
+        response.put("updated", updatedBanks);
+        response.put("errors", errors);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
     
 }
@@ -262,4 +434,18 @@ class LeaderboardEntry {
     private Long userId;
     private String username;
     private double balance;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class BankDto {
+    private Long id;
+    private Long personId;
+    private String username;
+    private String uid;
+    private double balance;
+    private double loanAmount;
+    private double dailyInterestRate;
+    private int riskCategory;
 }
