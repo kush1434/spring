@@ -315,13 +315,7 @@ public class Person implements Comparable<Person> {
     /** Custom getter to return age from dob attribute
      * @return int, the age of the person
     */
-    public int getAge() {
-        if (this.dob != null) {
-            LocalDate birthDay = this.dob.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            return Period.between(birthDay, LocalDate.now()).getYears();
-        }
-        return -1;
-    }
+
 
 
 //////////////////////////////////////////////////////////////////////////////////
