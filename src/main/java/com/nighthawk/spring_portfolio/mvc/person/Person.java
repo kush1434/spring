@@ -318,7 +318,7 @@ public class Person implements Comparable<Person> {
             roles.add(role);
         }
         person.setRoles(roles);
-        person.setBanks(new Bank(person));
+        person.setBanks(null);
 
         return person;
     }
@@ -328,17 +328,6 @@ public class Person implements Comparable<Person> {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     
-    
-    /**
-     * JPA lifecycle hook to ensure a Bank is created after a Person is persisted
-     * if one doesn't already exist
-     */
-    @PostPersist
-    private void ensureBankExists() {
-        if (this.banks == null) {
-            this.banks = new Bank(this);
-        }
-    }
 
 
 //////////////////////////////////////////////////////////////////////////////////

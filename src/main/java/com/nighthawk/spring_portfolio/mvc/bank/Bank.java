@@ -78,6 +78,7 @@ public class Bank {
 
     public Bank(Person person) {
         this.person = person;
+        this.person.banks = this;
         this.username = person.getName();
         this.uid = person.getUid();
         this.loanAmount = 0.0; // Default to 0
