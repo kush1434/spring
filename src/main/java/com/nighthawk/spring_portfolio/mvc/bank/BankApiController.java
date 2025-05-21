@@ -300,7 +300,7 @@ public class BankApiController {
                 if (bank != null) {
                     // Update existing bank
                     if (bankDto.getBalance() > 0) {
-                        bank.setBalance(bankDto.getBalance(), "bulk_update");
+                        bank.setBalance(bankDto.getBalance());
                     }
                     
                     if (bankDto.getLoanAmount() >= 0) {
@@ -327,7 +327,7 @@ public class BankApiController {
                         }
                         
                         if (bankDto.getBalance() > 0) {
-                            bank.setBalance(bankDto.getBalance(), "bulk_create");
+                            bank.setBalance(bankDto.getBalance());
                         }
                         
                         if (bankDto.getDailyInterestRate() > 0) {
@@ -354,7 +354,7 @@ public class BankApiController {
                         }
                         
                         if (bankDto.getBalance() > 0) {
-                            bank.setBalance(bankDto.getBalance(), "bulk_create");
+                            bank.setBalance(bankDto.getBalance());
                         }
                         
                         if (bankDto.getDailyInterestRate() > 0) {
@@ -381,7 +381,7 @@ public class BankApiController {
                         }
                         
                         if (bankDto.getBalance() > 0) {
-                            bank.setBalance(bankDto.getBalance(), "bulk_create");
+                            bank.setBalance(bankDto.getBalance());
                         }
                         
                         if (bankDto.getDailyInterestRate() > 0) {
