@@ -81,7 +81,7 @@ public class Bank {
         this.username = person.getName();
         this.uid = person.getUid();
         this.loanAmount = loanAmount;
-
+        this.balance = 100000.0;
         this.profitMap = new HashMap<>();
         this.featureImportance = new HashMap<>();
         this.npcProgress = new LinkedHashMap<>();
