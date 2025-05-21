@@ -160,7 +160,6 @@ public class Person implements Comparable<Person> {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean kasmServerNeeded = false;
 
-
     @Column(nullable=true)
     private String sid;
 
@@ -235,7 +234,6 @@ public class Person implements Comparable<Person> {
      * Relationship with Bank
      */
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
-    @JsonIgnore
     private Bank banks;
 
 
