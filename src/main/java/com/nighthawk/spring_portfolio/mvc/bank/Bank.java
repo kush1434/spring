@@ -100,7 +100,7 @@ public class Bank {
     }
     
     private void initializeNpcProgress() {
-        this.npcProgress.put("Stock-NPC", false);
+        this.npcProgress.put("Stock-NPC", true);
         this.npcProgress.put("Fidelity", false);
         this.npcProgress.put("Schwab", false);
         this.npcProgress.put("Casino-NPC", false);

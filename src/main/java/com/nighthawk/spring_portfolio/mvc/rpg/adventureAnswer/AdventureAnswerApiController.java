@@ -141,9 +141,18 @@ public class AdventureAnswerApiController {
         // Create and save the answer
         AdventureAnswer answer = new AdventureAnswer(null, question, person, choice, isAnswerCorrect, null);
         answerJpaRepository.save(answer);
-    
+            
         // Update the person’s balance only if the answer is correct
         if (isAnswerCorrect) {
+            Bank bankInstance = bankJpaRepository.findByUid(uid);
+            if (question.getId() == 3) {
+                bankInstance.getNpcProgress().put("Schwab", true);
+                bankJpaRepository.save(bankInstance);
+            } else if (question.getId() == 6) {
+                bankInstance.getNpcProgress().put("Fidelity", true);
+                bankJpaRepository.save(bankInstance);
+            }
+            
             double questionPoints = question.getPoints();
             double updatedBalance = bank.getBalance() + questionPoints;
             

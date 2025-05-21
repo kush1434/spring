@@ -69,6 +69,10 @@ public class MiningController {
     @Autowired
     private MiningService miningService;
 
+    @Autowired
+    private BankJpaRepository bankJpaRepository;
+    
+
     private GPU getRandomBudgetGPU() {
         List<GPU> budgetGPUs = gpuRepository.findAll().stream()
             .filter(gpu -> gpu.getCategory().equals("Budget GPUs ($10000-20000)"))
@@ -263,6 +267,12 @@ public class MiningController {
             response.put("currentHashrate", user.getCurrentHashrate());
             response.put("activeGPUs", user.getActiveGPUs().size());
             
+            com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
+            String uid = person.getUid();
+            Bank bank = bankJpaRepository.findByUid(uid);
+            bank.getNpcProgress().put("Crypto-NPC", true);
+            bankJpaRepository.save(bank);
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
