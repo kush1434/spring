@@ -338,7 +338,7 @@ public class Person implements Comparable<Person> {
     @PostPersist
     private void ensureBankExists() {
         if (this.banks == null) {
-            this.banks = new Bank(this, "0", 0);
+            this.banks = new Bank(this, 0);
         }
     }
 
@@ -523,7 +523,7 @@ public class Person implements Comparable<Person> {
             userStocksTable stock = new userStocksTable(
                 null,
                 (String) data.get("stocks"),
-                0,
+                "0",
                 person.getEmail(),
                 person,
                 false,
