@@ -27,8 +27,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.bank.Bank;
-import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -48,9 +46,6 @@ public class userStocksTableApiController {
 
     @Autowired
     private PersonJpaRepository personJpaRepository;
-
-    @Autowired
-    private BankJpaRepository bankJpaRepository;
 
     /**
      * API endpoint to add a stock to a user's portfolio.
@@ -82,16 +77,15 @@ public class userStocksTableApiController {
      * @return Success or error message.
      */
     @PostMapping("/removeStock")
-@ResponseBody
-public String removeStock(@RequestBody StockRequest request) {
-    try {
-        userService.removeStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
-        return "Stock removed successfully!";
-    } catch (Exception e) {
-        return "An error occurred: " + e.getMessage();
+    @ResponseBody
+    public String removeStock(@RequestBody StockRequest request) {
+        try {
+            userService.removeStock(request.getUsername(), request.getQuantity(), request.getStockSymbol());
+            return "Stock removed successfully!";
+        } catch (Exception e) {
+            return "An error occurred: " + e.getMessage();
+        }
     }
-}
-
 
     /**
      * API endpoint to get all stocks for a user.
@@ -191,7 +185,6 @@ class StockRequest {
     private String balance;
 }
 
-
 /**
  * DTO for user login request (username and password).
  */
@@ -218,9 +211,6 @@ class UserStocksTableService implements UserDetailsService {
     private PersonJpaRepository personJpaRepository;
 
     @Autowired
-    private BankJpaRepository bankJpaRepository;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
     /**
@@ -231,23 +221,16 @@ class UserStocksTableService implements UserDetailsService {
      * @throws UsernameNotFoundException If user is not found.
      */
     @Override
-public org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    try {
-        Long userId = Long.parseLong(username); // Parse the username as a userId
-        userStocksTable user = userRepository.findById(userId)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        userStocksTable user = userRepository.findByEmail(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found");
+        }
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getPerson_name())
-                .password(user.getPassword())
-                .authorities("USER")
                 .build();
-    } catch (NumberFormatException e) {
-        throw new UsernameNotFoundException("Invalid user ID format");
     }
-}
-
-
 
     /**
      * Fetches the current stock price for a given stock symbol from Yahoo Finance.
@@ -301,8 +284,7 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
      * @return Total value of the portfolio.
      */
     public double calculatePortfolioValue(String username) {
-        userStocksTable user = userRepository.findById(username);
-    userStocksTable user = userRepository.findById(username);
+        userStocksTable user = userRepository.findByEmail(username);
                 if (user == null) {
                     throw new RuntimeException("User not found");
                 }
@@ -332,7 +314,7 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
      * @param stockSymbol The symbol of the stock to add.
      */
     public void addStock(String username, int quantity, String stockSymbol) {
-        userStocksTable user = userRepository.findById(username);
+        userStocksTable user = userRepository.findByEmail(username);
                 if (user == null) {
                     throw new RuntimeException("User not found");
                 }
@@ -383,10 +365,8 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
 
         // Update balance in the person table
         com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
-        String uid = person.getUid();
-        Bank bank = bankJpaRepository.findByUid(uid);
-        bank.setBalance(Double.parseDouble(user.getBalance()), "stocks");
-        bankJpaRepository.save(bank);
+        person.setBalanceString(Double.parseDouble(user.getBalance()), "stocks");
+        personJpaRepository.save(person);
     }
 
     /**
@@ -397,7 +377,7 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
      * @param stockSymbol The symbol of the stock to remove.
      */
     public void removeStock(String username, int quantity, String stockSymbol) {
-        userStocksTable user = userRepository.findById(username);
+        userStocksTable user = userRepository.findByEmail(username);
         if (user == null) {
             throw new RuntimeException("User not found");
         }
@@ -449,9 +429,8 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
         userRepository.save(user);
 
         com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
-        String uid = person.getUid();
-        Bank bank = bankJpaRepository.findByUid(uid);
-        bankJpaRepository.save(bank);
+        person.setBalanceString(Double.parseDouble(user.getBalance()), "stocks");
+        personJpaRepository.save(person);
     }
 
     /**
@@ -461,7 +440,7 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
      * @return A list of UserStockInfo.
      */
     public List<UserStockInfo> getUserStocks(String username) {
-        userStocksTable user = userRepository.findById(username);
+        userStocksTable user = userRepository.findByEmail(username);
         if (user == null) {
             throw new RuntimeException("User not found");
         }
@@ -487,7 +466,7 @@ public org.springframework.security.core.userdetails.UserDetails loadUserByUsern
  */
 public void simulateStockValueChange(String username, List<UserStockInfo> stocks) {
     // Force fetch the latest user data to avoid caching issues
-    userStocksTable user = userRepository.findById(username);
+    userStocksTable user = userRepository.findByEmail(username);
     if (user == null) {
         throw new RuntimeException("User not found");
     }
@@ -532,7 +511,6 @@ public void simulateStockValueChange(String username, List<UserStockInfo> stocks
         }
     }
 
-
     // Update balance, clear stocks, and suseret hasSimulated to true
     user.setBalance(String.valueOf(updatedBalance));
     user.setStonks(""); // Clears all stocks
@@ -544,11 +522,8 @@ public void simulateStockValueChange(String username, List<UserStockInfo> stocks
 
     // Ensure the updated value is saved in the person table as well
     com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
-    String uid = person.getUid();
-    Bank bank = bankJpaRepository.findByUid(uid);
-    bank.setBalance(Double.parseDouble(user.getBalance()), "stocks");
-    bank.getNpcProgress().put("Stock-NPC", true);
-    bankJpaRepository.save(bank);
+    person.setBalanceString(Double.parseDouble(user.getBalance()), "stocks");
+    personJpaRepository.save(person);
 }
 
 
