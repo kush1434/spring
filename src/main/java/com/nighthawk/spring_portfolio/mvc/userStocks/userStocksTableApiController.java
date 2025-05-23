@@ -34,6 +34,10 @@ import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap; // use this instead of HashMap if multithreaded
+
 
 /**
  * Controller class for handling the user stock-related API endpoints.
@@ -45,13 +49,14 @@ public class userStocksTableApiController {
 
     // Injecting the service that handles the core logic for stock management
     @Autowired
+    private BankJpaRepository bankJpaRepository;
+    @Autowired
     private UserStocksTableService userService;
 
     @Autowired
     private PersonJpaRepository personJpaRepository;
 
-    @Autowired
-    private BankJpaRepository bankJpaRepository;
+    
 
     /**
      * API endpoint to add a stock to a user's portfolio.
@@ -208,6 +213,9 @@ class UserLoginRequest {
  */
 @Service
 class UserStocksTableService implements UserDetailsService {
+    @Autowired
+private BankJpaRepository bankJpaRepository;
+
     
     // Injecting necessary repositories
     @Autowired
@@ -218,6 +226,19 @@ class UserStocksTableService implements UserDetailsService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    private static class CachedStockPrice {
+        double price;
+        long timestamp;
+    
+        CachedStockPrice(double price, long timestamp) {
+            this.price = price;
+            this.timestamp = timestamp;
+        }
+    }
+    
+    // Cache map: symbol -> cached price
+    private final Map<String, CachedStockPrice> stockPriceCache = new ConcurrentHashMap<>();
+    
 
     /**
      * Loads user by username for authentication.
@@ -245,44 +266,63 @@ class UserStocksTableService implements UserDetailsService {
      * @return The current stock price.
      */
     public double getCurrentStockPrice(String stockSymbol) {
+        long now = System.currentTimeMillis();
+        long cacheDuration = 60 * 1000; // 1 minute
+    
+        // Check cache
+        if (stockPriceCache.containsKey(stockSymbol)) {
+            CachedStockPrice cached = stockPriceCache.get(stockSymbol);
+            if (now - cached.timestamp < cacheDuration) {
+                return cached.price; // ✅ Use cached price
+            }
+        }
+    
         String url = "https://query1.finance.yahoo.com/v8/finance/chart/" + stockSymbol;
         RestTemplate restTemplate = new RestTemplate();
-        
+    
         HttpHeaders headers = new HttpHeaders();
-        headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0");
+        headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36");
+        headers.set("Accept", "application/json");
+        headers.set("Accept-Language", "en-US,en;q=0.9");
     
         HttpEntity<String> entity = new HttpEntity<>(headers);
         int maxRetries = 3;
         int retryCount = 0;
-        
+    
         while (retryCount < maxRetries) {
             try {
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-                
                 if (response.getStatusCode() == HttpStatus.OK) {
                     JSONObject jsonResponse = new JSONObject(response.getBody());
-                    return jsonResponse.getJSONObject("chart").getJSONArray("result").getJSONObject(0)
-                            .getJSONObject("meta").getDouble("regularMarketPrice");
+                    double price = jsonResponse
+                            .getJSONObject("chart")
+                            .getJSONArray("result")
+                            .getJSONObject(0)
+                            .getJSONObject("meta")
+                            .getDouble("regularMarketPrice");
+    
+                    // ✅ Cache result
+                    stockPriceCache.put(stockSymbol, new CachedStockPrice(price, now));
+                    return price;
                 }
             } catch (HttpClientErrorException.TooManyRequests e) {
                 retryCount++;
                 System.out.println("Rate limited! Retrying... Attempt: " + retryCount);
-                
                 try {
-                    TimeUnit.SECONDS.sleep((long) Math.pow(2, retryCount)); // Exponential backoff
+                    TimeUnit.SECONDS.sleep((long) Math.pow(2, retryCount));
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
-                    throw new RuntimeException("Thread interrupted while waiting to retry API call.");
+                    throw new RuntimeException("Thread interrupted while retrying");
                 }
             } catch (Exception e) {
                 System.out.println("Error fetching stock price: " + e.getMessage());
                 break;
             }
         }
-        
+    
         throw new RuntimeException("Failed to fetch stock price for " + stockSymbol + " after retries.");
     }
-
+    
     /**
      * Calculates the total value of the user's stock portfolio by considering stock prices and quantities.
      * 
