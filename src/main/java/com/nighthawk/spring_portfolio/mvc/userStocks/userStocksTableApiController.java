@@ -295,7 +295,7 @@ class UserStocksTableService implements UserDetailsService {
                     throw new RuntimeException("User not found");
                 }
 
-        double totalValue = Double.parseDouble(user.getBalance());
+        double totalValue = user.getPerson().getBanks().getBalance();
 
         if (user.getStonks() != null && !user.getStonks().isEmpty()) {
             String[] stocks = user.getStonks().split(",");
@@ -334,7 +334,7 @@ class UserStocksTableService implements UserDetailsService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "not enough balance to purchase stock.");
         }
 
-        user.setBalance(String.valueOf(totalValue - totalCost)); // Deduct balance for stock purchase
+        user.getPerson().getBanks().setBalance(totalValue - totalCost); // Deduct balance for stock purchase
 
         // Update the user's stock holdings
         StringBuilder updatedStonks = new StringBuilder();
@@ -372,7 +372,7 @@ class UserStocksTableService implements UserDetailsService {
         // Update balance in the person table
         com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
         Bank bank = person.getBanks();
-        bank.setBalance(user.getBalance(), "stocks");
+        bank.setBalance(user.getPerson().getBanks().getBalance(), "stocks");
         personJpaRepository.save(person);
         bankJpaRepository.save(bank);
 
@@ -433,13 +433,13 @@ class UserStocksTableService implements UserDetailsService {
         }
 
         user.setStonks(updatedStonks.toString());
-        double userBalance = Double.parseDouble(user.getBalance());
-        user.setBalance(String.valueOf(userBalance + totalValue)); // Add back the stock value to balance
+        double userBalance = user.getPerson().getBanks().getBalance();
+        user.getPerson().getBanks().setBalance(userBalance + totalValue); // Add back the stock value to balance
         userRepository.save(user);
 
         com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
         Bank bank = person.getBanks();
-        bank.setBalance(user.getBalance(), "stocks");
+        bank.setBalance(user.getPerson().getBanks().getBalance(), "stocks");
         personJpaRepository.save(person);
         bankJpaRepository.save(bank);
     }
@@ -490,7 +490,7 @@ public void simulateStockValueChange(String username, List<UserStockInfo> stocks
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Simulation has already been completed.");
     }
 
-    double updatedBalance = Double.parseDouble(user.getBalance());
+    double updatedBalance = user.getPerson().getBanks().getBalance();
     RestTemplate restTemplate = new RestTemplate();
 
     for (UserStockInfo stock : stocks) {
@@ -523,7 +523,7 @@ public void simulateStockValueChange(String username, List<UserStockInfo> stocks
     }
 
     // Update balance, clear stocks, and suseret hasSimulated to true
-    user.setBalance(String.valueOf(updatedBalance));
+    user.getPerson().getBanks().setBalance(updatedBalance);
     user.setStonks(""); // Clears all stocks
     user.setHasSimulated(true); //  Ensure hasSimulated is properly set
     userRepository.save(user);
@@ -534,7 +534,7 @@ public void simulateStockValueChange(String username, List<UserStockInfo> stocks
     // Ensure the updated value is saved in the person table as well
     com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
     Bank bank = person.getBanks();
-    bank.setBalance(user.getBalance(), "stocks");
+    bank.setBalance(user.getPerson().getBanks().getBalance(), "stocks");
     personJpaRepository.save(person);
     bankJpaRepository.save(bank);
 }
