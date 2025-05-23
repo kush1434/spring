@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.nighthawk.spring_portfolio.mvc.person.Person;
-import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.bank.Bank;
+import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -18,9 +18,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/casino/mines")
 public class MinesApiController {
-    
+
     @Autowired
-    private PersonJpaRepository personJpaRepository;
+    private BankJpaRepository bankJpaRepository;
+
     private MinesBoard board;
 
     @Data
@@ -46,62 +47,62 @@ public class MinesApiController {
 
     @PostMapping("/winnings")
     public ResponseEntity<Double> calculateWinnings(@RequestBody MinesRequest minesRequest) {
-        Person user = personJpaRepository.findByUid(minesRequest.getUid());
-        if (user == null) {
+        Bank bank = bankJpaRepository.findByUid(minesRequest.getUid());
+        if (bank == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         double betSize = minesRequest.getBet();
         double winnings = board.winnings() * betSize;
-        double updatedBalance = user.getBalanceDouble() + winnings;
-        user.setBalanceString(updatedBalance, "casino");
-        personJpaRepository.save(user);
-        
-        return new ResponseEntity<>(user.getBalanceDouble(), HttpStatus.OK);
+        double updatedBalance = bank.getBalance() + winnings;
+
+        bank.setBalance(updatedBalance, "mines");
+        bankJpaRepository.save(bank);
+
+        return new ResponseEntity<>(updatedBalance, HttpStatus.OK);
     }
 
     @PostMapping("/stakes/{stakes}")
     public ResponseEntity<Double> postStakes(@PathVariable String stakes, @RequestBody MinesRequest minesRequest) {
-        Person user = personJpaRepository.findByUid(minesRequest.getUid());
-        if (user == null) {
+        Bank bank = bankJpaRepository.findByUid(minesRequest.getUid());
+        if (bank == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         double betSize = minesRequest.getBet();
-        double updatedBalance = user.getBalanceDouble() - betSize;
+        double updatedBalance = bank.getBalance() - betSize;
+
         if (updatedBalance < 0) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        user.setBalanceString(updatedBalance, "mines");
-        personJpaRepository.save(user);
+        bank.setBalance(updatedBalance, "mines");
+        bankJpaRepository.save(bank);
+
         board = new MinesBoard(stakes);
-        
-        return new ResponseEntity<>(user.getBalanceDouble(), HttpStatus.OK);
+
+        return new ResponseEntity<>(updatedBalance, HttpStatus.OK);
     }
 
     @GetMapping("/balance/{uid}")
     public ResponseEntity<Double> getBalance(@PathVariable String uid) {
-        Person user = personJpaRepository.findByUid(uid);
-        if (user == null) {
+        Bank bank = bankJpaRepository.findByUid(uid);
+        if (bank == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(user.getBalanceDouble(), HttpStatus.OK);
+        return new ResponseEntity<>(bank.getBalance(), HttpStatus.OK);
     }
 
     @PostMapping("/save")
     public ResponseEntity<Map<String, Object>> handleMinesGame(@RequestBody MinesRequest minesRequest) {
-        // Get user from database
-        Person person = personJpaRepository.findByUid(minesRequest.getUid());
-        if (person == null) {
+        Bank bank = bankJpaRepository.findByUid(minesRequest.getUid());
+        if (bank == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        // Update balance
-        double currentBalance = person.getBalanceDouble();
+        double currentBalance = bank.getBalance();
         double updatedBalance = currentBalance + minesRequest.getBet();
-        
-        // Check for negative balance
+
         if (updatedBalance < 0) {
             return new ResponseEntity<>(
                 Map.of("error", "Insufficient balance"),
@@ -109,11 +110,9 @@ public class MinesApiController {
             );
         }
 
-        // Save updated balance
-        person.setBalanceString(updatedBalance, "mines");
-        personJpaRepository.save(person);
+        bank.setBalance(updatedBalance, "mines");
+        bankJpaRepository.save(bank);
 
-        // Return response
         return new ResponseEntity<>(
             Map.of(
                 "status", "success",

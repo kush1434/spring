@@ -33,6 +33,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.PostPersist;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -158,24 +159,8 @@ public class Person implements Comparable<Person> {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean kasmServerNeeded = false;
 
-
     @Column(nullable=true)
     private String sid;
-    
-    /**
-     * user_stocks and balance describe properties used by the gamify application
-     */
-
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
-    @JsonIgnore
-    private Bank banks;
-
-    public void setName(String name) {
-        this.name = name;
-        if (this.banks != null) {
-            this.banks.setUsername(name);
-        }
-    }
 
     /**
      * stats is used to store JSON for daily stats
@@ -231,10 +216,10 @@ public class Person implements Comparable<Person> {
     @OneToOne(mappedBy = "person", cascade=CascadeType.ALL)
     private Tinkle timeEntries;
 
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
+    private Bank banks;
 
-    /**
-     * user_stocks and balance describe properties used by the gamify application
-     */
+
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "person")
     @JsonIgnore
     private userStocksTable user_stocks;
@@ -256,9 +241,10 @@ public class Person implements Comparable<Person> {
     /** Custom constructor for Person when building a new Person object from an API call
      * @param email, a String
      * @param password, a String
-     * @param name, a String     * @param dob, a Date
+     * @param name, a String
+     * @param dob, a Date
      */
-    public Person(String email, String uid, String password, String sid, String name, String pfp,  Boolean kasmServerNeeded, PersonRole role) {
+    public Person(String email, String uid, String password, String sid, String name, String pfp, Boolean kasmServerNeeded, PersonRole role) {
         this.email = email;
         this.uid = uid;
         this.password = password;
@@ -271,6 +257,9 @@ public class Person implements Comparable<Person> {
 
         this.timeEntries = new Tinkle(this, "");
         this.timeEntries.setPerson(this);
+        
+        // Create a Bank for this person
+        this.banks = null;
     }
 
 
@@ -281,7 +270,7 @@ public class Person implements Comparable<Person> {
      * @param dob
      * @return Person
      */
-    public static Person createPerson(String name, String email, String uid, String password, String sid, Boolean kasmServerNeeded,  List<String> asList) {
+    public static Person createPerson(String name, String email, String uid, String password, String sid, Boolean kasmServerNeeded, List<String> asList) {
         // By default, Spring Security expects roles to have a "ROLE_" prefix.
         return createPerson(name, email, uid, password, sid, kasmServerNeeded, Arrays.asList("ROLE_USER", "ROLE_STUDENT"));
     }
@@ -307,25 +296,26 @@ public class Person implements Comparable<Person> {
             roles.add(role);
         }
         person.setRoles(roles);
-        person.setBanks(new Bank(person, 0));
+        person.setBanks(null);
 
         return person;
     }
     
 
-    private static Person createPerson(String name, String email, String uid, String password, Boolean kasmServerNeeded,  List<String> asList) {
+    private static Person createPerson(String name, String email, String uid, String password, Boolean kasmServerNeeded, List<String> asList) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+    
 
 
 //////////////////////////////////////////////////////////////////////////////////
 /// getter methods
 
 
+    /** Custom getter to return age from dob attribute
+     * @return int, the age of the person
+    */
 
-
-//////////////////////////////////////////////////////////////////////////////////
-/// setter methods
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -477,7 +467,8 @@ public class Person implements Comparable<Person> {
                 (Boolean) data.get("kasmServerNeeded"),
                 (List<String>) data.get("roles")
             );
-    
+            
+            
             // Create userStocksTable and set the one-to-one relationship
             userStocksTable stock = new userStocksTable(
                 null,

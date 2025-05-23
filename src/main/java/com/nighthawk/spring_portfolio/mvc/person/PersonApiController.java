@@ -141,7 +141,6 @@ public class PersonApiController {
         private String password;
         private String name;
         private String pfp;
-        private double balance;
         private Boolean kasmServerNeeded; 
     }
 
@@ -157,7 +156,7 @@ public class PersonApiController {
 
   
         // A person object WITHOUT ID will create a new record in the database
-        Person person = new Person(personDto.getEmail(), personDto.getUid(),personDto.getPassword(),personDto.getSid(), personDto.getName(),  "/images/default.png", "0", true, personDetailsService.findRole("USER"));
+        Person person = new Person(personDto.getEmail(), personDto.getUid(),personDto.getPassword(),personDto.getSid(), personDto.getName(), "/images/default.png", true, personDetailsService.findRole("USER"));
 
         personDetailsService.save(person);
 
@@ -249,7 +248,6 @@ public class PersonApiController {
             personDto.setPassword(person.getPassword()); // Optional: You may want to exclude passwords for security reasons
             personDto.setName(person.getName());
             personDto.setPfp(person.getPfp());
-            personDto.setBalance(Double.parseDouble(person.getBalance())); // Assuming balance is stored as a String
             personDto.setKasmServerNeeded(person.getKasmServerNeeded());
             personDtos.add(personDto);
         }
@@ -423,12 +421,6 @@ public class PersonApiController {
         // Return NOT_FOUND if the person with the given ID does not exist
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-    
-    @GetMapping("/top5bybalance")
-    public ResponseEntity<List<Person>> getTop5ByBalance() {
-        List<Person> top5Users = repository.findTop5ByOrderByBalanceDesc();
-        return new ResponseEntity<>(top5Users, HttpStatus.OK);
-    }
 
     /**
      * Retrieves the balance of a Person entity by its ID.
@@ -436,22 +428,22 @@ public class PersonApiController {
      * @param id The ID of the Person entity whose balance is to be fetched.
      * @return A ResponseEntity containing the balance if found, or a NOT_FOUND status if the person does not exist.
      */
-    @GetMapping("/person/{id}/balance")
-    public ResponseEntity<Object> getBalance(@PathVariable long id) {
-        Optional<Person> optional = repository.findById(id);
-        if (optional.isPresent()) {
-            Person person = optional.get();
+    // @GetMapping("/person/{id}/balance")
+    // public ResponseEntity<Object> getBalance(@PathVariable long id) {
+    //     Optional<Person> optional = repository.findById(id);
+    //     if (optional.isPresent()) {
+    //         Person person = optional.get();
 
-        // Assuming there is a getBalance() method or a balance field in Person
-            Map<String, Object> response = new HashMap<>();
-            response.put("id", person.getId());
-            response.put("name", person.getName());
-            response.put("balance", person.getBalance()); // Replace with actual logic if needed
+    //     // Assuming there is a getBalance() method or a balance field in Person
+    //         Map<String, Object> response = new HashMap<>();
+    //         response.put("id", person.getId());
+    //         response.put("name", person.getName());
+    //         response.put("balance", person.getBanks().getBalance()); // Replace with actual logic if needed
 
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }
-        return new ResponseEntity<>("Person not found", HttpStatus.NOT_FOUND);
-    }
+    //         return new ResponseEntity<>(response, HttpStatus.OK);
+    //     }
+    //     return new ResponseEntity<>("Person not found", HttpStatus.NOT_FOUND);
+    // }
 
     /**
      * Adds stats to the Person table

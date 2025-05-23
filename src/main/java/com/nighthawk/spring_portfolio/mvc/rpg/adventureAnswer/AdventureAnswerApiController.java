@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nighthawk.spring_portfolio.mvc.bank.Bank;
+import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.rpg.adventureChoice.AdventureChoice;
@@ -54,6 +56,8 @@ public class AdventureAnswerApiController {
     private AdventureAnswerJpaRepository answerJpaRepository;
     @Autowired
     private PersonJpaRepository personJpaRepository;
+    @Autowired
+    private BankJpaRepository bankJpaRepository;
     @Autowired
     private AdventureQuestionJpaRepository questionJpaRepository;
     @Autowired
@@ -126,6 +130,8 @@ public class AdventureAnswerApiController {
         }
         
         Person person = personOpt.get();
+        String uid = person.getUid();
+        Bank bank = bankJpaRepository.findByUid(uid);
         AdventureQuestion question = questionOpt.get();
         AdventureChoice choice = choiceOpt.get();
     
@@ -135,14 +141,23 @@ public class AdventureAnswerApiController {
         // Create and save the answer
         AdventureAnswer answer = new AdventureAnswer(null, question, person, choice, isAnswerCorrect, null);
         answerJpaRepository.save(answer);
-    
+            
         // Update the person’s balance only if the answer is correct
         if (isAnswerCorrect) {
-            double questionPoints = question.getPoints();
-            double updatedBalance = person.getBalanceDouble() + questionPoints;
+            Bank bankInstance = bankJpaRepository.findByUid(uid);
+            if (question.getId() == 3) {
+                bankInstance.getNpcProgress().put("Schwab", true);
+                bankJpaRepository.save(bankInstance);
+            } else if (question.getId() == 6) {
+                bankInstance.getNpcProgress().put("Fidelity", true);
+                bankJpaRepository.save(bankInstance);
+            }
             
-            person.setBalanceString(updatedBalance, "adventuregame");
-            personJpaRepository.save(person);
+            double questionPoints = question.getPoints();
+            double updatedBalance = bank.getBalance() + questionPoints;
+            
+            bank.setBalance(updatedBalance, "adventuregame");
+            bankJpaRepository.save(bank);
         }
     
         return ResponseEntity.ok(true);
@@ -209,9 +224,11 @@ public class AdventureAnswerApiController {
         // fetch the person by their id
         Optional<Person> optional = personJpaRepository.findById(personid);
         Person personOpt = optional.get(); // get the person object from optional
+        String uid = personOpt.getUid();
+        Bank bank = bankJpaRepository.findByUid(uid);
 
         // retrieve the balance of the person
-        Double balance = personOpt.getBalanceDouble();
+        Double balance = bank.getBalance();
 
         // return the balance with an ok status
         return new ResponseEntity<>(balance, HttpStatus.OK);
@@ -235,6 +252,8 @@ public class AdventureAnswerApiController {
         // extract question and person objects
         AdventureQuestion question = questionOpt.get();
         Person person = personOpt.get();
+        String uid = person.getUid();
+        Bank bank = bankJpaRepository.findByUid(uid);
         AdventureChoice choice = choiceOpt.get();
 
         // log the question for debugging
@@ -263,9 +282,10 @@ public class AdventureAnswerApiController {
         answerJpaRepository.save(answer); // save the answer to the database
 
         double questionPoints = question.getPoints();
-        double updatedBalance = person.getBalanceDouble() + questionPoints;
-        person.setBalanceString(updatedBalance, "adventure");
+        double updatedBalance = bank.getBalance() + questionPoints;
+        bank.setBalance(updatedBalance, "adventure");
         
+        bankJpaRepository.save(bank);
         personJpaRepository.save(person); // save the updated person object
 
         // return the saved answer with an ok status
@@ -326,8 +346,8 @@ public class AdventureAnswerApiController {
     public List<AdventureLeaderboardDto> getLeaderboard() {
     List<AdventureLeaderboardDto> leaderboardEntries = answerJpaRepository.findTop10PersonsByTotalScore();
     for (AdventureLeaderboardDto entry : leaderboardEntries) {
-        Optional<Person> person = personJpaRepository.findById(entry.getId());
-        String Name = person.isPresent() ? person.get().getName() : "Unknown";
+        Bank bank = bankJpaRepository.findByPersonId(entry.getId());
+        String Name = bank.getUsername();
         entry.setuserName(Name);
     }
     return leaderboardEntries;

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.LinkedHashMap;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
@@ -23,9 +24,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -36,6 +40,8 @@ public class Bank {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
+    private String uid;
 
     @Column(unique = true, nullable = false)
     private String username;
@@ -50,7 +56,7 @@ public class Bank {
     private double loanAmount;
     
     // Add a field for personalized interest rate
-    private double dailyInterestRate = 0.03; // Default 3%
+    private double dailyInterestRate = 5.0; // Default 3%
     
     // Risk category (0=low, 1=medium, 2=high)
     private int riskCategory = 1;
@@ -65,15 +71,42 @@ public class Bank {
     @Column(columnDefinition = "jsonb")
     private Map<String, Double> featureImportance = new HashMap<>();
 
-    public Bank(Person person, double loanAmount) {
-        this.person = person;
-        this.username = person.getName();
-        this.balance = person.getBalanceDouble();
-        this.loanAmount = loanAmount;
+    // Track NPC progress
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Boolean> npcProgress = new LinkedHashMap<>();
 
+    public Bank(Person person) {
+        this.person = person;
+        this.person.setBanks(this);
+        this.username = person.getName();
+        this.uid = person.getUid();
+        this.loanAmount = 0.0; // Default to 0
+        this.balance = 100000.0;
         this.profitMap = new HashMap<>();
         this.featureImportance = new HashMap<>();
+        this.npcProgress = new LinkedHashMap<>();
+        initializeNpcProgress();
         initializeFeatureImportance();
+    }
+    
+    /**
+     * Ensure username and balance are set before persistence
+     */
+    @PrePersist
+    public void prePersist() {
+        if (person != null) {
+            this.username = person.getName();
+        }
+    }
+    
+    private void initializeNpcProgress() {
+        this.npcProgress.put("Stock-NPC", true);
+        this.npcProgress.put("Fidelity", false);
+        this.npcProgress.put("Schwab", false);
+        this.npcProgress.put("Casino-NPC", false);
+        this.npcProgress.put("Crypto-NPC", false);
+        this.npcProgress.put("Bank-NPC", false);
     }
     
     private void initializeFeatureImportance() {
@@ -86,6 +119,17 @@ public class Bank {
         this.featureImportance.put("crypto_activity", -0.28);
         this.featureImportance.put("volatility", 0.15);
         this.featureImportance.put("balance_trend", 0.22);
+    }
+    
+    public double setBalance(double updatedBalance, String source) {
+         // Update the balance as a String
+        Double profit = updatedBalance - this.balance;
+        this.balance = updatedBalance;
+        System.out.println("Profit: " + profit);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String timestamp = dateFormat.format(new Date());
+        updateProfitMap(source, timestamp, profit);
+        return this.balance; // Return the updated balance as a String
     }
     
     public void updateProfitMap(String category, String time, double profit) {
@@ -104,8 +148,7 @@ public class Bank {
 
     public void requestLoan(double loanAmount) {
         this.loanAmount += loanAmount;  // Increase the loan amount
-        double currentBalance = Double.parseDouble(this.person.getBalance());
-        this.person.setBalance(Double.toString(currentBalance+loanAmount));  
+        balance = (balance+loanAmount);  
         balance += loanAmount;   // Add the loan amount to the balance
         
         // Re-assess risk using ML model
@@ -385,7 +428,7 @@ public class Bank {
         ArrayList<Bank> bankList = new ArrayList<>();
 
         for (Person person : persons) {
-            Bank bank = new Bank(person, 0);
+            Bank bank = new Bank(person);
             bank.assessRiskUsingML(); // Set initial rate based on ML model
             bankList.add(bank);
         }
