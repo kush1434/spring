@@ -325,7 +325,7 @@ class UserStocksTableService implements UserDetailsService {
                     throw new RuntimeException("User not found");
                 }
 
-        double totalValue = user.getBalanceDouble();
+        double totalValue = user.getPerson().getBanks().getBalance();
         double stockPrice = getCurrentStockPrice(stockSymbol);
         double totalCost = stockPrice * quantity;
 

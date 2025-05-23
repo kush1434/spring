@@ -473,7 +473,6 @@ public class Person implements Comparable<Person> {
             userStocksTable stock = new userStocksTable(
                 null,
                 (String) data.get("stocks"),
-                "0",
                 person.getEmail(),
                 person,
                 false,

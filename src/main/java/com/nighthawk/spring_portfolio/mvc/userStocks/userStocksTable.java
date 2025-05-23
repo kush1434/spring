@@ -8,6 +8,7 @@ import org.hibernate.annotations.OnDeleteAction;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,7 +30,6 @@ import lombok.Setter;
 @Getter // Lombok annotation to generate getters
 @Setter // Lombok annotation to generate setters
 public class userStocksTable {
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id; // Primary key for the userStocksTable entity
@@ -52,8 +52,6 @@ public class userStocksTable {
     @Column
     private String crypto; // Cryptocurrency ticker symbols (e.g., BTC, ETH)
 
-    @Column
-    private String balance; // Balance for the associated person
     
     @Column
     private boolean hasSimulated;
@@ -64,13 +62,8 @@ public class userStocksTable {
     @Column(columnDefinition = "TEXT")
     private String cryptoHistory; // Stores all crypto purchase histories
 
-    public double getBalanceDouble() {
-        var balance_tmp = getBalance();
-        return Double.parseDouble(balance_tmp);
-    }
-
     // Constructor for initializing a userStocksTable object
-    public userStocksTable(String stonks, String crypto, String balance, String email, Person person, boolean hasSimulated, boolean period1, String cryptoHistory) {
+    public userStocksTable(String stonks, String crypto, String email, Person person, boolean hasSimulated, boolean period1, String cryptoHistory) {
         this.person_name = person.getName();
         this.stonks = stonks;
         this.crypto = crypto;
@@ -79,21 +72,14 @@ public class userStocksTable {
         this.hasSimulated = hasSimulated;
         this.period1 = period1;
         this.cryptoHistory = cryptoHistory;
-        if (person.getBanks() != null) {
-            this.balance = String.valueOf(person.getBanks().getBalance());
-        } else {
-            this.balance = "0.0"; // fallback default balance
-            System.err.println("Warning: Person " + person.getName() + " does not have an associated bank. Defaulting balance to 0.0.");
-        }
     }
 
     // Method to initialize an array of userStocksTable objects for a list of Person entities
     public static userStocksTable[] init(Person[] persons) {
-        String startingBalance = "100000"; // TODO: this was once deleted from Person, I have moved it here to avoid errors but this should probably be stored somewhere else
 
         ArrayList<userStocksTable> stocks = new ArrayList<>();
         for (Person person : persons) {
-            stocks.add(new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", startingBalance, person.getEmail(), person, false, true, ""));
+            stocks.add(new userStocksTable("AAPL,TSLA,AMZN", "BTC,ETH", person.getEmail(), person, false, true, ""));
         }
         return stocks.toArray(new userStocksTable[0]);
     }

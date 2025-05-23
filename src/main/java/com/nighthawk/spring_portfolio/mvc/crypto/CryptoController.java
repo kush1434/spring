@@ -49,7 +49,7 @@ public class CryptoController {
             return ResponseEntity.status(404).body("User balance not found for email: " + email);
         }
     
-        return ResponseEntity.ok("{ \"email\": \"" + email + "\", \"balance\": \"" + userStocks.getBalance() + "\" }");
+        return ResponseEntity.ok("{ \"email\": \"" + email + "\", \"balance\": \"" + userStocks.getPerson().getBanks().getBalance() + "\" }");
     }
     
     @GetMapping("/balanceById")
@@ -60,7 +60,7 @@ public class CryptoController {
             return ResponseEntity.status(404).body("User balance not found for ID: " + id);
         }
 
-        return ResponseEntity.ok("{ \"id\": \"" + id + "\", \"balance\": \"" + userStocks.getBalance() + "\" }");
+        return ResponseEntity.ok("{ \"id\": \"" + id + "\", \"balance\": \"" + userStocks.getPerson().getBanks().getBalance() + "\" }");
     }
     
     @GetMapping("/live")
@@ -141,11 +141,11 @@ public class CryptoController {
     
         userStocksTable userStocks = person.getUser_stocks();
         if (userStocks == null) {
-            userStocks = new userStocksTable("", selectedCrypto.getSymbol() + ":" + cryptoAmount, String.valueOf(updatedBalance), person.getEmail(), person, false, true, "");
+            userStocks = new userStocksTable("", selectedCrypto.getSymbol() + ":" + cryptoAmount, person.getEmail(), person, false, true, "");
         } else {
             String updatedCrypto = addOrUpdateCryptoHoldings(userStocks.getCrypto(), selectedCrypto.getSymbol(), cryptoAmount);
             userStocks.setCrypto(updatedCrypto);
-            userStocks.setBalance(String.valueOf(updatedBalance));
+            userStocks.getPerson().getBanks().setBalance(updatedBalance);
     
             // ✅ **Update transaction history**
         SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm");
@@ -249,7 +249,7 @@ public class CryptoController {
         double updatedBalance = bank.getBalance() + totalValueSold;
         bank.setBalance(updatedBalance, "crypto");
         userStocks.setCrypto(updatedCrypto);
-        userStocks.setBalance(String.valueOf(updatedBalance));
+        userStocks.getPerson().getBanks().setBalance(updatedBalance);
     
         // ✅ **Update transaction history**
         SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm");

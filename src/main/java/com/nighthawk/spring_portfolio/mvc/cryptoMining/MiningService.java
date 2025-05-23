@@ -115,11 +115,11 @@ public class MiningService {
                     // Get user's stocks/balance record for USD update
                     userStocksTable userStocks = userStocksRepo.findByEmail(miner.getPerson().getEmail());
                     if (userStocks != null) {
-                        double oldBalance = Double.parseDouble(userStocks.getBalance());
+                        double oldBalance = userStocks.getPerson().getBanks().getBalance();
                         double newBalance = oldBalance + pendingUSD;
                         
                         // Update USD balance
-                        userStocks.setBalance(String.format("%.2f", newBalance));
+                        userStocks.getPerson().getBanks().setBalance(newBalance);
                         userStocksRepo.save(userStocks);
                     }
                     
