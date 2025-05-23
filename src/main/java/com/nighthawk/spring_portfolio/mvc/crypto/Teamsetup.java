@@ -97,7 +97,7 @@
 //         userBalancesCache.clear();
         
 //         for (Person person : people) {
-//             userBalancesCache.put(person.getUid(), person.getBanks().getBalance());
+//             userBalancesCache.put(person.getUid(), person.getBalance());
 //         }
 
 //         lastCacheUpdateTime = System.currentTimeMillis();

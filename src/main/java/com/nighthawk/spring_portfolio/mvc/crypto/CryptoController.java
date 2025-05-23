@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nighthawk.spring_portfolio.mvc.bank.Bank;
-import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
@@ -31,9 +29,6 @@ public class CryptoController {
 
     @Autowired
     private PersonJpaRepository personRepository;
-
-    @Autowired
-    private BankJpaRepository bankRepository;
 
     @Autowired
     private UserStocksRepository userStocksRepo;
@@ -102,7 +97,6 @@ public class CryptoController {
     
         // Fetch user
         Person person = personRepository.findByEmail(email);
-        Bank bank = bankRepository.findByUid(personRepository.findByEmail(email).getUid());
         if (person == null) {
             return ResponseEntity.badRequest().body("User not found");
         }
@@ -131,13 +125,13 @@ public class CryptoController {
         double cryptoAmount = usdAmount / cryptoPrice;
     
         // Check for sufficient balance
-        if (bank.getBalance() < usdAmount) {
+        if (person.getBalanceDouble() < usdAmount) {
             return ResponseEntity.badRequest().body("Insufficient balance.");
         }
     
         // Deduct balance and update user's holdings
-        double updatedBalance = bank.getBalance() - usdAmount;
-        bank.setBalance(updatedBalance, "crypto");
+        double updatedBalance = person.getBalanceDouble() - usdAmount;
+        person.setBalanceString(updatedBalance, "crypto");
     
         userStocksTable userStocks = person.getUser_stocks();
         if (userStocks == null) {
@@ -156,7 +150,6 @@ public class CryptoController {
     
         // Save to database
         userStocksRepo.save(userStocks);
-        bankRepository.save(bank);
         personRepository.save(person);
     
         return ResponseEntity.ok("Successfully purchased " + cryptoAmount + " of " + selectedCrypto.getSymbol() + " for $" + usdAmount);
@@ -206,7 +199,6 @@ public class CryptoController {
     
         // Fetch user
         Person person = personRepository.findByEmail(email);
-        Bank bank = bankRepository.findByUid(personRepository.findByEmail(email).getUid());
         if (person == null) {
             return ResponseEntity.badRequest().body("User not found");
         }
@@ -246,8 +238,8 @@ public class CryptoController {
     
         // Update balance
         double totalValueSold = cryptoPrice * cryptoAmount;
-        double updatedBalance = bank.getBalance() + totalValueSold;
-        bank.setBalance(updatedBalance, "crypto");
+        double updatedBalance = person.getBalanceDouble() + totalValueSold;
+        person.setBalanceString(updatedBalance, "crypto");
         userStocks.setCrypto(updatedCrypto);
         userStocks.getPerson().getBanks().setBalance(updatedBalance);
     
@@ -260,7 +252,7 @@ public class CryptoController {
         // Save to database
         userStocksRepo.save(userStocks);
         personRepository.save(person);
-        bankRepository.save(bank);
+    
         return ResponseEntity.ok("Successfully sold " + cryptoAmount + " of " + selectedCrypto.getSymbol() + " for $" + totalValueSold);
     }
     @GetMapping("/history")

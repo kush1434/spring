@@ -62,4 +62,7 @@ public interface PersonJpaRepository extends JpaRepository<Person, Long> {
     @Query("SELECT p FROM Person p JOIN p.roles r WHERE r.name = :roleName")
     List<Person> findPeopleWithRole(@Param("roleName") String roleName);
 
+    @Query("SELECT p FROM Person p ORDER BY CAST(p.balance AS double) DESC LIMIT 5")
+    List<Person> findTop5ByOrderByBalanceDesc();
+
 }

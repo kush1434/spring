@@ -49,10 +49,8 @@ public class GroupsApiController {
      */
     private Map<String, Object> getPersonBasicInfo(Person person) {
         Map<String, Object> personInfo = new HashMap<>();
-        personInfo.put("id", person.getId());
         personInfo.put("uid", person.getUid());
         personInfo.put("name", person.getName());
-        personInfo.put("email", person.getEmail());
         // Add other Person properties as needed, but exclude the group reference
         return personInfo;
     }
@@ -402,10 +400,10 @@ public ResponseEntity<Object> bulkCreateGroups(@RequestBody List<GroupDto> group
     /**
      * Find groups containing a specific person
      */
-    @GetMapping("/person/{personId}")
+    @GetMapping("/person/{personUid}")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<Map<String, Object>>> getGroupsByPersonId(@PathVariable Long personId) {
-        List<Groups> groups = groupsRepository.findGroupsByPersonId(personId);
+    public ResponseEntity<List<Map<String, Object>>> getGroupsByPersonId(@PathVariable String personUid) {
+        List<Groups> groups = groupsRepository.findGroupsByPersonUid(personUid);
         List<Map<String, Object>> groupsWithMembers = new ArrayList<>();
         
         for (Groups group : groups) {

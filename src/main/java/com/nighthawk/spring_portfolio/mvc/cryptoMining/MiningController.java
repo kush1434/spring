@@ -18,27 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
-
-import com.nighthawk.spring_portfolio.mvc.person.Person;
-import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.bank.Bank;
-import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
-import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.transaction.annotation.Transactional;
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
@@ -51,9 +30,6 @@ public class MiningController {
     private PersonJpaRepository personRepository;
     
     @Autowired
-    private BankJpaRepository bankRepository;
-
-    @Autowired
     private MiningUserRepository miningUserRepository;
     
     @Autowired
@@ -61,10 +37,6 @@ public class MiningController {
 
     @Autowired
     private MiningService miningService;
-
-    @Autowired
-    private BankJpaRepository bankJpaRepository;
-    
 
     private GPU getRandomBudgetGPU() {
         List<GPU> budgetGPUs = gpuRepository.findAll().stream()
@@ -104,7 +76,6 @@ public class MiningController {
             System.out.println("\n=== Person Lookup ===");
             System.out.println("Looking up person with UID: " + uid);
             Person person = personRepository.findByUid(uid);
-            Bank bank = bankRepository.findByUid(uid);
             
             if (person == null) {
                 System.out.println("ERROR: No person found for UID: " + uid);
@@ -242,9 +213,8 @@ public class MiningController {
             
             // Get user's crypto balance
             Person person = user.getPerson();
-            String uid = person.getUid();
-            Bank bank = bankRepository.findByUid(uid);
-            double currentBalance = bank.getBalance();
+            double currentBalance = person.getBalanceDouble();
+            System.out.println("Current balance: $" + currentBalance);
             
             if (currentBalance < gpu.getPrice() * quantity) {
                 System.out.println("Error: Insufficient balance");
@@ -257,10 +227,9 @@ public class MiningController {
 
             // Deduct total GPU price from balance
             double newBalance = currentBalance - gpu.getPrice() * quantity;
-            bank.setBalance(newBalance, "cryptomining");
+            person.setBalanceString(newBalance);
             personRepository.save(person);
-            bankRepository.save(bank);
-
+            System.out.println("New balance after purchase: $" + newBalance);
             
             // Add GPUs to user's inventory
             System.out.println("Adding " + quantity + " GPUs to inventory");
@@ -306,12 +275,6 @@ public class MiningController {
             response.put("currentHashrate", user.getCurrentHashrate());
             response.put("activeGPUs", user.getActiveGPUs().size());
             
-            com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
-            String uid = person.getUid();
-            Bank bank = bankJpaRepository.findByUid(uid);
-            bank.getNpcProgress().put("Crypto-NPC", true);
-            bankJpaRepository.save(bank);
-
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -594,9 +557,7 @@ public class MiningController {
             
             // Get user's crypto balance
             Person person = user.getPerson();
-            String uid = person.getUid();
-            Bank bank = bankRepository.findByUid(uid);
-            double currentBalance = bank.getBalance();
+            double currentBalance = person.getBalanceDouble();
             
             Map<String, Object> status = new HashMap<>();
             double pendingBTC = user.getPendingBalance();
@@ -742,14 +703,10 @@ public class MiningController {
 
             // Update user's balance using Person with source
             Person person = user.getPerson();
-            String uid = person.getUid();
-            Bank bank = bankRepository.findByUid(uid);
-            double currentBalance = bank.getBalance();
-            double newBalance = currentBalance - gpu.getPrice() * quantityToSell;
-            bank.setBalance(currentBalance + sellPrice, "cryptomining");
+            double currentBalance = person.getBalanceDouble();
+            double newBalance = currentBalance + sellPrice;
+            person.setBalanceString(newBalance);
             personRepository.save(person);
-            bankRepository.save(bank);
-
 
             // Remove GPUs from user's inventory
             user.removeGPUs(gpu, quantityToSell);
@@ -805,11 +762,9 @@ public class MiningController {
 
             // Update user's balance using Person with source
             Person person = user.getPerson();
-            String uid = person.getUid();
-            Bank bank = bankRepository.findByUid(uid);
-            double currentBalance = bank.getBalance();
+            double currentBalance = person.getBalanceDouble();
             double newBalance = currentBalance + totalSellPrice;
-            bank.setBalance(newBalance, "cryptomining");
+            person.setBalanceString(newBalance);
             personRepository.save(person);
 
             // Save changes

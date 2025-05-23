@@ -15,9 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nighthawk.spring_portfolio.mvc.person.Person;
-import com.nighthawk.spring_portfolio.mvc.bank.Bank;
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
 
 @RestController
 @RequestMapping("/api/casino/blackjack")
@@ -31,9 +29,6 @@ public class BlackjackApiController {
     @Autowired
     private PersonJpaRepository personJpaRepository;
 
-    @Autowired
-    private BankJpaRepository bankJpaRepository;
-
     @PostMapping("/start")
     public ResponseEntity<Blackjack> startGame(@RequestBody Map<String, Object> request) {
         try {
@@ -41,9 +36,7 @@ public class BlackjackApiController {
             double betAmount = Double.parseDouble(request.get("betAmount").toString());
 
             Person person = personJpaRepository.findByUid(uid);
-            Bank bank = bankJpaRepository.findByUid(uid);
-            
-            if (person == null || bank == null) {
+            if (person == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
             }
 
@@ -54,7 +47,7 @@ public class BlackjackApiController {
             }
 
             // Check balance
-            if (bank.getBalance() < betAmount) {
+            if (person.getBalanceDouble() < betAmount) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
 
@@ -69,7 +62,7 @@ public class BlackjackApiController {
             repository.save(game);
             
             // Add balance to response
-            game.getGameStateMap().put("balance", bank.getBalance());
+            game.getGameStateMap().put("balance", person.getBalanceDouble());
             game.persistGameState();
             
             return ResponseEntity.ok(game);
@@ -84,10 +77,9 @@ public class BlackjackApiController {
         try {
             String uid = request.get("uid").toString();
             Person person = personJpaRepository.findByUid(uid);
-            Bank bank = bankJpaRepository.findByUid(uid);
 
-            if (person == null || bank == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Person or bank account not found");
+            if (person == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Person not found");
             }
 
             Optional<Blackjack> optionalGame = repository.findFirstByPersonAndStatusOrderByIdDesc(person, "ACTIVE");
@@ -120,25 +112,24 @@ public class BlackjackApiController {
             
             if (fiveCardCharlie) {
                 game.getGameStateMap().put("result", "WIN");
-                double updatedBalance = bank.getBalance() + game.getBetAmount();
-                bank.setBalance(updatedBalance);
-                bankJpaRepository.save(bank);
+                double updatedBalance = person.getBalanceDouble() + game.getBetAmount();
+                person.setBalanceString(updatedBalance, "blackjack");
                 game.setStatus("INACTIVE");
             } 
             // Check for bust
             else if (playerScore > 21) {
                 game.getGameStateMap().put("result", "LOSE");
-                double updatedBalance = bank.getBalance() - game.getBetAmount();
-                bank.setBalance(updatedBalance);
-                bankJpaRepository.save(bank);
+                double updatedBalance = person.getBalanceDouble() - game.getBetAmount();
+                person.setBalanceString(updatedBalance, "blackjack");
                 game.setStatus("INACTIVE");
             }
 
             // Update balance in response
-            game.getGameStateMap().put("balance", bank.getBalance());
+            game.getGameStateMap().put("balance", person.getBalanceDouble());
             game.persistGameState();
             
             repository.save(game);
+            personJpaRepository.save(person);
             
             return ResponseEntity.ok(game);
         } catch (Exception e) {
@@ -152,10 +143,9 @@ public class BlackjackApiController {
         try {
             String uid = request.get("uid").toString();
             Person person = personJpaRepository.findByUid(uid);
-            Bank bank = bankJpaRepository.findByUid(uid);
 
-            if (person == null || bank == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Person or bank account not found");
+            if (person == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Person not found");
             }
 
             Optional<Blackjack> optionalGame = repository.findFirstByPersonAndStatusOrderByIdDesc(person, "ACTIVE");
@@ -188,38 +178,35 @@ public class BlackjackApiController {
             String result;
             if (playerScore > 21) {
                 result = "LOSE";
-                double updatedBalance = bank.getBalance() - betAmount;
-                bank.setBalance(updatedBalance);
-                bankJpaRepository.save(bank);
+                double updatedBalance = person.getBalanceDouble() - betAmount;
+                person.setBalanceString(updatedBalance, "blackjack");
             } 
             // 5-card Charlie (already handled in hit, but just in case)
             else if (playerScore <= 21 && ((List<String>)game.getGameStateMap().get("playerHand")).size() >= 5) {
                 result = "WIN";
-                double updatedBalance = bank.getBalance() + betAmount;
-                bank.setBalance(updatedBalance, "blackjack");
-                bankJpaRepository.save(bank);
+                double updatedBalance = person.getBalanceDouble() + betAmount;
+                person.setBalanceString(updatedBalance, "blackjack");
             }
             else if (dealerScore > 21 || playerScore > dealerScore) {
                 result = "WIN";
-                double updatedBalance = bank.getBalance() + betAmount;
-                bank.setBalance(updatedBalance, "blackjack");
-                bankJpaRepository.save(bank);
+                double updatedBalance = person.getBalanceDouble() + betAmount;
+                person.setBalanceString(updatedBalance, "blackjack");
             } else if (playerScore < dealerScore) {
                 result = "LOSE";
-                double updatedBalance = bank.getBalance() - betAmount;
-                bank.setBalance(updatedBalance, "blackjack");
-                bankJpaRepository.save(bank);
+                double updatedBalance = person.getBalanceDouble() - betAmount;
+                person.setBalanceString(updatedBalance, "blackjack");
             } else {
                 result = "DRAW";
             }
 
             // Update game state and save
             game.getGameStateMap().put("result", result);
-            game.getGameStateMap().put("balance", bank.getBalance());
+            game.getGameStateMap().put("balance", person.getBalanceDouble());
             game.setStatus("INACTIVE");
             game.persistGameState();
             
             repository.save(game);
+            personJpaRepository.save(person);
 
             return ResponseEntity.ok(game);
         } catch (Exception e) {

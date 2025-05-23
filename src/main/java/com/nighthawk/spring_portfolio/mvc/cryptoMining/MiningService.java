@@ -13,10 +13,6 @@ import java.util.stream.Collectors;
 import java.util.Map;
 import java.util.Date;
 
-import com.nighthawk.spring_portfolio.mvc.bank.Bank;
-import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.person.Person;
-import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 // Add these imports
 import com.nighthawk.spring_portfolio.mvc.userStocks.UserStocksRepository;
 import com.nighthawk.spring_portfolio.mvc.userStocks.userStocksTable;
@@ -37,9 +33,6 @@ public class MiningService {
 
     @Autowired
     private PersonJpaRepository personRepository;
-
-    @Autowired
-    private BankJpaRepository bankRepository;
 
     // Fine-tune constants
     public static final double HASH_TO_BTC_RATE = 0.0001; // Current rate
@@ -73,11 +66,9 @@ public class MiningService {
                 
                 // Update Person's USD balance
                 Person person = miner.getPerson();
-                String uid = person.getUid();
-                Bank bank = bankRepository.findByUid(uid);
-                double currentBalance = bank.getBalance();
-                bank.setBalance(currentBalance + usdMined, "cryptomining");
-                bankRepository.save(bank);
+                double currentBalance = person.getBalanceDouble();
+                person.setBalanceString(currentBalance + usdMined);
+                personRepository.save(person);
                 
                 // Update mining stats
                 miner.setTotalBtcEarned(miner.getTotalBtcEarned() + btcMined);

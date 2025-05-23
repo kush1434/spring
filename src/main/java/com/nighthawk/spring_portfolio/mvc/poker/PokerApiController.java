@@ -5,17 +5,20 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.nighthawk.spring_portfolio.mvc.bank.Bank;
-import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.person.Person;
+import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
 
 @RestController
 @RequestMapping("/api/casino/poker")
 public class PokerApiController {
 
     @Autowired
-    private BankJpaRepository bankJpaRepository;
+    private PersonJpaRepository personJpaRepository;
 
     private PokerBoard pokerBoard;
 
@@ -60,13 +63,13 @@ public class PokerApiController {
             pokerBoard = new PokerBoard();  // Initialize if not done
         }
 
-        // Fetch bank account by username
-        Bank bank = bankJpaRepository.findByUid(pokerRequest.getUid());
-        if (bank == null) {
-            return new ResponseEntity<>("Bank account not found.", HttpStatus.NOT_FOUND);
+        // Fetch person by uid
+        Person person = personJpaRepository.findByUid(pokerRequest.getUid());
+        if (person == null) {
+            return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);  // Person not found
         }
 
-        double currentBalance = bank.getBalance();
+        double currentBalance = person.getBalanceDouble();
         double bet = pokerRequest.getBet();
 
         // Check if the player has enough balance to place the bet
@@ -77,17 +80,17 @@ public class PokerApiController {
         // Deal hands for the game
         pokerBoard.dealHands();
 
-        // Determine game outcome
+        // Calculate win/loss and update person balance
         PokerGameResult result = new PokerGameResult(pokerBoard.getPlayerHand(), pokerBoard.getDealerHand(), bet);
         boolean playerWin = result.isPlayerWin();
         double winnings = playerWin ? bet : -bet;
         double updatedBalance = currentBalance + winnings;
 
-        // Update balance using Bank entity
-        bank.setBalance(updatedBalance, "poker");
-        bankJpaRepository.save(bank);
+        // Update the person's balance in the database
+        person.setBalanceString(updatedBalance, "poker");
+        personJpaRepository.save(person);
 
-        // Send game results
+        // Create and return the response object with game results and updated balance
         PokerResponse response = new PokerResponse(
             pokerBoard.getPlayerHand(),
             pokerBoard.getDealerHand(),
@@ -99,6 +102,7 @@ public class PokerApiController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    // To reset the board
     @PostMapping("/reset")
     public ResponseEntity<String> resetGame() {
         pokerBoard = new PokerBoard();
