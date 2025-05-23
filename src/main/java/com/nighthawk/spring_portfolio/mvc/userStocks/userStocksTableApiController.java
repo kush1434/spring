@@ -27,6 +27,9 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
+import com.nighthawk.spring_portfolio.mvc.bank.Bank;
+import com.nighthawk.spring_portfolio.mvc.bank.BankJpaRepository;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,6 +49,9 @@ public class userStocksTableApiController {
 
     @Autowired
     private PersonJpaRepository personJpaRepository;
+
+    @Autowired
+    private BankJpaRepository bankJpaRepository;
 
     /**
      * API endpoint to add a stock to a user's portfolio.
@@ -365,8 +371,11 @@ class UserStocksTableService implements UserDetailsService {
 
         // Update balance in the person table
         com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
-        person.setBalanceString(Double.parseDouble(user.getBalance()), "stocks");
+        Bank bank = person.getBanks();
+        bank.setBalance(user.getBalance(), "stocks");
         personJpaRepository.save(person);
+        bankJpaRepository.save(bank);
+
     }
 
     /**
@@ -429,8 +438,10 @@ class UserStocksTableService implements UserDetailsService {
         userRepository.save(user);
 
         com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
-        person.setBalanceString(Double.parseDouble(user.getBalance()), "stocks");
+        Bank bank = person.getBanks();
+        bank.setBalance(user.getBalance(), "stocks");
         personJpaRepository.save(person);
+        bankJpaRepository.save(bank);
     }
 
     /**
@@ -522,8 +533,10 @@ public void simulateStockValueChange(String username, List<UserStockInfo> stocks
 
     // Ensure the updated value is saved in the person table as well
     com.nighthawk.spring_portfolio.mvc.person.Person person = user.getPerson();
-    person.setBalanceString(Double.parseDouble(user.getBalance()), "stocks");
+    Bank bank = person.getBanks();
+    bank.setBalance(user.getBalance(), "stocks");
     personJpaRepository.save(person);
+    bankJpaRepository.save(bank);
 }
 
 

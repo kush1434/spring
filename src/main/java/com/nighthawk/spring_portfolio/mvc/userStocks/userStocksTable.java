@@ -74,12 +74,17 @@ public class userStocksTable {
         this.person_name = person.getName();
         this.stonks = stonks;
         this.crypto = crypto;
-        this.balance = balance;
         this.email = email;
         this.person = person;
         this.hasSimulated = hasSimulated;
         this.period1 = period1;
         this.cryptoHistory = cryptoHistory;
+        if (person.getBanks() != null) {
+            this.balance = String.valueOf(person.getBanks().getBalance());
+        } else {
+            this.balance = "0.0"; // fallback default balance
+            System.err.println("Warning: Person " + person.getName() + " does not have an associated bank. Defaulting balance to 0.0.");
+        }
     }
 
     // Method to initialize an array of userStocksTable objects for a list of Person entities
