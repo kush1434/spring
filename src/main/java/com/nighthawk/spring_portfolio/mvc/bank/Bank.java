@@ -148,7 +148,6 @@ public class Bank {
 
     public void requestLoan(double loanAmount) {
         this.loanAmount += loanAmount;  // Increase the loan amount
-        balance = (balance+loanAmount);  
         balance += loanAmount;   // Add the loan amount to the balance
         
         // Re-assess risk using ML model
