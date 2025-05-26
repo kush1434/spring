@@ -144,7 +144,7 @@ public class CalendarEventController {
     }
     
     @DeleteMapping("/delete/{id}")
-    @CrossOrigin(origins = {"http://127.0.0.1:4100","https://open-coding-society.github.io/pages/"}, allowCredentials = "true")
+    @CrossOrigin(origins = {"http://127.0.0.1:4500","https://open-coding-society.github.io/pages/"}, allowCredentials = "true")
     public ResponseEntity<String> deleteEvent(@PathVariable int id) {
         System.out.println("Attempting to delete event...");
         try {

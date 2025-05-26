@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/media")
-@CrossOrigin(origins = "http://localhost:4100") // Enable CORS
+@CrossOrigin(origins = "http://localhost:4500") // Enable CORS
 public class MediaApiController {
 
     @Autowired

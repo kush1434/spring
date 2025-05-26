@@ -32,7 +32,7 @@ public class HallPassController {
     /**
      * Endpoint to request a hall pass by providing the user's email address.
      */
-    //@CrossOrigin(origins = "http://127.0.0.1:4100")
+    //@CrossOrigin(origins = "http://127.0.0.1:4500")
     @PostMapping("/request")
     public ResponseEntity<Object> requestHallPass(@RequestBody HallPassRequestDTO request) {
         try {
@@ -51,7 +51,7 @@ public class HallPassController {
     /**
      * Endpoint to check out (return) a hall pass.
      */
-    //@CrossOrigin(origins = "http://127.0.0.1:4100")
+    //@CrossOrigin(origins = "http://127.0.0.1:4500")
     @PostMapping("/checkout")
     public ResponseEntity<Object> checkoutHallPass(@RequestParam("email") String emailAddress) {
         try {
@@ -75,7 +75,7 @@ public class HallPassController {
         }
     }
 
-    //@CrossOrigin(origins = "http://127.0.0.1:4100")
+    //@CrossOrigin(origins = "http://127.0.0.1:4500")
     @GetMapping("/getactivepass")
     public ResponseEntity<Object> getPass(@RequestParam("email") String emailAddress) {
         try {

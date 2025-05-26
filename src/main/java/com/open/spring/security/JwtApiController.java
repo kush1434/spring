@@ -40,8 +40,8 @@ public class JwtApiController {
 	@Autowired
 	private PersonDetailsService personDetailsService;
 
-    // @CrossOrigin(origins = "http://127.0.0.1:4100")
-	@CrossOrigin(origins = "http://localhost:4100")
+    // @CrossOrigin(origins = "http://127.0.0.1:4500")
+	@CrossOrigin(origins = "http://localhost:4500")
 	@PostMapping("/authenticate")
 	public ResponseEntity<?> createAuthenticationToken(@RequestBody Person authenticationRequest) throws Exception {
 		authenticate(authenticationRequest.getUid(), authenticationRequest.getPassword());

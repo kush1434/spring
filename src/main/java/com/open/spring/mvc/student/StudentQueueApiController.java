@@ -45,7 +45,7 @@ public class StudentQueueApiController {
         return new ResponseEntity<>(queueDto.getStudentName() + " was added to " + queueDto.getTeacherEmail(), HttpStatus.CREATED);
     }
 
-    @CrossOrigin(origins = "http://127.0.0.1:4100")
+    @CrossOrigin(origins = "http://127.0.0.1:4500")
     @DeleteMapping("/remove")
     public ResponseEntity<Object> removeFromQueue(@RequestBody QueueDto queueDto) {
         Optional<StudentQueue> queueEntry = repository.findByTeacherEmail(queueDto.getTeacherEmail());
@@ -64,7 +64,7 @@ public class StudentQueueApiController {
         return new ResponseEntity<>("Queue for " + queueDto.getTeacherEmail() + " not found", HttpStatus.NOT_FOUND);
     }
 
-    @CrossOrigin(origins = "http://127.0.0.1:4100")
+    @CrossOrigin(origins = "http://127.0.0.1:4500")
     @PostMapping("/approve")
     public ResponseEntity<Object> approveStudent(@RequestBody QueueDto queueDto) {
         Optional<StudentQueue> queueEntry = repository.findByTeacherEmail(queueDto.getTeacherEmail());
