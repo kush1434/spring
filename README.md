@@ -1,14 +1,12 @@
 ## Recent Changes
 
-[Upgrading old dependencies to newest versions.](https://github.com/nighthawkcoders/spring_portfolio/issues/12)
+[Upgrading old dependencies to newest versions.](https://github.com/open-coding-society/spring_portfolio/issues/12)
 
-# [Spring Portfolio Starter](https://nighthawkcodingsociety.com/projectsearch/details/Spring%20Portfolio%20Starter)
+# [Spring Portfolio Starter](https://opencodingsociety.com/projectsearch/details/Spring%20Portfolio%20Starter)
 
-- Runtime link: https://spring2025.nighthawkcodingsociety.com/
-- JWT Login: https://nighthawkcoders.github.io/APCSA/data/login
-- Jokes endpoint: https://spring.nighthawkcodingsociety.com/api/jokes/
-
-
+- Runtime link: https://spring.opencodingsociety.com/
+- JWT Login: https://open-coding-society.github.io/pages/login
+- Jokes endpoint: https://spring.opencodingsociety.com/api/jokes/
 
 ## Visual thoughts
 
@@ -33,12 +31,14 @@
 - "pom.xml" file can teach you a lot about Java dependencies.  This is similar to "requirements.txt" file in Python.  It manages packages and dependencies.
 
 ## .env files
+
 - In order to run this project locally, a .env file should be set up with the appropriate variables:
 - GAMIFY_API_URL
 - GAMIFY_API_KEY
 
 
 ## Person MVC
+
 ![Class Diagram](https://github.com/user-attachments/assets/26219a16-e3dc-45e3-af1c-466763957dce)
 
 - Basically there is a rough MVCframework.
