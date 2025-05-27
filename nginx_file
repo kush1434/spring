@@ -9,7 +9,7 @@ server {
         # CORS Headers
         if ($request_method = OPTIONS) {
             add_header "Access-Control-Allow-Credentials" "true" always;
-            add_header "Access-Control-Allow-Origin" "https://open-coding-society.github.io" always;
+            add_header "Access-Control-Allow-Origin" "https://pages.opencodingsociety.com" always;
             add_header "Access-Control-Allow-Methods" "GET, POST, PUT, OPTIONS, HEAD" always;
             add_header "Access-Control-Allow-Max-Age" 600 always;
             add_header "Access-Control-Allow-Headers" "Authorization, Origin, X-Origin, X-Requested-With, Content-Type, Accept" always;

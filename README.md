@@ -5,7 +5,7 @@
 # [Spring Portfolio Starter](https://opencodingsociety.com/projectsearch/details/Spring%20Portfolio%20Starter)
 
 - Runtime link: https://spring.opencodingsociety.com/
-- JWT Login: https://open-coding-society.github.io/pages/login
+- JWT Login: https://pages.opencodingsociety.com/login
 - Jokes endpoint: https://spring.opencodingsociety.com/api/jokes/
 
 ## Visual thoughts

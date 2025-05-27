@@ -23,7 +23,7 @@ import lombok.Getter;
 // REST API controller for managing bathroom queues
 @RestController
 @RequestMapping("/api/queue") // Base URL for all endpoints in this controller
-@CrossOrigin(origins = {"http://localhost:8585", "https://open-coding-society.github.io/pages/"})
+@CrossOrigin(origins = {"http://localhost:8585", "https://pages.opencodingsociety.com/"})
 public class BathroomQueueApiController {
 
     @Autowired
@@ -44,7 +44,7 @@ public class BathroomQueueApiController {
     }
     
 
-    @CrossOrigin(origins = {"http://localhost:8585", "https://open-coding-society.github.io/pages"})
+    @CrossOrigin(origins = {"http://localhost:8585", "https://pages.opencodingsociety.com"})
     @PostMapping("/addQueue")
     public ResponseEntity<String> addQueue(@RequestBody QueueAddReq request) {
         System.out.println(request);
@@ -66,7 +66,7 @@ public class BathroomQueueApiController {
     }
 
     // Endpoint to add a student to the queue
-    @CrossOrigin(origins = {"http://localhost:8585", "https://open-coding-society.github.io/pages"})
+    @CrossOrigin(origins = {"http://localhost:8585", "https://pages.opencodingsociety.com"})
     @PostMapping("/add")
     public ResponseEntity<Object> addToQueue(@RequestBody QueueDto queueDto) {
         // Check if a queue already exists for the given teacher
@@ -85,7 +85,7 @@ public class BathroomQueueApiController {
 
     
     // Endpoint to remove a student from the queue
-    @CrossOrigin(origins = {"http://localhost:8585", "https://open-coding-society.github.io/pages"})
+    @CrossOrigin(origins = {"http://localhost:8585", "https://pages.opencodingsociety.com"})
     @PostMapping("/remove")
     public ResponseEntity<Object> removeFromQueue(@RequestBody QueueDto queueDto) {
         Optional<BathroomQueue> queueEntry = repository.findByTeacherEmail(queueDto.getTeacherEmail());
@@ -107,7 +107,7 @@ public class BathroomQueueApiController {
     }
     
 
-    @CrossOrigin(origins = {"http://localhost:8585", "https://open-coding-society.github.io/pages"})
+    @CrossOrigin(origins = {"http://localhost:8585", "https://pages.opencodingsociety.com"})
     @PostMapping("/removefront/{teacher}")
     public void removeFront(@PathVariable String teacher)
     {
@@ -121,7 +121,7 @@ public class BathroomQueueApiController {
 
 
     // Endpoint to approve the first student in the queue
-    @CrossOrigin(origins = {"http://localhost:8585", "https://open-coding-society.github.io/pages"})
+    @CrossOrigin(origins = {"http://localhost:8585", "https://pages.opencodingsociety.com"})
     @PostMapping("/approve")
     public ResponseEntity<Object> approveStudent(@RequestBody QueueDto queueDto) {
         Optional<BathroomQueue> queueEntry = repository.findByTeacherEmail(queueDto.getTeacherEmail());
@@ -165,7 +165,7 @@ public class BathroomQueueApiController {
     }
 
     // Endpoint to retrieve active queues
-    @CrossOrigin(origins = {"http://localhost:8585", "https://open-coding-society.github.io/pages"})
+    @CrossOrigin(origins = {"http://localhost:8585", "https://pages.opencodingsociety.com"})
     @GetMapping("/getActive")
     public ResponseEntity<Object> getActiveQueues() {
         return new ResponseEntity<>(repository.findAll(), HttpStatus.OK);

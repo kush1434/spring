@@ -31,11 +31,11 @@ public class MvcConfig implements WebMvcConfigurer {
     
     @Override
     public void addCorsMappings(@NonNull CorsRegistry registry) {
-        registry.addMapping("/**").allowedOrigins("https://spring.opencodingsociety.com", "https://open-coding-society.github.io", "http://127.0.0.1:4500", "http://localhost:4500").allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        registry.addMapping("/**").allowedOrigins("https://spring.opencodingsociety.com", "https://pages.opencodingsociety.com", "http://127.0.0.1:4500", "http://localhost:4500").allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
 
 
-        // registry.addMapping("/socket.io").allowedOrigins("https://spring.opencodingsociety.com", "https://open-coding-society.github.io", "http://127.0.0.1:4500", "http://localhost:4500").allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        // registry.addMapping("/socket.io").allowedOrigins("https://spring.opencodingsociety.com", "https://pages.opencodingsociety.com", "http://127.0.0.1:4500", "http://localhost:4500").allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
         // .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
 
     }

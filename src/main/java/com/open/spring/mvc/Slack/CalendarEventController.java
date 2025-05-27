@@ -95,7 +95,7 @@ public class CalendarEventController {
     }
 
     @PutMapping("/edit/{id}")
-    @CrossOrigin(origins = {"http://127.0.0.1:4500","https://open-coding-society.github.io/pages"}, allowCredentials = "true")
+    @CrossOrigin(origins = {"http://127.0.0.1:4500","https://pages.opencodingsociety.com"}, allowCredentials = "true")
     public ResponseEntity<String> editEvent(@PathVariable int id, @RequestBody Map<String, String> payload) {
         try {
             String newTitle = payload.get("newTitle");
@@ -144,7 +144,7 @@ public class CalendarEventController {
     }
     
     @DeleteMapping("/delete/{id}")
-    @CrossOrigin(origins = {"http://127.0.0.1:4500","https://open-coding-society.github.io/pages/"}, allowCredentials = "true")
+    @CrossOrigin(origins = {"http://127.0.0.1:4500","https://pages.opencodingsociety.com/"}, allowCredentials = "true")
     public ResponseEntity<String> deleteEvent(@PathVariable int id) {
         System.out.println("Attempting to delete event...");
         try {
