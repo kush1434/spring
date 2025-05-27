@@ -44,9 +44,48 @@
             <button class="btn btn-secondary toggle-column active" data-column="5">PFP</button>
             <button class="btn btn-secondary toggle-column inactive" data-column="6">SID</button>
             <button class="btn btn-secondary toggle-column active" data-column="7">Action</button>
-        </div> <br>
+            <button class="btn btn-secondary toggle-column inactive" data-column="8">Import/Export</button>
+        </div>
+        <br>
 
-        <button sec:authorize="hasRole('ROLE_ADMIN')" id="export-all" class="btn btn-info btn-sm">export all people</button>
+        <div sec:authorize="hasRole('ROLE_ADMIN')">
+            <button class="btn btn-info btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#exportCollaspe" aria-expanded="false" aria-controls="exportCollaspe">export mass users</button>
+            <button class="btn btn-info btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#importCollaspe" aria-expanded="false" aria-controls="importCollaspe">import mass users</button>
+            <br>
+            <div class="collapse" id="exportCollaspe">
+                <div class="card card-body bg-success border-muted">
+                <button id="export-all" class="btn btn-secondary btn-sm">export all</button>
+                <hr>
+                <table class="table table-bordered table-responsive">
+                    <thead>
+                        <tr>
+                            <th>Range</th>
+                            <th>-</th>
+                        </tr>
+                    </thead>
+                    <tbody id="exportTableBody">
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>
+                                <button id="export-ranges" class="btn btn-secondary btn-sm">export ranges</button>
+                            </td>
+                            <td>
+                                <button id="exportTableAddRow" class="btn btn-primary btn-sm">+</button>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+                </div>
+            </div>
+            <div class="collapse" id="importCollaspe">
+                <div class="card card-body bg-success border-muted">
+                    <input id="personAllFileUpload" type="file" accept=".json">
+                    <button id="import-all" class="btn btn-secondary btn-sm">import persons</button>
+                </div>
+            </div>
+            
+        </div>
 
         <div class="row align-items-md-stretch">
             <!-- Table displaying the list of persons -->
@@ -61,6 +100,7 @@
                         <th>PFP</th>
                         <th>SID</th>
                         <th>Action</th>
+                        <th>Import/Export</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -89,10 +129,15 @@
                         <td>
                             <a th:href="@{/mvc/person/update/{id}(id = ${person.id})}" class="btn btn-warning btn-sm"
                                 name="update">Update</a>
-                            <a sec:authorize="hasRole('ROLE_ADMIN')" th:href="@{/mvc/person/update/roles/{id}(id = ${person.id})}" class="btn btn-warning btn-sm"
-                                name="update">Update Roles</a>
+                            <a sec:authorize="hasRole('ROLE_ADMIN')"
+                                th:href="@{/mvc/person/update/roles/{id}(id = ${person.id})}"
+                                class="btn btn-warning btn-sm" name="update">Update Roles</a>
                             <a th:href="@{/mvc/person/delete/{id}(id = ${person.id})}"
                                 class="btn btn-danger btn-sm">Delete</a>
+                        </td>
+                        <td>
+                            <button>Import</button>
+                            <button>Export</button>
                         </td>
                     </tr>
                 </tbody>
@@ -108,8 +153,11 @@
 
 <!-- scripts -->
 <th:block layout:fragment="script" th:remove="tag">
-    <!-- script for extracting people (not included if user is not admin)-->
-    <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/person-extraction.js" th:src="@{/js/person-extraction.js}"></script>
+    <!-- script for extracting/importing people (not included if user is not admin)-->
+    <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/person-extraction.js"
+        th:src="@{/js/person-extraction.js}"></script>
+    <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/person-importation.js"
+        th:src="@{/js/person-importation.js}"></script>
     <!-- script for filtering columns-->
     <script type="text/javascript" src="/static/js/read-filter.js" th:src="@{/js/read-filter.js}"></script>
     <!-- script for updating overlay (used for update button)-->

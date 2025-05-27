@@ -1,7 +1,7 @@
 $(document).ready(function () {
     const table = $('#personTable').DataTable({
         columnDefs: [
-            { targets: [3, 4, 6, 7], visible: false } // Hide Email (index 3) and SID (index 6) by default
+            { targets: [3, 4, 6, 8], visible: false } // Hide Email (index 3) and SID (index 6) by default
         ]
     });
 

@@ -48,14 +48,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/person/**").permitAll()           
                         .requestMatchers(HttpMethod.GET,"/api/person/{id}/balance").permitAll() // Allow unauthenticated access to this endpoint
                         .requestMatchers(HttpMethod.GET, "/api/person/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/people/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/people/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/person/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/person/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/synergy/grades/requests").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/synergy/**").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
                         
 
-                        .requestMatchers(HttpMethod.GET,"/api/assignments/assigned").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/synergy/saigai/").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/calendar/add").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/calendar/add_event").permitAll()
@@ -104,6 +103,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/mvc/teamteach/teachergrading").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET,"/mvc/train/**").authenticated()
                         .requestMatchers(HttpMethod.GET,"/mvc/extract/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST,"/mvc/extract/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST,"/mvc/import/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/**").permitAll()
                 )
                 .formLogin(form -> form
