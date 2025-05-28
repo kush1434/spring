@@ -260,7 +260,7 @@ public class Person implements Comparable<Person> {
         this.timeEntries.setPerson(this);
         
         // Create a Bank for this person
-        this.banks = null;
+        this.banks = new Bank(this);
     }
 
 
@@ -297,7 +297,7 @@ public class Person implements Comparable<Person> {
             roles.add(role);
         }
         person.setRoles(roles);
-        person.setBanks(null);
+        person.setBanks(new Bank(person));
 
         return person;
     }
