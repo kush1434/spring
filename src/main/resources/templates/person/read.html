@@ -56,6 +56,9 @@
                 <div class="card card-body bg-success border-muted">
                 <button id="export-all" class="btn btn-secondary btn-sm">export all</button>
                 <hr>
+                <p class="text-secondary font-weight-light">selection fields are located under the import/export column</p>
+                <button id="export-selected" class="btn btn-secondary btn-sm">export selected</button>
+                <hr>
                 <table class="table table-bordered table-responsive">
                     <thead>
                         <tr>
@@ -80,7 +83,7 @@
             </div>
             <div class="collapse" id="importCollaspe">
                 <div class="card card-body bg-success border-muted">
-                    <input id="personAllFileUpload" type="file" accept=".json">
+                    <input id="personAllFileUpload" type="file" accept=".json" class="form-control">
                     <button id="import-all" class="btn btn-secondary btn-sm">import persons</button>
                 </div>
             </div>
@@ -136,8 +139,11 @@
                                 class="btn btn-danger btn-sm">Delete</a>
                         </td>
                         <td>
-                            <button>Import</button>
-                            <button>Export</button>
+                            <div class="input-group">
+                                <button class="btn btn-info btn-sm" name="export">Export</button>
+                                <button class="btn btn-info btn-sm" name="import">Import</button>
+                                <input type="checkbox" name="import" class="form-check-input">
+                            </div>
                         </td>
                     </tr>
                 </tbody>
