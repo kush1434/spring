@@ -37,9 +37,9 @@
         <!-- Show Hall Pass form only if teacher is found (no error) -->
         <div th:if="${teacher}" class="bg-light p-4 rounded">
             <h2 th:text="'Hall Pass for ' + ${teacher.firstname} + ' ' + ${teacher.lastname}"></h2>
-            <a href='https://nighthawkcoders.github.io/portfolio_2025/bathroom' class='button-link'>Current Queue</a>
-            <br><a href='https://nighthawkcoders.github.io/portfolio_2025/issue' class='button-link'>Report Issues</a>
-            <br><a href='https://nighthawkcoders.github.io/portfolio_2025/profile' class='button-link'>Profile</a>
+            <a href='https://pages.opencodingsociety.com/bathroom' class='button-link'>Current Queue</a>
+            <br><a href='https://pages.opencodingsociety.com/issue' class='button-link'>Report Issues</a>
+            <br><a href='https://pages.opencodingsociety.com/profile' class='button-link'>Profile</a>
             <div th:if="${activePass}">
                 <h3>You have an active hall pass. Please check-in to end session</h3>
                 <p><strong>Teacher:</strong> <span

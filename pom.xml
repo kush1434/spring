@@ -7,7 +7,7 @@
         <version>3.1.5</version>
         <relativePath/>
     </parent>
-    <groupId>com.nighthawk</groupId>
+    <groupId>com.open</groupId>
     <artifactId>spring</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>spring</name>
@@ -233,6 +233,12 @@
             <groupId>nz.ac.waikato.cms.weka</groupId>
             <artifactId>weka-stable</artifactId>
             <version>3.8.6</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.haifengl</groupId>
+            <artifactId>smile-core</artifactId>
+            <version>2.6.0</version>
         </dependency>
 
     </dependencies>
