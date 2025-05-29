@@ -16,7 +16,6 @@ import com.open.spring.mvc.person.PersonJpaRepository;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 
 import jakarta.persistence.Convert;
-import jakarta.validation.Valid;
 
 
 @Controller
@@ -45,6 +44,47 @@ public class ImportationViewController {
         private Boolean kasmServerNeeded;
         private Map<String, Map<String, Object>> stats;
     }
+
+    /////////////////////////////////////////
+    /// Single Imports
+
+
+    //this import updates a single person, it does not create a new person
+    @Transactional
+    @PostMapping("person/{id}")
+    public ResponseEntity<String> importPersonById(@PathVariable("id") long id, @RequestBody PersonEmpty body) {
+        if (!personJpaRepository.existsById(id)) {
+            return new ResponseEntity<String>(HttpStatus.NOT_FOUND);
+        }
+        Person[] defaultPersons = Person.init();
+        for(int i=0; i<defaultPersons.length; i++){
+            if(defaultPersons[i].getId().equals(id)){
+                return new ResponseEntity<String>(HttpStatus.FORBIDDEN);
+            }
+        }
+
+        Person person = personJpaRepository.findById(id).get();
+        //build a PersonEmpty based on the person
+        person.setName(body.getName());
+        person.setEmail(body.getEmail());
+        person.setKasmServerNeeded(body.getKasmServerNeeded());
+        person.setPassword(body.getPassword());
+        person.setUid(body.getUid());
+        person.setPfp(body.getPfp());
+        person.setStats(person.getStats());
+
+        try {
+            personJpaRepository.save(person);
+        } catch (Exception e) {
+            System.out.println(e.getStackTrace());
+            return new ResponseEntity<String>("success", HttpStatus.CONFLICT);
+        }
+        
+                
+        return new ResponseEntity<String>("success", HttpStatus.OK);
+    }
+
+
 
     /////////////////////////////////////////
     /// Multi Imports (all)
