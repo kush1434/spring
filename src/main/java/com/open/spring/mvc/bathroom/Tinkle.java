@@ -33,13 +33,11 @@ public class Tinkle {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id; // Primary key
 
-    @Column(name = "uid")
-    private String uid; // Foreign key referencing Person.uid
 
     @OneToOne
-    @JoinColumn(name = "uid", referencedColumnName = "uid", insertable = false, updatable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE) // Delete this record if associated Person is deleted
-    @JsonBackReference // Prevent infinite recursion during JSON serialization
+    @JoinColumn(name = "person_id", unique=true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonBackReference
     private Person person;
 
     private String timeIn; // Stores time entries in raw string format (comma-separated "in--out" pairs)
@@ -61,11 +59,6 @@ public class Tinkle {
         parseAndStoreTimeInOut(statsInput); // Populate the parsed time list
     }
 
-    // Setter that also updates the uid field for DB syncing
-    public void setPerson(Person person) {
-        this.person = person;
-        this.uid = person != null ? person.getUid() : null;
-    }
 
     // Add time entries from a string (e.g., "08:00:00-08:15:00,09:00:00-09:20:00")
     public void addTimeIn(String timeInOutPairs) {
