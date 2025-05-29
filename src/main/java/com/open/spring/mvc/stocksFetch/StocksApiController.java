@@ -1,17 +1,14 @@
 package com.open.spring.mvc.stocksFetch;
 
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,6 +19,20 @@ public class StocksApiController {
     @Value("${yahoofinance.quotesquery1v8.enabled:false}")
     private boolean isV8Enabled;
 
+    private static final List<String> USER_AGENTS = Arrays.asList(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15",
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0 Safari/537.36",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
+    );
+
+    private static final Random random = new Random();
+
+    private String getRandomUserAgent() {
+        return USER_AGENTS.get(random.nextInt(USER_AGENTS.size()));
+    }
+
     @GetMapping("/{symbol}")
     public ResponseEntity<?> getStockBySymbol(@PathVariable String symbol) {
         String url = isV8Enabled
@@ -30,18 +41,17 @@ public class StocksApiController {
 
         RestTemplate restTemplate = new RestTemplate();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0");
-
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
         int maxRetries = 3;
         int retryCount = 0;
 
         while (retryCount < maxRetries) {
             try {
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("User-Agent", getRandomUserAgent());
+                HttpEntity<String> entity = new HttpEntity<>(headers);
+
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-                
+
                 if (response.getStatusCode() == HttpStatus.OK) {
                     System.out.println("Successfully fetched stock data for: " + symbol);
                     return new ResponseEntity<>(response.getBody(), HttpStatus.OK);
@@ -53,7 +63,6 @@ public class StocksApiController {
             } catch (HttpClientErrorException.TooManyRequests e) {
                 retryCount++;
                 System.out.println("Rate limited! Retrying... Attempt: " + retryCount);
-                
                 try {
                     TimeUnit.SECONDS.sleep((long) Math.pow(2, retryCount)); // Exponential backoff
                 } catch (InterruptedException ex) {
