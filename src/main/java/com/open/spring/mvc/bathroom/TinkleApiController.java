@@ -1,5 +1,6 @@
 package com.open.spring.mvc.bathroom;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -9,20 +10,26 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonJpaRepository;
 
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -36,6 +43,8 @@ public class TinkleApiController {
     @Autowired
     private PersonJpaRepository personRepository;
 
+    @Autowired
+    private EntityManager entityManager;
 
     @Getter
     @Setter
@@ -111,30 +120,20 @@ public class TinkleApiController {
     }
 
     @DeleteMapping("/bulk/clear")
-    public ResponseEntity<?> clearTable(HttpServletRequest request) {
-        // Check for admin authentication
-        String role = (String) request.getAttribute("role");
-        if (role == null || !role.equals("ADMIN")) {
-            return new ResponseEntity<>("Unauthorized - Admin access required", HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<?> clearTable(@RequestParam(required = false) String role) {
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("status", "error", "message", "Unauthorized — Admin access required"));
         }
 
-        try {
-            // Delete all records
-            repository.deleteAll();
-            
-            Map<String, String> response = new HashMap<>();
-            response.put("status", "success");
-            response.put("message", "All bathroom records have been cleared");
-            
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("status", "error");
-            errorResponse.put("message", "Failed to clear table: " + e.getMessage());
-            
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        repository.deleteAllRowsInBulk();
+
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "All bathroom records have been cleared"
+        ));
     }
+
 
     @GetMapping("/bulk/extract")
     public ResponseEntity<List<TinkleDto>> bulkExtract() {
@@ -154,6 +153,7 @@ public class TinkleApiController {
         // Return the list of TinkleDto objects
         return new ResponseEntity<>(tinkleDtos, HttpStatus.OK);
     }
+
 
     @PostMapping("/bulk/create")
     public ResponseEntity<Object> bulkCreateTinkles(@RequestBody List<TinkleDto> tinkleDtos) {
