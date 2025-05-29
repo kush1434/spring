@@ -318,7 +318,7 @@ public class BankApiController {
                     bank = bankJpaRepository.findByPersonId(bankDto.getPersonId());
                 } else if (bankDto.getUid() != null) {
                     // Or by username
-                    bank = bankJpaRepository.findByUsername(bankDto.getUid());
+                    bank = bankJpaRepository.findByUid(bankDto.getUid());
                 }
                 
                 if (bank != null) {
@@ -339,7 +339,7 @@ public class BankApiController {
                     updatedBanks.add(bank.getUsername() != null ? bank.getUsername() : "Bank ID: " + bank.getId());
                 } else if (bankDto.getUid() != null) {
                     // Create new bank account if person exists
-                    Person person = personJpaRepository.findById(bankDto.getUid()).orElse(null);
+                    Person person = personJpaRepository.findByUid(bankDto.getUid());
                     
                     if (person != null) {
                         // Create new bank account using the modified constructor
