@@ -32,11 +32,9 @@ public class Tinkle {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(name = "uid")
-    private String uid;
 
     @OneToOne
-    @JoinColumn(name = "uid", referencedColumnName = "uid", insertable = false, updatable = false)
+    @JoinColumn(name = "person_id", unique=true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonBackReference
     private Person person;
@@ -59,10 +57,6 @@ public class Tinkle {
         parseAndStoreTimeInOut(statsInput);
     }
 
-    public void setPerson(Person person) {
-        this.person = person;
-        this.uid = person != null ? person.getUid() : null;
-    }
 
     public void addTimeIn(String timeInOutPairs) {
         if (timeInOutPairs != null && !timeInOutPairs.isEmpty()) {

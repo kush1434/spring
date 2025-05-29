@@ -256,9 +256,7 @@ public class Person implements Comparable<Person> {
         this.roles.add(role);
         this.submissions = new ArrayList<>();
 
-        this.timeEntries = new Tinkle(this, "");
-        this.timeEntries.setPerson(this);
-        
+        this.timeEntries = new Tinkle(this, "");        
         // Create a Bank for this person
         this.banks = null;
     }
