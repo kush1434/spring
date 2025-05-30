@@ -1,4 +1,4 @@
-package com.open.spring.mvc.Slack;
+package com.open.spring.mvc.slack;
 
 import java.time.*;
 import java.util.regex.*;
@@ -15,28 +15,6 @@ public class SlackService {
 
     // Slack Incoming Webhook URL (replace this with your actual webhook URL)
     //private static final String SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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";
-
-    // Method to send a message to Slack
-    public void sendMessage(String message) {
-        // Create the JSON payload for the Slack message
-        String payload = "{\"text\":\"" + message + "\"}";
-
-        // Set up RestTemplate and headers
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        // emergency commenting
-        // Send the message to Slack
-        //HttpEntity<String> entity = new HttpEntity<>(payload, headers);
-        //ResponseEntity<String> response = restTemplate.postForEntity(SLACK_WEBHOOK_URL, entity, String.class);
-
-        // Check the response from Slack (optional)
-        //if (response.getStatusCode().is2xxSuccessful()) {
-        //    System.out.println("Message sent to Slack successfully.");
-        //} else {
-        //    System.out.println("Failed to send message to Slack.");
-        //}
-    }
 
     private LocalDate getWeekStartDateFromMessage(String message) {
         LocalDate today = LocalDate.now();
@@ -66,18 +44,6 @@ public class SlackService {
             return LocalDate.of(year, month, day);
         }
         // Default: use current week's Monday
-        return today.with(DayOfWeek.MONDAY);
+        return today.with(DayOfWeek.SUNDAY);
     }
-
-    // In your main parsing method, replace the week start logic:
-    // LocalDate weekStart = getWeekStartDateFromMessage(message);
-    // Then, for each [Mon], [Tue], etc.:
-    // Map<String, Integer> dayOffsets = Map.of(
-    //    "Mon", 0, "Tue", 1, "Wed", 2, "Thu", 3, "Fri", 4, "Sat", 5, "Sun", 6
-    // );
-    // for (String day : daysFoundInMessage) {
-    //    int offset = dayOffsets.get(day);
-    //    LocalDate eventDate = weekStart.plusDays(offset);
-    //    // Use eventDate for calendar_events
-    // }
 }
