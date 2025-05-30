@@ -1,4 +1,4 @@
-package com.open.spring.mvc.Slack;
+package com.open.spring.mvc.slack;
 
 import java.time.LocalDate;
 import java.util.List;
