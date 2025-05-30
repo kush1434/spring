@@ -30,27 +30,29 @@ import lombok.Setter;
 @RequestMapping("/api/tinkle")
 public class TinkleApiController {
 
+    // Inject Tinkle JPA repository for database operations
     @Autowired
     private TinkleJPARepository repository;
 
+    // Inject Person JPA repository to fetch person-related data
     @Autowired
     private PersonJpaRepository personRepository;
 
-
+    // Data Transfer Object for Tinkle-related input/output
     @Getter
     @Setter
     public static class TinkleDto {
-        private String studentEmail;
-        private String timeIn;
-        // private double averageDuration;
+        private String studentEmail;  // Used to identify the person
+        private String timeIn;        // String of time-in/time-out pairs
     }
 
-    //POST request that adds the student's time entry into the datatable.
+    /**
+     * Add or update time-in data for a student by email.
+     */
     @PostMapping("/add")
     public ResponseEntity<Object> timeInOut(@RequestBody TinkleDto tinkleDto) {
-        //First finds the student by name
         Optional<Tinkle> student = repository.findByPersonName(tinkleDto.getStudentEmail());
-        //If the student exists then it adds the timeIn to the student's timeIn column
+
         if (student.isPresent()) {
             student.get().addTimeIn(tinkleDto.getTimeIn());
             repository.save(student.get());
@@ -60,33 +62,39 @@ public class TinkleApiController {
         }
     }
 
-    //GET Request to get all of the tinkle objects
+    /**
+     * Return a list of all Tinkle entries in the database.
+     */
     @GetMapping("/all")
     public List<Tinkle> getAll() {
         return repository.findAll();
     }
 
-    //GET REQUEst by the person's name, used to find a person's specific bathrooms statistics on the bathroom frontend
+    /**
+     * Fetch a specific student's bathroom stats by name.
+     */
     @GetMapping("/{name}")
     public ResponseEntity<Object> getTinkle(@PathVariable String name) {
-        //JPA function to find the person
         Optional<Tinkle> tinkle = repository.findByPersonName(name);
+
         if (tinkle.isPresent()) {
-            Tinkle tinklePerson = tinkle.get();
-            return new ResponseEntity<>(tinklePerson, HttpStatus.OK);
+            return new ResponseEntity<>(tinkle.get(), HttpStatus.OK);
         } else {
             return new ResponseEntity<>("Student not found", HttpStatus.NOT_FOUND);
         }
     }
 
+    /**
+     * Populate initial Tinkle records for all people if they don't already exist.
+     */
     @GetMapping("/repopulate")
     public ResponseEntity<Object> populatePeople() {
         var personArray = personRepository.findAllByOrderByNameAsc();
 
-        for(Person person: personArray) {
-            Tinkle tinkle = new Tinkle(person,"");
+        for (Person person : personArray) {
+            Tinkle tinkle = new Tinkle(person, "");
             Optional<Tinkle> tinkleFound = repository.findByPersonName(tinkle.getPersonName());
-            if(tinkleFound.isEmpty()) {
+            if (tinkleFound.isEmpty()) {
                 repository.save(tinkle);
             }
         }
@@ -94,67 +102,75 @@ public class TinkleApiController {
         return ResponseEntity.ok("Complete");
     }
 
+    /**
+     * Retrieve a student's `timeIn` string directly from in-memory cache.
+     * This seems to depend on another controller (ApprovalRequestApiController).
+     */
     @GetMapping("/timeIn/{studentName}")
     public ResponseEntity<Object> getTimeIn(@PathVariable String studentName) {
         System.out.println("🔍 Fetching timeIn for: " + studentName);
-    
-        // Retrieve stored timeIn from memory (ApprovalRequestApiController)
+
         String timeIn = ApprovalRequestApiController.getTimeInFromMemory(studentName);
 
         if (timeIn != null) {
             System.out.println("Retrieved timeIn from memory for " + studentName + ": " + timeIn);
-            return ResponseEntity.ok(timeIn); // Return timeIn value
+            return ResponseEntity.ok(timeIn);
         } else {
             System.out.println("Student not found in memory: " + studentName);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Student not found");
         }
     }
 
+    /**
+     * Clears all bathroom records from the database.
+     * Requires the requester to be an admin (checked via request attribute).
+     */
     @DeleteMapping("/bulk/clear")
     public ResponseEntity<?> clearTable(HttpServletRequest request) {
-        // Check for admin authentication
         String role = (String) request.getAttribute("role");
         if (role == null || !role.equals("ADMIN")) {
             return new ResponseEntity<>("Unauthorized - Admin access required", HttpStatus.UNAUTHORIZED);
         }
 
         try {
-            // Delete all records
             repository.deleteAll();
-            
+
             Map<String, String> response = new HashMap<>();
             response.put("status", "success");
             response.put("message", "All bathroom records have been cleared");
-            
+
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("status", "error");
             errorResponse.put("message", "Failed to clear table: " + e.getMessage());
-            
+
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
+    /**
+     * Extracts all `Tinkle` entries and returns them as simplified `TinkleDto` objects.
+     */
     @GetMapping("/bulk/extract")
     public ResponseEntity<List<TinkleDto>> bulkExtract() {
-        // Fetch all Tinkle entries from the database
         List<Tinkle> tinkleList = repository.findAll();
-        
-        // Map Tinkle entities to TinkleDto objects
+
         List<TinkleDto> tinkleDtos = new ArrayList<>();
         for (Tinkle tinkle : tinkleList) {
-            TinkleDto tinkleDto = new TinkleDto();
-            tinkleDto.setStudentEmail(tinkle.getPersonName());
-            tinkleDto.setTimeIn(tinkle.getTimeIn());
-            // You can add more fields here if needed
-            tinkleDtos.add(tinkleDto);
+            TinkleDto dto = new TinkleDto();
+            dto.setStudentEmail(tinkle.getPersonName());
+            dto.setTimeIn(tinkle.getTimeIn());
+            tinkleDtos.add(dto);
         }
-        
-        // Return the list of TinkleDto objects
+
         return new ResponseEntity<>(tinkleDtos, HttpStatus.OK);
     }
 
+    /**
+     * Bulk creation or update of Tinkle entries.
+     * Updates existing entries if found, otherwise creates new ones.
+     */
     @PostMapping("/bulk/create")
     public ResponseEntity<Object> bulkCreateTinkles(@RequestBody List<TinkleDto> tinkleDtos) {
         List<String> createdTinkles = new ArrayList<>();
@@ -163,21 +179,19 @@ public class TinkleApiController {
 
         for (TinkleDto tinkleDto : tinkleDtos) {
             try {
-                // Check if student already exists
                 Optional<Tinkle> existingTinkle = repository.findByPersonName(tinkleDto.getStudentEmail());
-                
+
                 if (existingTinkle.isPresent()) {
-                    // Update existing tinkle with new timeIn data
+                    // Update existing record
                     Tinkle tinkle = existingTinkle.get();
                     tinkle.addTimeIn(tinkleDto.getTimeIn());
                     repository.save(tinkle);
                     createdTinkles.add(tinkleDto.getStudentEmail() + " (updated)");
                 } else {
-                    // Find the person first
+                    // Create new record
                     Person person = personRepository.findByName(tinkleDto.getStudentEmail());
-                    
+
                     if (person != null) {
-                        // Create new tinkle entry
                         Tinkle newTinkle = new Tinkle(person, tinkleDto.getTimeIn());
                         repository.save(newTinkle);
                         createdTinkles.add(tinkleDto.getStudentEmail());
@@ -190,10 +204,10 @@ public class TinkleApiController {
             }
         }
 
-        // Prepare the response
+        // Create a summary response
         Map<String, Object> response = new HashMap<>();
         response.put("created", createdTinkles);
-        response.put("duplicates", duplicateTinkles);
+        response.put("duplicates", duplicateTinkles); // This list is currently unused
         response.put("errors", errors);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
