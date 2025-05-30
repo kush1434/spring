@@ -1,5 +1,6 @@
 import BlobBuilder from "./blob-builder.js";
 
+//Fetch request to extract all people
 async function getAllPeople() {
     let data1;
     await fetch("/mvc/extract/all/person", {
@@ -11,6 +12,7 @@ async function getAllPeople() {
     return data1;
 }
 
+//Ftech request to extract a person with a given id
 async function getSinglePerson(id) {
     let data1;
     await fetch("/mvc/extract/person/"+String(id), {
@@ -22,12 +24,7 @@ async function getSinglePerson(id) {
     return data1;
 }
 
-document.getElementById("export-all").addEventListener("click", async () => {
-    let content = await getAllPeople();
-    const blob = new BlobBuilder(BlobBuilder.fileTypeEnum.json, content);
-    blob.downloadBlob("persons");
-})
-
+//fetch request to fetch people in ranges (formatted as: [[i0,i1],[i0,i1]])
 async function getAllPeopleInRanges(ranges) {
     let data1;
     await fetch("/mvc/extract/all/person/fromRanges", {

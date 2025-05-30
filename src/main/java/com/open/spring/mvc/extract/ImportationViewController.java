@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import com.open.spring.mvc.person.Person;
+import com.open.spring.mvc.person.PersonDetailsService;
 import com.open.spring.mvc.person.PersonJpaRepository;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 
@@ -25,6 +26,8 @@ public class ImportationViewController {
     /// Autowired Jpa Repositories
     @Autowired
     private PersonJpaRepository personJpaRepository;
+    @Autowired
+    private PersonDetailsService personDetailsService;
 
     /////////////////////////////////////////
     /// Export Objects
@@ -52,34 +55,45 @@ public class ImportationViewController {
     //this import updates a single person, it does not create a new person
     @Transactional
     @PostMapping("person/{id}")
-    public ResponseEntity<String> importPersonById(@PathVariable("id") long id, @RequestBody PersonEmpty body) {
+    public ResponseEntity<String> importPersonById(@PathVariable("id") Long id, @RequestBody PersonEmpty person) {
         if (!personJpaRepository.existsById(id)) {
             return new ResponseEntity<String>(HttpStatus.NOT_FOUND);
         }
+        
+        Person personToUpdate = personJpaRepository.findById(id).get();
+        //don't allow updating database users
         Person[] defaultPersons = Person.init();
         for(int i=0; i<defaultPersons.length; i++){
-            if(defaultPersons[i].getId().equals(id)){
+            if(defaultPersons[i].getUid().equals(personToUpdate.getUid())){
                 return new ResponseEntity<String>(HttpStatus.FORBIDDEN);
             }
         }
+       
+        boolean samePassword = true;
 
-        Person person = personJpaRepository.findById(id).get();
-        //build a PersonEmpty based on the person
-        person.setName(body.getName());
-        person.setEmail(body.getEmail());
-        person.setKasmServerNeeded(body.getKasmServerNeeded());
-        person.setPassword(body.getPassword());
-        person.setUid(body.getUid());
-        person.setPfp(body.getPfp());
-        person.setStats(person.getStats());
-
-        try {
-            personJpaRepository.save(person);
-        } catch (Exception e) {
-            System.out.println(e.getStackTrace());
-            return new ResponseEntity<String>("success", HttpStatus.CONFLICT);
+        if (person.getPassword() != null && !person.getPassword().isBlank()) {
+            personToUpdate.setPassword(person.getPassword());
+            samePassword = false;
         }
-        
+        if (person.getName() != null && !person.getName().isBlank() && !person.getName().equals(personToUpdate.getName())) {
+            personToUpdate.setName(person.getName());
+        }
+        if (person.getEmail() != null && !person.getEmail().isBlank() && !person.getEmail().equals(personToUpdate.getEmail())) {
+            personToUpdate.setEmail(person.getEmail());
+        }
+        if (person.getKasmServerNeeded() != null && !person.getKasmServerNeeded().equals(personToUpdate.getKasmServerNeeded())) {
+            personToUpdate.setKasmServerNeeded(person.getKasmServerNeeded());
+        }
+        if (person.getSid() != null && !person.getSid().equals(personToUpdate.getSid())) {
+            personToUpdate.setSid(person.getSid());
+        }
+
+        try{
+            personDetailsService.save(personToUpdate,samePassword);    
+        } catch(Exception e){
+            System.out.println(e.getStackTrace());
+            return new ResponseEntity<String>(HttpStatus.FAILED_DEPENDENCY);
+        }
                 
         return new ResponseEntity<String>("success", HttpStatus.OK);
     }

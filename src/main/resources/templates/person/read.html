@@ -139,9 +139,12 @@
                                 class="btn btn-danger btn-sm">Delete</a>
                         </td>
                         <td>
-                            <button class="btn btn-info btn-sm" name="export" th:export-id="${person.id}">Export</button>
-                            <button class="btn btn-info btn-sm" name="import" th:import-id="${person.id}">Import</button>
                             <input type="checkbox" name="export-select" class="form-check-input" th:export-select-id="${person.id}">
+                            <hr>
+                            <button class="btn btn-info btn-sm" name="export" th:export-id="${person.id}">Export</button>
+                            <hr>
+                            <input id="personSingleFileUpload" type="file" accept=".json" class="form-control">
+                            <button class="btn btn-info btn-sm" name="import" th:import-id="${person.id}">Import</button>
                         </td>
                     </tr>
                 </tbody>
