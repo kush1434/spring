@@ -98,6 +98,38 @@ public class ImportationViewController {
         return new ResponseEntity<String>("success", HttpStatus.OK);
     }
 
+    //this import creates a single person
+    @Transactional
+    @PostMapping("person")
+    public ResponseEntity<String> importPerson(@RequestBody PersonEmpty personEmpty) {
+        
+        //don't allow updating database users
+        Person[] defaultPersons = Person.init();
+        for(int i=0; i<defaultPersons.length; i++){
+            if(defaultPersons[i].getUid().equals(personEmpty.getUid())){
+                return new ResponseEntity<String>(HttpStatus.FORBIDDEN);
+            }
+        }
+       
+        Person temp = new Person();
+            temp.setUid(personEmpty.getUid());
+            temp.setPassword(personEmpty.getPassword());
+            temp.setEmail(personEmpty.getEmail());
+            temp.setName(personEmpty.getName());
+            temp.setPfp(personEmpty.getPfp());
+            temp.setSid(personEmpty.getSid());
+            temp.setKasmServerNeeded(personEmpty.getKasmServerNeeded());
+            temp.setStats(personEmpty.getStats());
+
+        try{
+            personJpaRepository.save(temp);
+        } catch(Exception e){
+            System.out.println(e.getStackTrace());
+            return new ResponseEntity<String>(HttpStatus.FAILED_DEPENDENCY);
+        }
+                
+        return new ResponseEntity<String>("success", HttpStatus.OK);
+    }
 
 
     /////////////////////////////////////////
