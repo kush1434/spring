@@ -1,15 +1,23 @@
 package com.open.spring.mvc.bank;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonJpaRepository;
@@ -275,31 +283,114 @@ public class BankApiController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+    
     @DeleteMapping("/bulk/clear")
     public ResponseEntity<?> clearTable(HttpServletRequest request) {
-        // Check for admin authentication
-        String role = (String) request.getAttribute("role");
-        if (role == null || !role.equals("ADMIN")) {
-            return new ResponseEntity<>("Unauthorized - Admin access required", HttpStatus.UNAUTHORIZED);
-        }
-
         try {
-            // Delete all records
-            bankJpaRepository.deleteAll();
+            // Get initial count
+            long initialCount = bankJpaRepository.count();
             
-            Map<String, String> response = new HashMap<>();
-            response.put("status", "success");
-            response.put("message", "All bank records have been cleared");
+            if (initialCount == 0) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "success");
+                response.put("message", "No bank records to clear");
+                response.put("initialCount", 0);
+                response.put("deletedCount", 0);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+            
+            // Attempt to clear
+            bankService.clearAllBanks();
+            
+            // Verify deletion
+            long finalCount = bankJpaRepository.count();
+            long deletedCount = initialCount - finalCount;
+            
+            Map<String, Object> response = new HashMap<>();
+            if (finalCount == 0) {
+                response.put("status", "success");
+                response.put("message", "All bank records have been cleared successfully");
+            } else {
+                response.put("status", "partial_success");
+                response.put("message", String.format("Partially cleared: %d out of %d records deleted", deletedCount, initialCount));
+            }
+            
+            response.put("initialCount", initialCount);
+            response.put("finalCount", finalCount);
+            response.put("deletedCount", deletedCount);
             
             return new ResponseEntity<>(response, HttpStatus.OK);
+            
         } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
+            Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("status", "error");
             errorResponse.put("message", "Failed to clear table: " + e.getMessage());
+            errorResponse.put("exception", e.getClass().getSimpleName());
+            
+            // Include current count for debugging
+            try {
+                errorResponse.put("currentCount", bankJpaRepository.count());
+            } catch (Exception countException) {
+                errorResponse.put("currentCount", "unable_to_count");
+            }
             
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
+    // Alternative force clear endpoint
+    @DeleteMapping("/bulk/clear/force")
+    public ResponseEntity<?> forceClearTable(HttpServletRequest request) {
+        try {
+            long initialCount = bankJpaRepository.count();
+            
+            if (initialCount == 0) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "success");
+                response.put("message", "No bank records to clear");
+                response.put("initialCount", 0);
+                response.put("deletedCount", 0);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+            
+            // Use force clear method
+            bankService.clearAllBanksForce();
+            
+            // Verify deletion
+            long finalCount = bankJpaRepository.count();
+            long deletedCount = initialCount - finalCount;
+            
+            Map<String, Object> response = new HashMap<>();
+            if (finalCount == 0) {
+                response.put("status", "success");
+                response.put("message", "All bank records have been force cleared successfully");
+            } else {
+                response.put("status", "partial_success");
+                response.put("message", String.format("Force clear partially successful: %d out of %d records deleted", deletedCount, initialCount));
+            }
+            
+            response.put("initialCount", initialCount);
+            response.put("finalCount", finalCount);
+            response.put("deletedCount", deletedCount);
+            
+            return new ResponseEntity<>(response, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", "error");
+            errorResponse.put("message", "Failed to force clear table: " + e.getMessage());
+            errorResponse.put("exception", e.getClass().getSimpleName());
+            
+            try {
+                errorResponse.put("currentCount", bankJpaRepository.count());
+            } catch (Exception countException) {
+                errorResponse.put("currentCount", "unable_to_count");
+            }
+            
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // Bulk create/update bank accounts
     @PostMapping("/bulk/create")
     public ResponseEntity<Object> bulkCreateBanks(@RequestBody List<BankDto> bankDtos) {
@@ -317,9 +408,9 @@ public class BankApiController {
                 } else if (bankDto.getPersonId() != null) {
                     // Otherwise try to find by person ID
                     bank = bankJpaRepository.findByPersonId(bankDto.getPersonId());
-                } else if (bankDto.getUsername() != null) {
+                } else if (bankDto.getUid() != null) {
                     // Or by username
-                    bank = bankJpaRepository.findByUsername(bankDto.getUsername());
+                    bank = bankJpaRepository.findByUid(bankDto.getUid());
                 }
                 
                 if (bank != null) {
@@ -338,9 +429,9 @@ public class BankApiController {
                     
                     bankJpaRepository.save(bank);
                     updatedBanks.add(bank.getUsername() != null ? bank.getUsername() : "Bank ID: " + bank.getId());
-                } else if (bankDto.getPersonId() != null) {
+                } else if (bankDto.getUid() != null) {
                     // Create new bank account if person exists
-                    Person person = personJpaRepository.findById(bankDto.getPersonId()).orElse(null);
+                    Person person = personJpaRepository.findByUid(bankDto.getUid());
                     
                     if (person != null) {
                         // Create new bank account using the modified constructor
@@ -363,7 +454,7 @@ public class BankApiController {
                         bankJpaRepository.save(bank);
                         createdBanks.add(bank.getUsername());
                     } else {
-                        errors.add("Person not found with ID: " + bankDto.getPersonId());
+                        errors.add("Person not found with ID: " + bankDto.getUid());
                     }
                 } else if (bankDto.getUsername() != null) {
                     // Try to find person by username (name)
