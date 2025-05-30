@@ -9,6 +9,7 @@ import weka.core.*;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Enumeration;
 
 public class TitanicML {
 
@@ -51,7 +52,29 @@ public class TitanicML {
         Instances data = convertTableToWeka(titanic);
 
         // Set class index (target variable)
-        data.setClassIndex(data.attribute("Survived").index());
+        // Find the Survived attribute index directly
+        // In your main method, replace the current survivedIndex finder with this:
+        int survivedIndex = -1;
+        for (int i = 0; i < data.numAttributes(); i++) {
+            // Match attribute name that starts with "Survived" since it appears to have extra text
+            if (data.attribute(i).name().startsWith("Survived")) {
+                survivedIndex = i;
+                System.out.println("Found Survived attribute at index " + i + " with name: " + data.attribute(i).name());
+                break;
+            }
+        }
+        
+        if (survivedIndex == -1) {
+            // Debug: Print all available attribute names
+            System.out.println("Available attributes:");
+            Enumeration<Attribute> attrs = data.enumerateAttributes();
+            while (attrs.hasMoreElements()) {
+                System.out.println("  - " + attrs.nextElement().name());
+            }
+            throw new RuntimeException("Could not find 'Survived' attribute in the dataset");
+        }
+        
+        data.setClassIndex(survivedIndex);
 
         // Step 3: Apply Machine Learning Models
         J48 tree = new J48();
@@ -78,55 +101,92 @@ public class TitanicML {
             DoubleColumn doubleColumn = (DoubleColumn) column;
             min = doubleColumn.min();
             max = doubleColumn.max();
-            for (int i = 0; i < doubleColumn.size(); i++) {
-                double normalizedValue = (doubleColumn.getDouble(i) - min) / (max - min);
-                doubleColumn.set(i, normalizedValue);
+            if (max > min) { // Prevent division by zero
+                for (int i = 0; i < doubleColumn.size(); i++) {
+                    double normalizedValue = (doubleColumn.getDouble(i) - min) / (max - min);
+                    doubleColumn.set(i, normalizedValue);
+                }
             }
         } else if (column instanceof IntColumn) {
             IntColumn intColumn = (IntColumn) column;
             min = intColumn.min();
             max = intColumn.max();
-            for (int i = 0; i < intColumn.size(); i++) {
-                double normalizedValue = (intColumn.getInt(i) - min) / (max - min);
-                intColumn.set(i, (int) normalizedValue);
+            if (max > min) { // Prevent division by zero
+                for (int i = 0; i < intColumn.size(); i++) {
+                    double normalizedValue = (intColumn.getInt(i) - min) / (max - min);
+                    intColumn.set(i, (int) normalizedValue);
+                }
             }
         }
     }
     
     // Convert Tablesaw Table to Weka Instances
     private static Instances convertTableToWeka(Table table) {
-        List<Attribute> attributes = new ArrayList<>();
+        ArrayList<Attribute> attributes = new ArrayList<>();
+        int index = 0;
+        
+        // Map to store column name -> attribute index
+        java.util.HashMap<String, Integer> attributeMap = new java.util.HashMap<>();
 
         // Define attributes based on column types
         for (Column<?> col : table.columns()) {
+            String columnName = col.name();
+            
             if (col.type().equals(ColumnType.STRING)) {
                 List<String> classValues = new ArrayList<>();
-                table.stringColumn(col.name()).unique().forEach(classValues::add);
-                attributes.add(new Attribute(col.name(), classValues));
+                StringColumn stringCol = table.stringColumn(columnName);
+                
+                // Add all unique values to the list of class values
+                for (String value : stringCol.unique().asList()) {
+                    classValues.add(value);
+                }
+                
+                Attribute attr = new Attribute(columnName, classValues);
+                attributes.add(attr);
+                attributeMap.put(columnName, index++);
             } else {
-                attributes.add(new Attribute(col.name()));
+                Attribute attr = new Attribute(columnName);
+                attributes.add(attr);
+                attributeMap.put(columnName, index++);
             }
         }
 
         // Create Weka dataset
-        Instances data = new Instances("Titanic", new ArrayList<>(attributes), table.rowCount());
+        Instances data = new Instances("Titanic", attributes, table.rowCount());
 
-        for (Row row : table) {
-            double[] values = new double[table.columnCount()];
-            for (int i = 0; i < table.columnCount(); i++) {
-                Column<?> col = table.column(i);
-
-                // Handle Integer and Double columns
+        // Add data instances
+        for (int rowIndex = 0; rowIndex < table.rowCount(); rowIndex++) {
+            double[] values = new double[attributes.size()];
+            
+            for (int colIndex = 0; colIndex < table.columnCount(); colIndex++) {
+                Column<?> col = table.column(colIndex);
+                String colName = col.name();
+                Integer attrIndex = attributeMap.get(colName);
+                
+                if (attrIndex == null) {
+                    throw new RuntimeException("Could not find attribute index for column: " + colName);
+                }
+                
                 if (col.type() == ColumnType.INTEGER) {
-                    values[i] = row.getInt(i);
+                    values[attrIndex] = table.intColumn(colIndex).get(rowIndex);
                 } else if (col.type() == ColumnType.DOUBLE) {
-                    values[i] = row.getDouble(i);
+                    values[attrIndex] = table.doubleColumn(colIndex).get(rowIndex);
                 } else if (col.type() == ColumnType.STRING) {
-                    values[i] = attributes.get(i).indexOfValue(row.getString(i));
+                    String value = table.stringColumn(colIndex).get(rowIndex);
+                    Attribute attr = attributes.get(attrIndex);
+                    int valueIndex = attr.indexOfValue(value);
+                    if (valueIndex == -1) {
+                        System.err.println("Warning: Value '" + value + "' not found in attribute '" + 
+                                          colName + "'. Using first value instead.");
+                        valueIndex = 0;
+                    }
+                    values[attrIndex] = valueIndex;
                 }
             }
+            
             data.add(new DenseInstance(1.0, values));
         }
+        
         return data;
     }
 
@@ -135,5 +195,6 @@ public class TitanicML {
         weka.classifiers.Evaluation eval = new weka.classifiers.Evaluation(data);
         eval.crossValidateModel(model, data, 10, new java.util.Random(1));
         System.out.printf("%s Accuracy: %.2f%%%n", modelName, eval.pctCorrect());
+        System.out.printf("%s Confusion Matrix:%n%s%n", modelName, eval.toMatrixString());
     }
 }
