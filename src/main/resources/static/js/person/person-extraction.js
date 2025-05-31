@@ -1,4 +1,4 @@
-import BlobBuilder from "./blob-builder.js";
+import BlobBuilder from "../blob-builder.js";
 
 async function getAllPeople() {
     let data1;

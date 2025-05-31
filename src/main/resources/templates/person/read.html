@@ -154,10 +154,10 @@
 <!-- scripts -->
 <th:block layout:fragment="script" th:remove="tag">
     <!-- script for extracting/importing people (not included if user is not admin)-->
-    <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/person-extraction.js"
-        th:src="@{/js/person-extraction.js}"></script>
-    <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/person-importation.js"
-        th:src="@{/js/person-importation.js}"></script>
+    <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/person/person-extraction.js"
+        th:src="@{/js/person/person-extraction.js}"></script>
+    <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/person/person-importation.js"
+        th:src="@{/js/person/person-importation.js}"></script>
     <!-- script for filtering columns-->
     <script type="text/javascript" src="/static/js/read-filter.js" th:src="@{/js/read-filter.js}"></script>
     <!-- script for updating overlay (used for update button)-->

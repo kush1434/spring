@@ -11,13 +11,14 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonJpaRepository;
@@ -125,15 +126,12 @@ public class TinkleApiController {
      * Clears all bathroom records from the database.
      * Requires the requester to be an admin (checked via request attribute).
      */
-    @DeleteMapping("/bulk/clear")
-    public ResponseEntity<?> clearTable(HttpServletRequest request) {
-        String role = (String) request.getAttribute("role");
-        if (role == null || !role.equals("ADMIN")) {
-            return new ResponseEntity<>("Unauthorized - Admin access required", HttpStatus.UNAUTHORIZED);
-        }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/bulk/clear")
+    public ResponseEntity<?> clearTable(HttpServletRequest request) {
         try {
-            repository.deleteAll();
+            repository.deleteAllInBatch();
 
             Map<String, String> response = new HashMap<>();
             response.put("status", "success");
