@@ -29,9 +29,6 @@ public class TrainCombinedApiController {
     private TrainStationJPARepository trainStationRepository;
 
     @Autowired
-    private TrainOrderJPARepository trainOrderRepository;
-
-    @Autowired
     private TrainCompanyJPARepository repository;
 
     //idk why this one only works with transactional annotation, its probally to do with the one-to-one relationship betweeen TrainCompany and Person
@@ -75,6 +72,8 @@ public class TrainCombinedApiController {
             train.setCompany(company);
             train.setPosition(Float.valueOf(0));
             train.setCargo(new HashMap<String,List<Product>>());
+            train.setTrainType("trolley");
+            train.setTrainColor("red");
             trainRepository.save(train);
         }
         
@@ -168,36 +167,6 @@ public class TrainCombinedApiController {
         Train train =  trainRepository.getById(trainId);
 
         ResponseEntity<Train> responseEntity = new ResponseEntity<Train>(train, HttpStatus.OK);
-        return responseEntity;
-    }
-
-    @GetMapping("/get/train/{id}/orders")
-    @Transactional
-    public ResponseEntity<List<TrainOrder>> getTrainOrdersById(@PathVariable("id") long trainId, Authentication authentication) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Person person = personRepository.getByUid(userDetails.getUsername());
-        Long id = person.getId();
-
-        if (!repository.existsById(id)) {
-            ResponseEntity<List<TrainOrder>> responseEntity = new ResponseEntity<List<TrainOrder>>(HttpStatus.FAILED_DEPENDENCY);
-            return responseEntity;
-        }
-
-        TrainCompany company = repository.getById(id);
-
-        if(!trainRepository.existsByCompanyId(company.getId())){
-            ResponseEntity<List<TrainOrder>> responseEntity = new ResponseEntity<List<TrainOrder>>(HttpStatus.FAILED_DEPENDENCY);
-            return responseEntity;
-        }
-
-        if(!company.getTrains().stream().anyMatch(train -> Long.valueOf(trainId).equals(train.getId()))){
-            ResponseEntity<List<TrainOrder>> responseEntity = new ResponseEntity<List<TrainOrder>>(HttpStatus.FORBIDDEN);
-            return responseEntity; 
-        }
-       
-        List<TrainOrder> trainOrders =  trainOrderRepository.getAllByTrain(trainRepository.getById(trainId));
-
-        ResponseEntity<List<TrainOrder>> responseEntity = new ResponseEntity<List<TrainOrder>>(trainOrders, HttpStatus.OK);
         return responseEntity;
     }
 }

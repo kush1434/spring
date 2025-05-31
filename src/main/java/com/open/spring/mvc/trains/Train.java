@@ -35,10 +35,6 @@ public class Train {
     @JoinColumn(name="company_id")
     private TrainCompany company;
 
-    @OneToMany(mappedBy = "train", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private List<TrainOrder> trainOrders;
-
     @Min(value=-10000)
     @Max(value=10000)
     private Float position;
@@ -46,4 +42,8 @@ public class Train {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private Map<String,List<Product>> cargo; //Product, amount available
+
+    private String trainType;
+
+    private String trainColor;
 }
