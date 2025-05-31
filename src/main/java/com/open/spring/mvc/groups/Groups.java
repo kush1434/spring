@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.open.spring.mvc.person.Person;
 
 import jakarta.persistence.CascadeType;
@@ -16,24 +19,24 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
+@EqualsAndHashCode(callSuper = true)
 @Table(name = "groups")
 @Getter
 @Setter
-public class Groups {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
+public class Groups extends Submitter {
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
         name = "group_members", 
         joinColumns = @JoinColumn(name = "group_id"), 
         inverseJoinColumns = @JoinColumn(name = "person_id")
     )
+    @JsonManagedReference
     @JsonIgnore
     private List<Person> groupMembers = new ArrayList<>();
 

@@ -1,4 +1,4 @@
-package com.nighthawk.spring_portfolio.mvc.titanic;
+package com.open.spring.mvc.titanic;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
