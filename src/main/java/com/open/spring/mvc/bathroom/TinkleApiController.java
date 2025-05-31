@@ -1,5 +1,6 @@
 package com.open.spring.mvc.bathroom;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -9,20 +10,25 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonJpaRepository;
 
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,11 +45,17 @@ public class TinkleApiController {
     @Autowired
     private PersonJpaRepository personRepository;
 
-    // Data Transfer Object for Tinkle-related input/output
+    @Autowired
+    private BathroomQueueJPARepository bathroomQueue;
+
+    @Autowired
+    private EntityManager entityManager;
+
     @Getter
     @Setter
     public static class TinkleDto {
-        private String studentEmail;  // Used to identify the person
+        // private String studentEmail;  // Used to identify the person
+        private String sid;
         private String timeIn;        // String of time-in/time-out pairs
     }
 
@@ -52,14 +64,22 @@ public class TinkleApiController {
      */
     @PostMapping("/add")
     public ResponseEntity<Object> timeInOut(@RequestBody TinkleDto tinkleDto) {
-        Optional<Tinkle> student = repository.findByPersonName(tinkleDto.getStudentEmail());
+        Optional<Tinkle> student = repository.findBySid(tinkleDto.getSid());
 
         if (student.isPresent()) {
             student.get().addTimeIn(tinkleDto.getTimeIn());
             repository.save(student.get());
             return new ResponseEntity<>(student.get(), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("Student not found", HttpStatus.NOT_FOUND);
+            // List<BathroomQueue> queues = bathroomQueue.findAll();
+            // for (BathroomQueue queue : queues) {
+            //     if (queue.getPeopleQueue().contains(tinkleDto.getStudentEmail())) {
+            //         queue.removeStudent(tinkleDto.getStudentEmail());
+            //         bathroomQueue.save(queue);
+            //         break;
+            //     }
+            // }
+            return new ResponseEntity<>("Student not found in Tinkle. Queue entry removed.", HttpStatus.NOT_FOUND);
         }
     }
 
@@ -93,15 +113,16 @@ public class TinkleApiController {
         var personArray = personRepository.findAllByOrderByNameAsc();
 
         for (Person person : personArray) {
-            Tinkle tinkle = new Tinkle(person, "");
-            Optional<Tinkle> tinkleFound = repository.findByPersonName(tinkle.getPersonName());
+            Optional<Tinkle> tinkleFound = repository.findBySid(person.getSid());
             if (tinkleFound.isEmpty()) {
+                Tinkle tinkle = new Tinkle(person, "");
                 repository.save(tinkle);
             }
         }
 
         return ResponseEntity.ok("Complete");
     }
+
 
     /**
      * Retrieve a student's `timeIn` string directly from in-memory cache.
@@ -133,23 +154,18 @@ public class TinkleApiController {
         try {
             repository.deleteAllInBatch();
 
-            Map<String, String> response = new HashMap<>();
-            response.put("status", "success");
-            response.put("message", "All bathroom records have been cleared");
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "All bathroom records have been cleared"
+            ));
         } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("status", "error");
-            errorResponse.put("message", "Failed to clear table: " + e.getMessage());
-
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
-    /**
-     * Extracts all `Tinkle` entries and returns them as simplified `TinkleDto` objects.
-     */
+
+
     @GetMapping("/bulk/extract")
     public ResponseEntity<List<TinkleDto>> bulkExtract() {
         List<Tinkle> tinkleList = repository.findAll();
@@ -157,7 +173,7 @@ public class TinkleApiController {
         List<TinkleDto> tinkleDtos = new ArrayList<>();
         for (Tinkle tinkle : tinkleList) {
             TinkleDto dto = new TinkleDto();
-            dto.setStudentEmail(tinkle.getPersonName());
+            dto.setSid(tinkle.getSid());
             dto.setTimeIn(tinkle.getTimeIn());
             tinkleDtos.add(dto);
         }
@@ -165,47 +181,46 @@ public class TinkleApiController {
         return new ResponseEntity<>(tinkleDtos, HttpStatus.OK);
     }
 
-    /**
-     * Bulk creation or update of Tinkle entries.
-     * Updates existing entries if found, otherwise creates new ones.
-     */
     @PostMapping("/bulk/create")
     public ResponseEntity<Object> bulkCreateTinkles(@RequestBody List<TinkleDto> tinkleDtos) {
         List<String> createdTinkles = new ArrayList<>();
-        List<String> duplicateTinkles = new ArrayList<>();
         List<String> errors = new ArrayList<>();
 
         for (TinkleDto tinkleDto : tinkleDtos) {
+            String sid = tinkleDto.getSid();
+
+            if (sid == null || sid.isEmpty()) {
+                errors.add("Missing sid for entry");
+                continue;
+            }
+
             try {
-                Optional<Tinkle> existingTinkle = repository.findByPersonName(tinkleDto.getStudentEmail());
+                Optional<Tinkle> existingTinkle = repository.findBySid(sid);
 
                 if (existingTinkle.isPresent()) {
-                    // Update existing record
                     Tinkle tinkle = existingTinkle.get();
                     tinkle.addTimeIn(tinkleDto.getTimeIn());
                     repository.save(tinkle);
-                    createdTinkles.add(tinkleDto.getStudentEmail() + " (updated)");
+                    createdTinkles.add(sid + " (updated)");
                 } else {
-                    // Create new record
-                    Person person = personRepository.findByName(tinkleDto.getStudentEmail());
+                    Person person = personRepository.findBySid(sid);
+                    Optional<Person> personOpt = Optional.ofNullable(person);
 
-                    if (person != null) {
-                        Tinkle newTinkle = new Tinkle(person, tinkleDto.getTimeIn());
+                    if (personOpt.isPresent()) {
+                        Tinkle newTinkle = new Tinkle(personOpt.get(), tinkleDto.getTimeIn());
                         repository.save(newTinkle);
-                        createdTinkles.add(tinkleDto.getStudentEmail());
+                        createdTinkles.add(sid);
                     } else {
-                        errors.add("Person not found with name: " + tinkleDto.getStudentEmail());
+                        errors.add("No person found for sid: " + sid);
                     }
                 }
             } catch (Exception e) {
-                errors.add("Exception occurred for student: " + tinkleDto.getStudentEmail() + " - " + e.getMessage());
+                errors.add("Exception for sid " + sid + ": " + e.getMessage());
             }
         }
 
-        // Create a summary response
         Map<String, Object> response = new HashMap<>();
         response.put("created", createdTinkles);
-        response.put("duplicates", duplicateTinkles); // This list is currently unused
         response.put("errors", errors);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
