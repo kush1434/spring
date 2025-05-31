@@ -23,14 +23,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// Lombok annotations to generate boilerplate code like getters, setters, constructors, etc.
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
+@Entity // Marks this class as a JPA entity
 public class Tinkle {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private Long id; // Primary key
 
 
     @OneToOne
@@ -39,25 +40,27 @@ public class Tinkle {
     @JsonBackReference
     private Person person;
 
-    private String timeIn; // Stores comma-separated time pairs
+    private String timeIn; // Stores time entries in raw string format (comma-separated "in--out" pairs)
 
     @Column
-    @Convert(converter = TimeInOutPairsConverter.class)
-    private List<LocalDateTime[]> timeInOutPairs = new ArrayList<>();
+    @Convert(converter = TimeInOutPairsConverter.class) // JPA converter to handle complex type
+    private List<LocalDateTime[]> timeInOutPairs = new ArrayList<>(); // Parsed list of [in, out] times
 
     @Column
-    private String personName;
+    private String personName; // Convenience field to hold the person’s name
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    // Constructor used to create an object from a Person and raw string input
     public Tinkle(Person person, String statsInput) {
         this.person = person;
         this.personName = person.getName();
         this.timeIn = statsInput;
-        parseAndStoreTimeInOut(statsInput);
+        parseAndStoreTimeInOut(statsInput); // Populate the parsed time list
     }
 
 
+    // Add time entries from a string (e.g., "08:00:00-08:15:00,09:00:00-09:20:00")
     public void addTimeIn(String timeInOutPairs) {
         if (timeInOutPairs != null && !timeInOutPairs.isEmpty()) {
             if (this.timeInOutPairs == null || this.timeInOutPairs.isEmpty()) {
@@ -74,6 +77,7 @@ public class Tinkle {
                 String[] times = pair.split("-");
                 if (times.length == 2) {
                     try {
+                        // Ensure consistent formatting of time strings
                         times[0] = formatTime(times[0], timeFormatter);
                         times[1] = formatTime(times[1], timeFormatter);
 
@@ -83,7 +87,7 @@ public class Tinkle {
 
                         this.timeInOutPairs.add(new LocalDateTime[]{parsedTimeIn, parsedTimeOut});
 
-                        // Update timeIn column to maintain consistency
+                        // Append to the raw string format for storage
                         if (this.timeIn == null || this.timeIn.isEmpty()) {
                             this.timeIn = date + " " + times[0] + "--" + date + " " + times[1];
                         } else {
@@ -97,6 +101,7 @@ public class Tinkle {
         }
     }
 
+    // Ensure time strings are in HH:mm:ss format
     private String formatTime(String time, DateTimeFormatter formatter) {
         String[] parts = time.split(":");
         if (parts.length == 3) {
@@ -108,6 +113,7 @@ public class Tinkle {
         return time;
     }
 
+    // Add time entries directly from LocalDateTime values
     public void addTimeIn(LocalDateTime timeIn, LocalDateTime timeOut) {
         this.timeInOutPairs.add(new LocalDateTime[]{timeIn, timeOut});
 
@@ -119,6 +125,7 @@ public class Tinkle {
         }
     }
 
+    // Parses a string of time pairs into LocalDateTime objects
     private void parseAndStoreTimeInOut(String statsInput) {
         if (statsInput != null && !statsInput.isEmpty()) {
             String[] pairs = statsInput.split(",");
@@ -139,6 +146,7 @@ public class Tinkle {
         }
     }
 
+    // For debugging/logging purposes
     @Override
     public String toString() {
         return "Tinkle{" +
@@ -148,51 +156,51 @@ public class Tinkle {
                 '}';
     }
 
+    // Initializes dummy Tinkle data for an array of Person objects
     public static Tinkle[] init(Person[] persons) {
         ArrayList<Tinkle> tinkles = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    
+
         java.util.Random random = new java.util.Random();
-    
+
+        // Base dates to be reused across all persons
         String[] baseDates = {
             "2025-04-07", "2025-04-08", "2025-04-09", "2025-04-10", "2025-04-11",
             "2025-04-14", "2025-04-15", "2025-04-16", "2025-04-17", "2025-04-18"
         };
-    
+
         String[] timeInOutSamples = new String[10];
-    
+
+        // Create sample timeInOut strings with 20 entries each
         for (int i = 0; i < 10; i++) {
             StringBuilder sampleBuilder = new StringBuilder();
             String date = baseDates[i % baseDates.length];
-    
-            // Assign a "base" average trip duration for this person (10-20 min)
+
             int baseDuration = 10 + random.nextInt(11); // 10 to 20 minutes
-    
+
             for (int j = 0; j < 20; j++) {
-                int hour = 8 + (j % 10); // 8 AM to 5 PM
+                int hour = 8 + (j % 10); // Hour range: 8 AM to 5 PM
                 int minute = (j * 3) % 60;
-    
-                // Add a random adjustment of ±3 minutes around base duration
-                int durationAdjustment = random.nextInt(7) - 3;  // -3 to +3 minutes
-                int tripDuration = Math.max(5, baseDuration + durationAdjustment); // Ensure at least 5 min trips
-    
+
+                int durationAdjustment = random.nextInt(7) - 3; // -3 to +3 min
+                int tripDuration = Math.max(5, baseDuration + durationAdjustment); // At least 5 min
+
                 String timeIn = String.format("%s %02d:%02d:00", date, hour, minute);
                 String timeOut = LocalDateTime.parse(timeIn, formatter).plusMinutes(tripDuration).format(formatter);
-    
+
                 sampleBuilder.append(timeIn).append("--").append(timeOut);
-                if (j != 19) sampleBuilder.append(","); // comma between entries
+                if (j != 19) sampleBuilder.append(","); // Separate pairs
             }
-    
+
             timeInOutSamples[i] = sampleBuilder.toString();
         }
-    
+
+        // Assign sample data to each person
         for (int i = 0; i < persons.length; i++) {
             String timeInOut = timeInOutSamples[i % timeInOutSamples.length];
             tinkles.add(new Tinkle(persons[i], timeInOut));
         }
-    
+
         return tinkles.toArray(new Tinkle[0]);
     }
-    
-    
 }

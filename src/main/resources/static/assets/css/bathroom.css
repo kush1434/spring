@@ -34,6 +34,10 @@
     background-color: rgba(255, 255, 255, 0.2);
 }
 
+#bathroomPassLink {
+    text-decoration: none;
+}
+
 .weekday-tab.active {
     color: #28a745;
     background-color: #fff;

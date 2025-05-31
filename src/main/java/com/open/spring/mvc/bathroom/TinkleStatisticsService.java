@@ -11,17 +11,21 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+/**
+ * Service class to provide statistical computations on Tinkle entries.
+ * Includes duration calculations, formatting utilities, and threshold detection.
+ */
 @Service
 public class TinkleStatisticsService {
 
     /**
-     * Calculates the average weekly duration for each user.
+     * Calculates the average weekly duration in seconds for each user.
      *
      * @param tinkleList List of Tinkle entries from the database.
      * @return A map where the key is the user's name and the value is their average weekly duration in seconds.
      */
     public Map<String, Long> calculateAverageWeeklyDurations(List<Tinkle> tinkleList) {
-        // Group durations by person name
+        // Group total durations (in seconds) by person name
         Map<String, List<Long>> userWeeklyDurations = tinkleList.stream()
             .filter(tinkle -> tinkle.getPersonName() != null) 
             .collect(Collectors.groupingBy(
@@ -32,13 +36,11 @@ public class TinkleStatisticsService {
                 )
             ));
 
-        // Calculate the average weekly duration per user
+        // Compute average duration per user
         Map<String, Long> averageWeeklyDurations = new HashMap<>();
         for (Map.Entry<String, List<Long>> entry : userWeeklyDurations.entrySet()) {
             String userName = entry.getKey();
             List<Long> durations = entry.getValue();
-
-            // Sum all durations and divide by the number of weeks (assuming 1 entry per week)
             long totalDuration = durations.stream().mapToLong(Long::longValue).sum();
             long averageDuration = durations.isEmpty() ? 0 : totalDuration / durations.size();
             averageWeeklyDurations.put(userName, averageDuration);
@@ -48,26 +50,26 @@ public class TinkleStatisticsService {
     }
 
     /**
-     * Calculates the total duration in seconds for a given timeIn string.
+     * Calculates total duration in seconds from a timeIn string that contains comma-separated start--end datetime pairs.
      *
-     * @param timeIn A string containing time pairs (e.g., "08:00:00-08:10:00,10:30:00-10:45:00").
-     * @return Total duration in seconds.
+     * @param timeIn Example format: "2024-05-01 08:00:00--2024-05-01 08:10:00,2024-05-01 10:30:00--2024-05-01 10:45:00"
+     * @return Total duration across all pairs in seconds.
      */
     public long calculateTotalDurationInSeconds(String timeIn) {
         if (timeIn == null || timeIn.isEmpty()) return 0;
-        
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        
+
         return Arrays.stream(timeIn.split(","))
             .mapToLong(pair -> {
-                String[] times = pair.split("--"); // Changed delimiter to match new format
+                String[] times = pair.split("--");
                 if (times.length == 2) {
                     try {
                         LocalDateTime start = LocalDateTime.parse(times[0].trim(), formatter);
                         LocalDateTime end = LocalDateTime.parse(times[1].trim(), formatter);
                         return Duration.between(start, end).getSeconds();
                     } catch (Exception e) {
-                        return 0; // skip malformed entries
+                        return 0; // Skip malformed time pairs
                     }
                 }
                 return 0;
@@ -75,13 +77,25 @@ public class TinkleStatisticsService {
             .sum();
     }
 
+    /**
+     * Converts a duration in seconds to HH:mm:ss format.
+     *
+     * @param totalSeconds Total duration in seconds.
+     * @return Formatted duration string.
+     */
     public String formatDuration(long totalSeconds) {
         long hours = totalSeconds / 3600;
         long minutes = (totalSeconds % 3600) / 60;
         long seconds = totalSeconds % 60;
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
-    
+
+    /**
+     * Calculates average weekly durations and formats the result as HH:mm:ss strings.
+     *
+     * @param tinkleList List of Tinkle entries.
+     * @return Map of user names to formatted average durations.
+     */
     public Map<String, String> calculateAverageWeeklyDurationsFormatted(List<Tinkle> tinkleList) {
         Map<String, Long> averageWeeklyDurations = calculateAverageWeeklyDurations(tinkleList);
         return averageWeeklyDurations.entrySet().stream()
@@ -90,23 +104,30 @@ public class TinkleStatisticsService {
                 entry -> formatDuration(entry.getValue())
             ));
     }
-    
+
+    /**
+     * Returns total formatted duration from a timeIn string.
+     *
+     * @param timeIn Raw datetime string.
+     * @return Formatted total duration in HH:mm:ss.
+     */
     public String calculateDurationFormatted(String timeIn) {
         long totalSeconds = calculateTotalDurationInSeconds(timeIn);
-        return formatDuration(totalSeconds); // Reuse the formatDuration method
+        return formatDuration(totalSeconds);
     }
-    
+
     /**
-     * Format timeIn string to display just HH:MM--HH:MM for each pair
-     * @param timeIn The raw datetime pairs string
-     * @return Formatted time pairs
+     * Simplifies the timeIn string by returning HH:mm--HH:mm format for each entry.
+     *
+     * @param timeIn Raw datetime pairs.
+     * @return A simplified, human-readable time range string.
      */
     public String formatTimeIn(String timeIn) {
         if (timeIn == null || timeIn.isEmpty()) return "No data";
-        
+
         try {
             DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            
+
             return Arrays.stream(timeIn.split(","))
                 .map(pair -> {
                     String[] times = pair.split("--");
@@ -114,7 +135,7 @@ public class TinkleStatisticsService {
                         try {
                             LocalDateTime start = LocalDateTime.parse(times[0].trim(), inputFormatter);
                             LocalDateTime end = LocalDateTime.parse(times[1].trim(), inputFormatter);
-                            return String.format("%02d:%02d--%02d:%02d", 
+                            return String.format("%02d:%02d--%02d:%02d",
                                 start.getHour(), start.getMinute(),
                                 end.getHour(), end.getMinute());
                         } catch (Exception e) {
@@ -128,15 +149,16 @@ public class TinkleStatisticsService {
             return "Format error";
         }
     }
-    
+
     /**
-     * Extract and format the day from timeIn string (MM-DD format)
-     * @param timeIn The raw datetime pairs string
-     * @return Day in MM-DD format
+     * Extracts the first date from the timeIn string and returns it in MM-DD format.
+     *
+     * @param timeIn Raw datetime string.
+     * @return Formatted date string or error message.
      */
     public String extractDay(String timeIn) {
         if (timeIn == null || timeIn.isEmpty()) return "No date";
-        
+
         try {
             String[] times = timeIn.split("--");
             if (times.length >= 1) {
@@ -150,16 +172,17 @@ public class TinkleStatisticsService {
             return "Date error";
         }
     }
-    
+
     /**
-     * Checks if a time range exceeds the threshold (for highlighting)
-     * @param timeIn Single time range pair
-     * @param thresholdMinutes Minutes threshold
-     * @return true if time range exceeds threshold
+     * Checks if a single time range exceeds a defined threshold in minutes.
+     *
+     * @param timeInPair A single time range in "start--end" format.
+     * @param thresholdMinutes The duration threshold in minutes.
+     * @return true if the duration exceeds the threshold; false otherwise.
      */
     public boolean isLongDuration(String timeInPair, int thresholdMinutes) {
         if (timeInPair == null || timeInPair.isEmpty()) return false;
-        
+
         try {
             String[] times = timeInPair.split("--");
             if (times.length == 2) {
@@ -170,7 +193,7 @@ public class TinkleStatisticsService {
                 return durationMinutes > thresholdMinutes;
             }
         } catch (Exception e) {
-            // Ignore parsing errors
+            // Ignore malformed input
         }
         return false;
     }
