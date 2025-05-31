@@ -46,4 +46,42 @@ public class Train {
     private String trainType;
 
     private String trainColor;
+
+    public static Train createTrain(){
+        Train train = new Train();
+        //default position of 0
+        train.setPosition(Float.valueOf(0));
+        //defalt no cargo
+        train.setCargo(new HashMap<String,List<Product>>());
+        //assign type of train
+        train.setTrainType("trolley");
+        //assign a random color for the train
+        int random = (int)(Math.random()*7); //red orange yellow green blue purple
+        switch (random) {
+            case 0:
+                train.setTrainColor("red");
+                break;
+            case 1:
+                train.setTrainColor("orange");
+                break;
+            case 2:
+                train.setTrainColor("yellow");
+                break;
+            case 3:
+                train.setTrainColor("green");
+                break;
+            case 4:
+                train.setTrainColor("blue");
+                break;
+            case 5:
+                train.setTrainColor("purple");
+                break;        
+            default:
+                train.setTrainColor("red");
+                break;
+        }
+
+        //return the train, company needs to be assigned
+        return train;
+    }
 }

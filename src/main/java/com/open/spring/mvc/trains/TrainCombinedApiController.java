@@ -68,12 +68,8 @@ public class TrainCombinedApiController {
         TrainCompany company = repository.getById(id);
 
         if(!trainRepository.existsByCompanyId(company.getId())){
-            Train train = new Train();
+            Train train = Train.createTrain(); //creates an empty train with a randomized type/color
             train.setCompany(company);
-            train.setPosition(Float.valueOf(0));
-            train.setCargo(new HashMap<String,List<Product>>());
-            train.setTrainType("trolley");
-            train.setTrainColor("red");
             trainRepository.save(train);
         }
         
