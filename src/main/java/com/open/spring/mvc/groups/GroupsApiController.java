@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonDetailsService;
@@ -49,7 +52,6 @@ public class GroupsApiController {
      */
     private Map<String, Object> getPersonBasicInfo(Person person) {
         Map<String, Object> personInfo = new HashMap<>();
-        personInfo.put("id", person.getId());
         personInfo.put("uid", person.getUid());
         personInfo.put("name", person.getName());
         personInfo.put("email", person.getEmail());
@@ -62,8 +64,22 @@ public class GroupsApiController {
      */
     @GetMapping
     @Transactional(readOnly = true)
-    public ResponseEntity<List<Map<String, Object>>> getAllGroups() {
-        List<Groups> groups = groupsRepository.findAll();
+    public ResponseEntity<List<Map<String, Object>>> getAllGroups(@AuthenticationPrincipal UserDetails userDetails) {
+        String uid = userDetails.getUsername();
+        Person grader = personRepository.findByUid(uid);
+        if (grader == null) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN, "You must be a logged in user to retrieve the groups"
+            );
+        }
+        
+        List<Groups> groups;
+        if (grader.hasRoleWithName("ROLE_TEACHER") || grader.hasRoleWithName("ROLE_ADMIN")) {
+            groups = groupsRepository.findAll();
+        } else {
+            groups = groupsRepository.findGroupsByPersonId(grader.getId());
+        }
+        
         List<Map<String, Object>> groupsWithMembers = new ArrayList<>();
         
         for (Groups group : groups) {
@@ -402,10 +418,10 @@ public ResponseEntity<Object> bulkCreateGroups(@RequestBody List<GroupDto> group
     /**
      * Find groups containing a specific person
      */
-    @GetMapping("/person/{personId}")
+    @GetMapping("/person/{personUid}")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<Map<String, Object>>> getGroupsByPersonId(@PathVariable Long personId) {
-        List<Groups> groups = groupsRepository.findGroupsByPersonId(personId);
+    public ResponseEntity<List<Map<String, Object>>> getGroupsByPersonId(@PathVariable String personUid) {
+        List<Groups> groups = groupsRepository.findGroupsByPersonUid(personUid);
         List<Map<String, Object>> groupsWithMembers = new ArrayList<>();
         
         for (Groups group : groups) {

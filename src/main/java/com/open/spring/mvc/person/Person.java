@@ -1,79 +1,51 @@
 package com.open.spring.mvc.person;
 
-import static jakarta.persistence.FetchType.EAGER;
-
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.PreRemove;
 import jakarta.persistence.PrimaryKeyJoinColumn;
-import jakarta.persistence.Convert;
-import static jakarta.persistence.FetchType.EAGER;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.PostPersist;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.springframework.format.annotation.DateTimeFormat;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.open.spring.mvc.assignments.AssignmentSubmission;
 import com.open.spring.mvc.bank.Bank;
 import com.open.spring.mvc.bathroom.Tinkle;
 import com.open.spring.mvc.groups.Groups;
+import com.open.spring.mvc.groups.Submitter;
 import com.open.spring.mvc.synergy.SynergyGrade;
 import com.open.spring.mvc.trains.TrainCompany;
 import com.open.spring.mvc.userStocks.userStocksTable;
-import com.vladmihalcea.hibernate.type.json.JsonType;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.PreRemove;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+
+
 /**
  * Person is a POJO, Plain Old Java Object.
  * --- @Data is Lombox annotation
@@ -85,18 +57,16 @@ import java.util.Date;
  * --- @Entity annotation is used to mark the class as a persistent Java class.
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Convert(attributeName = "person", converter = JsonType.class)
-@JsonIgnoreProperties({"submissions"})
-public class Person implements Comparable<Person> {
+@JsonIgnoreProperties({"submissions", "groups"})
+public class Person extends Submitter implements Comparable<Person> {
 
 //////////////////////////////////////////////////////////////////////////////////
 /// Columns stored on Person
-
-
-    /** Automatic unique identifier for Person record 
+    /** Automatic unique identifier for Person or group record 
      * --- Id annotation is used to specify the identifier property of the entity.
      * ----GeneratedValue annotation is used to specify the primary key generation
      * strategy to use.
@@ -105,11 +75,11 @@ public class Person implements Comparable<Person> {
      * ----- GenerationType.AUTO is the default generation type and it will pick the
      * strategy based on the used database.
      */
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    // @Id
+    // @GeneratedValue(strategy = GenerationType.AUTO)
+    // private Long id;
 
-/**
+    /**
      * email, password, roles are key attributes to login and authentication
      * --- @NotEmpty annotation is used to validate that the annotated field is not
      * null or empty, meaning it has to have a value.
@@ -123,7 +93,6 @@ public class Person implements Comparable<Person> {
 
     @NotEmpty
     private String password;
-
 
     @NotEmpty
     @Size(min = 1)
@@ -189,12 +158,6 @@ public class Person implements Comparable<Person> {
     @JsonIgnore
     private List<SynergyGrade> grades;
     
-
-    @ManyToMany(mappedBy="students", cascade=CascadeType.MERGE)
-    @JsonIgnore
-    private List<AssignmentSubmission> submissions;
-    
-
  
 
     /**
@@ -227,6 +190,7 @@ public class Person implements Comparable<Person> {
 
 
     @ManyToMany(mappedBy = "groupMembers")
+    @JsonBackReference
     @JsonIgnore
     private List<Groups> groups = new ArrayList<>();
 
@@ -254,11 +218,10 @@ public class Person implements Comparable<Person> {
         this.kasmServerNeeded = kasmServerNeeded;
         this.pfp = pfp;
         this.roles.add(role);
-        this.submissions = new ArrayList<>();
 
         this.timeEntries = new Tinkle(this, "");        
         // Create a Bank for this person
-        this.banks = null;
+        this.banks = new Bank(this);
     }
 
 
@@ -295,16 +258,10 @@ public class Person implements Comparable<Person> {
             roles.add(role);
         }
         person.setRoles(roles);
-        person.setBanks(null);
+        person.setBanks(new Bank(person));
 
         return person;
     }
-    
-
-    private static Person createPerson(String name, String email, String uid, String password, Boolean kasmServerNeeded, List<String> asList) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-    
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -318,21 +275,8 @@ public class Person implements Comparable<Person> {
 
 
 //////////////////////////////////////////////////////////////////////////////////
-/// other methods
-
-
-    // removes this user from all submission when deleted
-    @PreRemove
-    private void removePersonFromSubmissions() {
-        if (submissions != null) {
-            // if a user is deleted, remove them from everything they've submitted
-            for (AssignmentSubmission submission : submissions) {
-                submission.getStudents().remove(this);
-            }
-        }
-    }
-
-  
+    // other methods  
+    
     /** Custom hasRoleWithName method to find if a role exists on user
      * @param roleName, a String with the name of the role
      * @return boolean, the result of the search
@@ -530,5 +474,19 @@ public class Person implements Comparable<Person> {
             System.out.println(person);  // print object
             System.out.println();
         }
+    }
+
+    @JsonIgnore
+    public List<Groups> getGroups() {
+        return groups;
+    }
+
+    public static List<AssignmentSubmission> getAllSubmissions(Person person) {
+        // gets all the individual submissions and also the group submissions
+        List<AssignmentSubmission> all = new ArrayList<>(person.getSubmissions());
+        for (Groups group : person.getGroups()) {
+            all.addAll(group.getSubmissions());
+        }
+        return all;
     }
 }

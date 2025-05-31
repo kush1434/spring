@@ -1,4 +1,4 @@
-package com.open.spring.mvc.Slack;
+package com.open.spring.mvc.slack;
 
 public class SlackEvent {
     // POJO

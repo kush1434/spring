@@ -1,4 +1,4 @@
-package com.open.spring.mvc.Slack;
+package com.open.spring.mvc.slack;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -19,20 +19,9 @@ public class CalendarEventService {
     @Autowired
     private SlackService slackService;
 
-    private final String CSA_WEBHOOK_URL = "https://hooks.slack.com/services/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"; 
-    private final String CSP_WEBHOOK_URL = "https://hooks.slack.com/services/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";
-    private final String CSSE_WEBHOOK_URL = "https://hooks.slack.com/services/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"; 
-    private String SLACK_WEBHOOK_URL = CSA_WEBHOOK_URL;
-
     // Save a new event
     public CalendarEvent saveEvent(CalendarEvent event) {
         CalendarEvent savedEvent = calendarEventRepository.save(event);
-        //slackService.sendMessage("New Event Added:\n" +
-        //        "Title: " + savedEvent.getTitle() + "\n" +
-        //        "Description: " + savedEvent.getDescription() + "\n" +
-        //        "Date: " + savedEvent.getDate() + "\n" +
-        //        "Type: " + savedEvent.getType() + "\n" +
-        //        "Period: " + savedEvent.getPeriod(), SLACK_WEBHOOK_URL);
         return savedEvent;
     }
 
@@ -56,26 +45,10 @@ public class CalendarEventService {
     public boolean updateEventById(int id, String newTitle, String description, LocalDate date) {
         CalendarEvent event = getEventById(id);
         if (event != null) {
-            String oldDetails = "Old Event Details:\n" +
-                    "Title: " + event.getTitle() + "\n" +
-                    "Description: " + event.getDescription() + "\n" +
-                    "Date: " + event.getDate() + "\n" +
-                    "Type: " + event.getType() + "\n" +
-                    "Period: " + event.getPeriod();
-
             event.setTitle(newTitle);
             event.setDescription(description);
             event.setDate(date);
             calendarEventRepository.save(event);
-
-            String newDetails = "Updated Event Details:\n" +
-                    "Title: " + event.getTitle() + "\n" +
-                    "Description: " + event.getDescription() + "\n" +
-                    "Date: " + event.getDate() + "\n" +
-                    "Type: " + event.getType() + "\n" +
-                    "Period: " + event.getPeriod();
-
-            //slackService.sendMessage("Event Updated:\n" + oldDetails + "\n\n" + newDetails, SLACK_WEBHOOK_URL);
             return true;
         }
         return false;
@@ -86,12 +59,6 @@ public class CalendarEventService {
         CalendarEvent event = getEventById(id);
         if (event != null) {
             calendarEventRepository.delete(event);
-            //slackService.sendMessage("Event Deleted:\n" +
-            //        "Title: " + event.getTitle() + "\n" +
-            //        "Description: " + event.getDescription() + "\n" +
-            //        "Date: " + event.getDate() + "\n" +
-            //        "Type: " + event.getType() + "\n" +
-            //        "Period: " + event.getPeriod(), SLACK_WEBHOOK_URL);
             return true;
         }
         return false;
@@ -156,6 +123,7 @@ public class CalendarEventService {
         Pattern descriptionPattern = Pattern.compile("(\\*\\*|\\*)?\\s*\\u2022\\s*(.+)");
         String[] lines = text.split("\\n");
         CalendarEvent lastEvent = null;
+        List<CalendarEvent> lastEventRange = new ArrayList<>();
 
         for (String line : lines) {
             Matcher dayMatcher = dayPattern.matcher(line);
@@ -169,15 +137,12 @@ public class CalendarEventService {
                 switch(jsonMap.get("channel")) {
                     case CSP_CHANNEL_ID:
                         period = "CSP";
-                        SLACK_WEBHOOK_URL = CSP_WEBHOOK_URL;
                         break;
                     case CSA_CHANNEL_ID:
                         period = "CSA";
-                        SLACK_WEBHOOK_URL = CSA_WEBHOOK_URL;
                         break;
                     case CSSE_CHANNEL_ID:
                         period = "CSSE";
-                        SLACK_WEBHOOK_URL = CSSE_WEBHOOK_URL;
                         break;
                 }
 
@@ -188,13 +153,23 @@ public class CalendarEventService {
                     type = "grade";
                 }
 
+                // Find description for this line (if any)
+                Matcher descMatcher = descriptionPattern.matcher(line);
+                String description = "";
+                if (descMatcher.find()) {
+                    description = descMatcher.group(2).trim();
+                }
+
+                lastEventRange.clear(); // Clear previous range
                 for (LocalDate date : getDatesInRange(startDay, endDay, weekStartDate)) {
-                    lastEvent = new CalendarEvent(date, currentTitle, "", type, period);
-                    events.add(lastEvent);
+                    CalendarEvent event = new CalendarEvent(date, currentTitle, description, type, period);
+                    events.add(event);
+                    lastEvent = event; // Update lastEvent to the current event
+                    lastEventRange.add(event); // Add to current range
                 }
             } else {
                 Matcher descMatcher = descriptionPattern.matcher(line);
-                if (descMatcher.find() && lastEvent != null) {
+                if (descMatcher.find() && !lastEventRange.isEmpty()) {
                     String description = descMatcher.group(2).trim();
                     String asterisks = descMatcher.group(1);
 
@@ -205,13 +180,21 @@ public class CalendarEventService {
                         type = "grade";
                     }
 
-                    lastEvent.setDescription(lastEvent.getDescription() +
-                            (lastEvent.getDescription().isEmpty() ? "" : ", ") +
-                            description);
-                    lastEvent.setType(type);
+                    for (CalendarEvent event : lastEventRange) {
+                        event.setDescription(event.getDescription() +
+                                (event.getDescription().isEmpty() ? "" : ", ") +
+                                description);
+                        event.setType(type);
+                    }
                 }
             }
         }
+
+        // Log the events and their descriptions
+        for (CalendarEvent event : events) {
+            System.out.println("Event: " + event.getDate() + ", Title: " + event.getTitle() + ", Description: " + event.getDescription());
+        }
+
         return events;
     }
 

@@ -1,4 +1,4 @@
-package com.open.spring.mvc.Slack;
+package com.open.spring.mvc.slack;
 
 import java.util.List;
 import java.util.Map;
@@ -45,42 +45,6 @@ public class SlackController {
         this.restTemplate = restTemplate;
     }
 
-    // Deprecated feature sadly
-    // Was used to get a list of every slack message
-    @GetMapping("/slack/")
-    public ResponseEntity<List<SlackMessage>> returnSlackData() {
-        List<SlackMessage> messages = messageRepository.findAll();
-        return ResponseEntity.ok(messages);
-    }
-
-    // Deprecated feature sadly
-    // Was used to link the user id of the message sender to their actual name
-    @PostMapping("/slack/getUsername")
-    public ResponseEntity<String> getUsername(@RequestBody Map<String, String> requestBody) {
-        String userId = requestBody.get("userId");
-        if (userId == null || userId.isEmpty()) {
-            return ResponseEntity.badRequest().body("Invalid user ID");
-        }
-
-        String url = "https://slack.com/api/users.info?user=" + userId;
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + slackToken);
-        headers.set("Content-Type", "application/x-www-form-urlencoded");
-
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-
-        Map<String, Object> body = response.getBody();
-        if (body == null || !(boolean) body.get("ok")) {
-            return ResponseEntity.status(400).body("Failed to fetch user info");
-        }
-
-        Map<String, Object> user = (Map<String, Object>) body.get("user");
-        String username = (String) ((Map<String, Object>) user.get("profile")).get("real_name");
-
-        return ResponseEntity.ok(username);
-    }
-
     // Main message receiver function
     @PostMapping("/slack/events")
     public ResponseEntity<String> handleSlackEvent(@RequestBody SlackEvent payload) {
@@ -88,11 +52,9 @@ public class SlackController {
             return ResponseEntity.ok(payload.getChallenge());
         }
     
-    
         try {
             SlackEvent.Event messageEvent = payload.getEvent();
             String eventType = messageEvent.getType();
-    
     
             // Distinguishing messages from other events
             if ("message".equals(eventType)) {
