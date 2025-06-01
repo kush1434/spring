@@ -21,8 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.open.spring.mvc.assignments.Assignment;
 import com.open.spring.mvc.assignments.AssignmentJpaRepository;
-import com.open.spring.mvc.groups.GroupsJpaRepository;
-import com.open.spring.mvc.groups.Submitter;
 import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonJpaRepository;
 
@@ -32,8 +30,6 @@ import lombok.Getter;
 @RestController
 @RequestMapping("/api/synergy")
 public class SynergyApiController {
-
-    private final GroupsJpaRepository groupsJpaRepository;
     @Autowired
     private SynergyGradeJpaRepository gradeRepository;
 
@@ -51,11 +47,42 @@ public class SynergyApiController {
      */
     @Getter
     public static class SynergyGradeRequestDto {
-        private Long submitterId;
-        private Boolean isGroup;
+        private Long studentId;
         private Long assignmentId;
         private Double gradeSuggestion;
         private String explanation;
+    }
+    
+    /**
+     * A dto that stores information about a grade request for many students.
+     */
+    @Getter
+    public static class SynergyGradeRequestDtoBulk {
+        private List<Long> studentIds;
+        private Long assignmentId;
+        private Double gradeSuggestion;
+        private String explanation;
+    }
+    
+    /**
+     * A data transfer object that stores information about a grade request that is made for
+     * the student who creaed it.
+     */
+    @Getter
+    public static class SynergyGradeRequestSelfDto {
+        public Long assignmentId;
+        public Double gradeSuggestion;
+        public String explanation;
+    }
+    
+    /**
+     * A data transfer object that stores information about a grade request that is made for
+     * the student who creaed it.
+     */
+    @Getter
+    public static class SynergyGradeRequestSeedDto {
+        public Double gradeSuggestion;
+        public String explanation;
     }
 
     /**
@@ -79,10 +106,6 @@ public class SynergyApiController {
             this.assignmentId = grade.getAssignment().getId();
             this.studentId = grade.getStudent().getId();
         }
-    }
-
-    SynergyApiController(GroupsJpaRepository groupsJpaRepository) {
-        this.groupsJpaRepository = groupsJpaRepository;
     }
 
     /**
@@ -171,31 +194,134 @@ public class SynergyApiController {
             );
         }
 
-        Submitter submitter;
-        if (requestData.isGroup) {
-            // If the submitter is a group, we need to find the group by ID
-            submitter = groupsJpaRepository.findById(requestData.getSubmitterId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid group ID passed"));
-        } else {
-            submitter = personRepository.findById(requestData.getSubmitterId()).orElseThrow(() -> 
-                new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid student ID passed")
+        Person student = personRepository.findById(requestData.getStudentId()).orElseThrow(() -> 
+            new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid student ID passed")
+        );
+        Assignment assignment = assignmentRepository.findById(requestData.getAssignmentId()).orElseThrow(() -> 
+            new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid assignment ID passed")
+        );;
+        
+        SynergyGradeRequest gradeRequest = new SynergyGradeRequest(assignment, student, grader, requestData.getExplanation(), requestData.getGradeSuggestion());
+        gradeRequestRepository.save(gradeRequest);
+
+        return ResponseEntity.ok(Map.of("message", "Successfully created the grade request."));
+    }
+    
+    
+    /**
+     * A POST endpoint to create multiple grade requests.
+     * @param userDetails The information about the logged in user. Automatically passed in by thymeleaf.
+     * @param requestData The JSON data passed in, of the format studentId: Long, assignmentId: Long,
+     *                    gradeSuggestion: Double, explanation: String
+     * @return A JSON object signifying that the request was created.
+     */
+    @PostMapping("/grades/requests/bulk")
+    public ResponseEntity<Map<String, String>> createGradeRequest(
+        @AuthenticationPrincipal UserDetails userDetails, 
+        @RequestBody SynergyGradeRequestDtoBulk requestData
+    ) throws ResponseStatusException {
+        String uid = userDetails.getUsername();
+        Person grader = personRepository.findByUid(uid);
+        if (grader == null) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN, "You must be a logged in user to do this"
             );
         }
-        List<Person> students = submitter.getMembers();
+
+        List<Person> students = personRepository.findAllById(requestData.getStudentIds());
+        if (students.isEmpty()) {
+            new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid student ID passed");
+        }
 
         Assignment assignment = assignmentRepository.findById(requestData.getAssignmentId()).orElseThrow(() -> 
             new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid assignment ID passed")
         );
         
         for (Person student : students) {
-            // Check if a grade request already exists for this student and assignment
-            SynergyGradeRequest request = new SynergyGradeRequest(assignment, student, grader, requestData.getExplanation(), requestData.getGradeSuggestion());
-            gradeRequestRepository.save(request);
+            SynergyGradeRequest gradeRequest = new SynergyGradeRequest(assignment, student, grader, requestData.getExplanation(), requestData.getGradeSuggestion());
+            gradeRequestRepository.save(gradeRequest);
         }
 
         return ResponseEntity.ok(Map.of("message", "Successfully created the grade requests."));
     }
-    
+
+    @GetMapping("/grades/requests/seed")
+    public ResponseEntity<?> getGradeRequestsSeed(
+        @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        String email = userDetails.getUsername();
+        Person student = personRepository.findByEmail(email);
+        if (student == null) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN, "You must be a logged in user to do this"
+            );
+        }
+
+        return ResponseEntity.ok(gradeRequestRepository.findByStudentId(student.getId()));
+    }
+
+    /**
+     * A POST endpoint to create a grade request for seed.
+     * @param userDetails The information about the logged in user. Automatically passed in by thymeleaf.
+     * @param requestData The JSON data passed in, of the format studentId: Long, assignmentId: Long,
+     *                    gradeSuggestion: Double, explanation: String
+     * @return A JSON object signifying that the request was created.
+     */
+    @PostMapping("/grades/requests/seed")
+    public ResponseEntity<Map<String, String>> createGradeRequestSeed(
+        @AuthenticationPrincipal UserDetails userDetails, 
+        @RequestBody SynergyGradeRequestSeedDto requestData
+    ) throws ResponseStatusException {
+        String uid = userDetails.getUsername();
+        Person student = personRepository.findByUid(uid);
+        if (student == null) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN, "You must be a logged in user to do this"
+            );
+        }
+
+        Assignment assignment = assignmentRepository.findByName("Seed");
+        if (assignment == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no seed assignment");
+        }
+        
+        SynergyGradeRequest gradeRequest = new SynergyGradeRequest(assignment, student, student, requestData.getExplanation(), requestData.getGradeSuggestion());
+        gradeRequestRepository.save(gradeRequest);
+
+        return ResponseEntity.ok(Map.of("message", "Successfully created the grade request for seed."));
+    }
+
+    /**
+     * A POST endpoint to create a grade request.
+     * @param userDetails The information about the logged in user. Automatically passed in by thymeleaf.
+     * @param requestData The JSON data passed in, of the format studentId: Long, assignmentId: Long,
+     *                    gradeSuggestion: Double, explanation: String
+     * @return A JSON object signifying that the request was created.
+     */
+    @PostMapping("/grades/requests/self")
+    public ResponseEntity<Map<String, String>> createGradeRequestForSelf(
+        @AuthenticationPrincipal UserDetails userDetails, 
+        @RequestBody SynergyGradeRequestSelfDto requestData
+    ) throws ResponseStatusException {
+        String uid = userDetails.getUsername();
+        Person student = personRepository.findByUid(uid);
+        if (student == null) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN, "You must be a logged in user to do this"
+            );
+        }
+
+        Assignment assignment = assignmentRepository.findById(requestData.assignmentId).orElseThrow(() -> 
+            new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid assignment ID passed")
+        );;
+        
+        SynergyGradeRequest gradeRequest = new SynergyGradeRequest(assignment, student, student, requestData.explanation, requestData.gradeSuggestion);
+        gradeRequestRepository.save(gradeRequest);
+
+        return ResponseEntity.ok(Map.of("message", "Successfully created the grade request."));
+    }
+
+
     /**
      * A POST endpoint to accept a grade request.
      * @param body The JSON data passed in, of the format requestId: Long
