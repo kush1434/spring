@@ -16,7 +16,10 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
-  
+
+
+//dot env for email username/password
+import io.github.cdimascio.dotenv.Dotenv;
   
 public class Email  
 { 
@@ -38,9 +41,13 @@ public class Email
       properties.put("mail.smtp.ssl.protocols", "TLSv1.2");
   
       // creating session object to get properties 
+
+      final Dotenv dotenv = Dotenv.load();
+      final String emailUsername = dotenv.get("EMAIL_USERNAME");
+      final String emailPassword = dotenv.get("EMAIL_PASSWORD");
       Session session = Session.getDefaultInstance(properties,new Authenticator() {
         protected PasswordAuthentication getPasswordAuthentication() {
-            return new PasswordAuthentication("delnortecoders@gmail.com","yqhoxcnrvplhybum"); // email and password, see this for app passwords https://support.google.com/accounts/answer/185833?visit_id=638748419667916449-2613033234&p=InvalidSecondFactor&rd=1
+            return new PasswordAuthentication(emailUsername,emailPassword); // email and password, see this for app passwords https://support.google.com/accounts/answer/185833?visit_id=638748419667916449-2613033234&p=InvalidSecondFactor&rd=1
         }
     }); 
   

@@ -95,7 +95,6 @@ public class ApprovalRequestApiController {
 
             // Add student to the queue using addStudent method
             queue.addStudent(requestDto.getStudentName());
-            queue.approveStudent();
             bathroomQueueRepository.save(queue);
 
             return new ResponseEntity<>("Student approved, added to queue, and timeIn saved", HttpStatus.OK);

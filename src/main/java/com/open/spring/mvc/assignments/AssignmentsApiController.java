@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.open.spring.mvc.groups.GroupsJpaRepository;
+import com.open.spring.mvc.groups.Submitter;
 import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonJpaRepository;
 import com.open.spring.mvc.person.PersonApiController.PersonDto;
@@ -39,6 +41,9 @@ import lombok.Setter;
 public class AssignmentsApiController {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
+
+    @Autowired
+    private GroupsJpaRepository groupRepo;
 
     @Autowired
     private AssignmentJpaRepository assignmentRepo;
@@ -135,20 +140,23 @@ public class AssignmentsApiController {
         error.put("error", "Assignment not found: " + name);
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
-    // add at transactional to make it work
-    @GetMapping("/submissions/student/{studentId}")
-    @Transactional
-    public ResponseEntity<?> getStudentSubmissions(@PathVariable Long studentId) {
-        List<AssignmentSubmission> submissions = submissionRepo.findByStudentId(studentId);
-        
-        // Convert to dtos to avoid some bugs
-        List<AssignmentSubmissionReturnDto> submissionDtos = submissions.stream()
-            .map(AssignmentSubmissionReturnDto::new)
-            .collect(Collectors.toList());
-        
-        System.out.println("Number of responses: " + submissionDtos.size());
 
-        return new ResponseEntity<>(submissionDtos, HttpStatus.OK);
+    @Transactional
+    @GetMapping("/submissions/student/{studentId}")
+    public ResponseEntity<?> getSubmissions(@PathVariable Long studentId) {
+        if (personRepo.findById(studentId).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Student not found");
+        }
+
+        List<AssignmentSubmissionReturnDto> dtos = Stream.concat(
+            submissionRepo.findBySubmitterId(studentId).stream(),
+            groupRepo.findGroupsByPersonId(studentId).stream()
+                .flatMap(group -> submissionRepo.findBySubmitterId(group.getId()).stream())
+        )
+        .map(AssignmentSubmissionReturnDto::new)
+        .toList();
+
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")
@@ -196,33 +204,6 @@ public class AssignmentsApiController {
             simple.add(new AssignmentDto(a));
         }
         return new ResponseEntity<>(simple, HttpStatus.OK);
-    }
-    
-    /**
-     * A POST endpoint to submit an assignment.
-     * @param assignmentId The ID of the assignment being submitted.
-     * @param studentId The ID of the student submitting the assignment.
-     * @param content The content of the student's submission.
-     * @return The saved submission, if it successfully submitted.
-     */
-    @PostMapping("/submit/{assignmentId}")
-    public ResponseEntity<?> submitAssignment(
-            @PathVariable Long assignmentId,
-            @RequestParam Long studentId,
-            @RequestParam String content,
-            @RequestParam String comment,
-            @RequestParam Boolean isLate
-            ) {
-        Assignment assignment = assignmentRepo.findById(assignmentId).orElse(null);
-        Person student = personRepo.findById(studentId).orElse(null);
-        if (assignment != null) {
-            AssignmentSubmission submission = new AssignmentSubmission(assignment, List.of(student), content, comment, isLate);
-            AssignmentSubmission savedSubmission = submissionRepo.save(submission);
-            return new ResponseEntity<>(savedSubmission, HttpStatus.CREATED);
-        }
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "Assignment not found");
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -518,29 +499,26 @@ public class AssignmentsApiController {
             return ResponseEntity.badRequest().body("Only one submission found for this assignment, can't really do peer grading");
         }
 
-        
-        // Keep latest submission
-        Map<Long, AssignmentSubmission> latestSubmissions = submissions.stream()
-        .collect(Collectors.toMap(
-            submission -> submission.getStudents().get(0).getId(), // Get the first student's ID
-            submission -> submission,
-            (existing, replacement) -> replacement
-        ));
-    
-        List<AssignmentSubmission> uniqueSubmissions = new ArrayList<>(latestSubmissions.values());
+        Collections.shuffle(submissions);
 
-    
-        Collections.shuffle(uniqueSubmissions);
-    
-        for (int i = 0; i < uniqueSubmissions.size(); i++) {
-            AssignmentSubmission currentSubmission = uniqueSubmissions.get(i);
+        for (int i = 0; i < submissions.size(); i++) {
+            AssignmentSubmission currentSubmission = submissions.get(i);
             
             // grader whos not the asme persoon
-            List<AssignmentSubmission> possibleGraders = uniqueSubmissions.stream()
-                .filter(submission -> !submission.getStudents().get(0).equals(currentSubmission.getStudents().get(0))) // just check if the FIRST student is different, will make this better later
+            List<AssignmentSubmission> possibleGraders = submissions.stream()
+                .filter(submission -> Collections.disjoint(
+                    submission.getSubmitter().getMembers(), 
+                    currentSubmission.getSubmitter().getMembers()
+                )) // ensure no overlap between the members of the two groups
                 .collect(Collectors.toList());
     
             if (possibleGraders.isEmpty()) {
+                System.out.println("FATAL: No possible graders found for submission by: " + 
+                    currentSubmission.getSubmitter().getMembers().stream()
+                        .map(Person::getName)
+                        .collect(Collectors.joining(", ")));
+
+                // TODO: implement a better randomization strategy. In theory, it is possible that all submissions are from various groups which all include one same person, therefore causing this issue.
                 continue; 
             }
     
@@ -551,13 +529,11 @@ public class AssignmentsApiController {
     
             // Assign graders to the current submission
             // Create a new list instead of sharing the existing one
-            currentSubmission.setAssignedGraders(
-                new ArrayList<>(graderSubmission.getStudents())
-            );
+            currentSubmission.setAssignedGraders(graderSubmission.getSubmitter().getMembers());
         }
 
     
-        submissionRepo.saveAll(uniqueSubmissions);
+        submissionRepo.saveAll(submissions);
         // test debug
         // for (AssignmentSubmission sub : uniqueSubmissions) {
         //     System.out.println("Submission by: " + sub.getStudents().get(0).getName() + 
@@ -568,5 +544,14 @@ public class AssignmentsApiController {
         // }
     
         return ResponseEntity.ok("Graders randomized successfully!");
+    }
+
+
+    @GetMapping("/extract/{id}")
+    public ResponseEntity<AssignmentDto> extractAssignment(@PathVariable Long id) {
+        Optional<Assignment> curAssignment = assignmentRepo.findById(id);
+        Assignment assignment = curAssignment.get();
+        AssignmentDto assignmentDto = new AssignmentDto(assignment);
+        return new ResponseEntity<>(assignmentDto, HttpStatus.OK);
     }
 }

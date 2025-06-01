@@ -429,7 +429,7 @@ public class BankApiController {
                     
                     bankJpaRepository.save(bank);
                     updatedBanks.add(bank.getUsername() != null ? bank.getUsername() : "Bank ID: " + bank.getId());
-                } else if (bankDto.getPersonId() != null) {
+                } else if (bankDto.getUid() != null) {
                     // Create new bank account if person exists
                     Person person = personJpaRepository.findById(bankDto.getPersonId()).get();
                     
@@ -454,7 +454,7 @@ public class BankApiController {
                         bankJpaRepository.save(bank);
                         createdBanks.add(bank.getUsername());
                     } else {
-                        errors.add("Person not found with ID: " + bankDto.getPersonId());
+                        errors.add("Person not found with ID: " + bankDto.getUid());
                     }
                 } else if (bankDto.getUsername() != null) {
                     // Try to find person by username (name)

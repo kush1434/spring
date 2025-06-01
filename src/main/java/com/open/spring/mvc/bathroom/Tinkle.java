@@ -47,7 +47,10 @@ public class Tinkle {
     private List<LocalDateTime[]> timeInOutPairs = new ArrayList<>(); // Parsed list of [in, out] times
 
     @Column
-    private String personName; // Convenience field to hold the person’s name
+    private String personName;
+
+    @Column(nullable = false, unique = true)
+    private String sid;
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -55,8 +58,9 @@ public class Tinkle {
     public Tinkle(Person person, String statsInput) {
         this.person = person;
         this.personName = person.getName();
+        this.sid = person.getSid();
         this.timeIn = statsInput;
-        parseAndStoreTimeInOut(statsInput); // Populate the parsed time list
+        parseAndStoreTimeInOut(statsInput);               
     }
 
 
@@ -150,10 +154,11 @@ public class Tinkle {
     @Override
     public String toString() {
         return "Tinkle{" +
-                "id=" + id +
-                ", personName='" + personName + '\'' +
-                ", timeInOutPairs size=" + (timeInOutPairs != null ? timeInOutPairs.size() : 0) +
-                '}';
+            "id=" + id +
+            ", personName='" + personName + '\'' +
+            ", sid='" + sid + '\'' +
+            ", timeInOutPairs size=" + (timeInOutPairs != null ? timeInOutPairs.size() : 0) +
+            '}';
     }
 
     // Initializes dummy Tinkle data for an array of Person objects
