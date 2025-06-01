@@ -41,6 +41,26 @@ public class BankApiController {
     @Autowired
     private PersonJpaRepository personJpaRepository;
 
+    /**
+     * Helper method to find or create a Bank for a given personId
+     */
+    private Bank findOrCreateBankByPersonId(Long personId) {
+        Bank bank = bankJpaRepository.findByPersonId(personId);
+        if (bank == null) {
+            // Find the person
+            Person person = personJpaRepository.findById(personId).orElse(null);
+            if (person == null) {
+                throw new RuntimeException("Person not found with ID: " + personId);
+            }
+            
+            // Create new bank account
+            bank = new Bank(person);
+            bank.assessRiskUsingML();
+            bank = bankJpaRepository.save(bank);
+        }
+        return bank;
+    }
+
     // Get top 10 leaderboard
     @GetMapping("/leaderboard")
     public ResponseEntity<Map<String, Object>> getLeaderboard() {
@@ -136,17 +156,11 @@ public class BankApiController {
         }
     }
 
-    // Get user analytics by person ID (alternative endpoint)
+    // Get user analytics by person ID (alternative endpoint) - MODIFIED
     @GetMapping("/analytics/person/{personId}")
     public ResponseEntity<Map<String, Object>> getUserAnalyticsByPersonId(@PathVariable Long personId) {
         try {
-            Bank bank = bankJpaRepository.findByPersonId(personId);
-            if (bank == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                    "success", false,
-                    "error", "User not found"
-                ));
-            }
+            Bank bank = findOrCreateBankByPersonId(personId);
 
             // Prepare analytics data
             Map<String, Object> analyticsData = new HashMap<>();
@@ -174,24 +188,27 @@ public class BankApiController {
         }
     }
 
-    // Existing endpoints remain unchanged below this point
+    // MODIFIED - Now creates bank if not found
     @GetMapping("/{id}/profitmap/{category}")
     public ResponseEntity<List<List<Object>>> getProfitByCategory(@PathVariable Long id, @PathVariable String category) {
-        Bank bank = bankJpaRepository.findByPersonId(id);
-        if (bank == null) {
-            return ResponseEntity.notFound().build();
+        try {
+            Bank bank = findOrCreateBankByPersonId(id);
+            return ResponseEntity.ok(bank.getProfitByCategory(category));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return ResponseEntity.ok(bank.getProfitByCategory(category));
-    }  
+    }
 
+    // MODIFIED - Now creates bank if not found
     @GetMapping("/{id}/interestRate")
     public ResponseEntity<Double> getInterestRate(@PathVariable Long id) {
-        Bank bank = bankJpaRepository.findByPersonId(id);
-        if (bank == null) {
-            return ResponseEntity.notFound().build();
+        try {
+            Bank bank = findOrCreateBankByPersonId(id);
+            return ResponseEntity.ok(bank.getDailyInterestRate());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return ResponseEntity.ok(bank.getDailyInterestRate());
-    }     
+    }
     
     @PostMapping("/requestLoan")
     public ResponseEntity<String> requestLoan(@RequestBody LoanRequest request) {
@@ -215,13 +232,14 @@ public class BankApiController {
         }
     }
 
+    // MODIFIED - Now creates bank if not found
     @GetMapping("/{personId}/loanAmount")
     public ResponseEntity<Double> getLoanAmount(@PathVariable Long personId) {
         try {
-            Bank bank = bankService.findByPersonId(personId);
+            Bank bank = findOrCreateBankByPersonId(personId);
             return ResponseEntity.ok(bank.getLoanAmount());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
     
@@ -240,13 +258,14 @@ public class BankApiController {
         return "Applied 5% interest to all loan amounts.";
     }
 
+    // MODIFIED - Now creates bank if not found
     @GetMapping("/{personId}/npcProgress")
     public ResponseEntity<LinkedHashMap<String, Boolean>> getNpcProgress(@PathVariable Long personId) {
         try {
-            Bank bank = bankService.findByPersonId(personId);
+            Bank bank = findOrCreateBankByPersonId(personId);
             return ResponseEntity.ok((LinkedHashMap<String, Boolean>) bank.getNpcProgress());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
     
@@ -431,7 +450,7 @@ public class BankApiController {
                     updatedBanks.add(bank.getUsername() != null ? bank.getUsername() : "Bank ID: " + bank.getId());
                 } else if (bankDto.getUid() != null) {
                     // Create new bank account if person exists
-                    Person person = personJpaRepository.findByUid(bankDto.getUid());
+                    Person person = personJpaRepository.findById(bankDto.getPersonId()).get();
                     
                     if (person != null) {
                         // Create new bank account using the modified constructor
