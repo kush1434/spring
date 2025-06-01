@@ -43,7 +43,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/mining")
 @Transactional
-@CrossOrigin(origins = {"http://localhost:8585", "http://localhost:4500", "http://127.0.0.1:4500"})
 public class MiningController {
     @Autowired
     private PersonJpaRepository personRepository;
@@ -65,28 +64,16 @@ public class MiningController {
     
 
     private GPU getRandomBudgetGPU() {
-        System.out.println("\n=== Getting Random Budget GPU ===");
         List<GPU> budgetGPUs = gpuRepository.findAll().stream()
             .filter(gpu -> gpu.getCategory().equals("Budget GPUs ($10000-20000)"))
             .collect(Collectors.toList());
         
-        System.out.println("Found " + budgetGPUs.size() + " budget GPUs");
-        
         if (budgetGPUs.isEmpty()) {
-            System.out.println("ERROR: No budget GPUs found in database");
-            // Try to get any GPU as fallback
-            List<GPU> allGPUs = gpuRepository.findAll();
-            if (allGPUs.isEmpty()) {
-                throw new RuntimeException("No GPUs found in database. Please ensure DataInitializer has run.");
-            }
-            System.out.println("Using fallback GPU: " + allGPUs.get(0).getName());
-            return allGPUs.get(0);
+            throw new RuntimeException("No budget GPUs found");
         }
         
         int randomIndex = (int) (Math.random() * budgetGPUs.size());
-        GPU selectedGPU = budgetGPUs.get(randomIndex);
-        System.out.println("Selected GPU: " + selectedGPU.getName());
-        return selectedGPU;
+        return budgetGPUs.get(randomIndex);
     }
 
     private MiningUser getOrCreateMiningUser() {
@@ -128,13 +115,6 @@ public class MiningController {
             return miningUserRepository.findByPerson(person)
                 .map(existingUser -> {
                     System.out.println("Found existing mining user for: " + person.getEmail());
-                    // Ensure user has at least one GPU
-                    if (existingUser.getOwnedGPUs().isEmpty()) {
-                        System.out.println("User has no GPUs, adding a budget GPU");
-                        GPU randomBudgetGPU = getRandomBudgetGPU();
-                        existingUser.addGPU(randomBudgetGPU);
-                        miningUserRepository.save(existingUser);
-                    }
                     return existingUser;
                 })
                 .orElseGet(() -> {
@@ -323,26 +303,14 @@ public class MiningController {
             response.put("currentHashrate", user.getCurrentHashrate());
             response.put("activeGPUs", user.getActiveGPUs().size());
             
-            // Try to update bank NPC progress, but don't fail if bank doesn't exist
-            try {
-                com.open.spring.mvc.person.Person person = user.getPerson();
-                String uid = person.getUid();
-                Bank bank = bankJpaRepository.findByUid(uid);
-                if (bank != null) {
-                    bank.getNpcProgress().put("Crypto-NPC", true);
-                    bankJpaRepository.save(bank);
-                }
-            } catch (Exception e) {
-                System.out.println("Warning: Could not update bank NPC progress: " + e.getMessage());
-                // Continue execution even if bank update fails
-            }
+            com.open.spring.mvc.person.Person person = user.getPerson();
+            String uid = person.getUid();
+            Bank bank = bankJpaRepository.findByUid(uid);
+            bank.getNpcProgress().put("Crypto-NPC", true);
+            bankJpaRepository.save(bank);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.out.println("\n=== Error in toggleMining ===");
-            System.out.println("Error type: " + e.getClass().getName());
-            System.out.println("Error message: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", e.getMessage()));
         }

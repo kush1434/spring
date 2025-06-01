@@ -27,13 +27,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.open.spring.mvc.userStocks.UserStocksRepository;
 import com.open.spring.mvc.userStocks.userStocksTable;
 
-import jakarta.transaction.Transactional;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -178,10 +174,9 @@ public class PersonApiController {
      * Retrieves all the Person entities in the database, people
      * 
      * @return A ResponseEntity containing a list for Person entities
-     * @throws JsonProcessingException 
      */
     @GetMapping("/people")
-    public ResponseEntity<?> getPeople() throws JsonProcessingException {
+    public ResponseEntity<List<Person>> getPeople() {
         // Fetch the data from the repository into a variable
         List<Person> people = repository.findAllByOrderByNameAsc();
 
