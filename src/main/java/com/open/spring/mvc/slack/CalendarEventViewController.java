@@ -1,4 +1,4 @@
-package com.nighthawk.spring_portfolio.mvc.Slack;
+package com.open.spring.mvc.slack;
 
 import java.util.List;
 

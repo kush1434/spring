@@ -1,4 +1,4 @@
-package com.nighthawk.spring_portfolio.mvc.extract;
+package com.open.spring.mvc.extract;
 
 import java.util.*;
 import java.time.LocalDate;
@@ -16,16 +16,16 @@ import jakarta.persistence.Convert;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 
 ///// entity classes
-import com.nighthawk.spring_portfolio.mvc.person.Person;
-import com.nighthawk.spring_portfolio.mvc.assignments.Assignment;
-import com.nighthawk.spring_portfolio.mvc.assignments.AssignmentQueue;
-import com.nighthawk.spring_portfolio.mvc.Slack.CalendarEvent;
+import com.open.spring.mvc.person.Person;
+import com.open.spring.mvc.assignments.Assignment;
+import com.open.spring.mvc.assignments.AssignmentQueue;
+import com.open.spring.mvc.slack.CalendarEvent;
 
 ///// repositories
-import com.nighthawk.spring_portfolio.mvc.person.PersonJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.groups.GroupsJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.assignments.AssignmentJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.Slack.CalendarEventRepository;
+import com.open.spring.mvc.person.PersonJpaRepository;
+import com.open.spring.mvc.groups.GroupsJpaRepository;
+import com.open.spring.mvc.assignments.AssignmentJpaRepository;
+import com.open.spring.mvc.slack.CalendarEventRepository;
 
 
 
