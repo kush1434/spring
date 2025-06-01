@@ -54,12 +54,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 }
             break;
 
-            case "endStream":
+            case "stopBroadcast":
                 if(session.getId()!=broadcasterID)
                 {
                     return;
                 }
                 broadcasterID = null;
+            break;
 
             case "viewerOfferClient":
                 if (broadcasterID == null) {

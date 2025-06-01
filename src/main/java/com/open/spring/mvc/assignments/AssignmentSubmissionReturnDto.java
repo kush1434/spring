@@ -23,7 +23,7 @@ public class AssignmentSubmissionReturnDto {
     public AssignmentSubmissionReturnDto(AssignmentSubmission submission) {
         this.id = submission.getId();
         this.assignment = new AssignmentReturnDto(submission.getAssignment());
-        this.students = submission.getStudents().stream().map(PersonSubmissionDto::new).toList();
+        this.students = submission.getSubmitter().getMembers().stream().map(PersonSubmissionDto::new).toList();
         this.content = submission.getContent();
         this.comment = submission.getComment();
         this.grade = submission.getGrade();

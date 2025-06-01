@@ -16,7 +16,7 @@
 
         .btn {
             background-color: #4CAF50;
-            border: none;
+            border-style: solid;
             color: white;
             padding: 10px 20px;
             text-align: center;
@@ -55,6 +55,45 @@
             margin: 0 10px;
             background-color: #f2f2f2;
             border: 1px solid #ddd;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .btn-export {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .btn-exportOne {
+            background-color: #03ad50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .btn-exportSubmissions {
+            background-color: #6B73FF;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
             cursor: pointer;
             border-radius: 4px;
         }
@@ -138,6 +177,13 @@
         .modal tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+        td.wrap-text {
+            max-width: 200px;        /* set the max width you want */
+            word-wrap: break-word;   /* ensures long words like URLs will break*/
+            word-break: break-all;   /* breaks within words if needed */
+            white-space: normal;     /* allows wrapping */
+          }
+        
 
         td.wrap-text {
             max-width: 200px;        /* set the max width you want */
@@ -148,6 +194,15 @@
 
         #submissionsTable_length, #submissionsTable_filter input {
             color: #AAA;
+        }
+
+        #assignmentTable_length select {
+            color: white;
+        }
+
+        .dataTables_length select {
+            color: white !important;
+            background-color: #333;
         }
         
     </style>
@@ -168,6 +223,7 @@
         <div id="assignmentView">
             <h1>Assignment Tracker</h1>
             <button class="btn" onclick="showAddAssignmentModal()">Add Assignment</button>
+            <button class="btn-export" onclick="exportAssignments()">Export All Assignments</button>
 
             <!-- Add Assignment Modal -->
             <div id="addAssignmentModal" class="modal">
@@ -208,6 +264,7 @@
                     <button class="btn" onclick="closeRandomizeGradersModal()">Cancel</button>
                 </div>
             </div>
+
 
             <table id="assignmentTable" class="display">
                 <thead>
@@ -308,19 +365,20 @@
                     .then(assignments => {
                         assignmentTable.clear();
                         assignments.forEach(assignment => {
-                            const formattedDueDate = formatDate(assignment.dueDate);
                             assignmentTable.row.add([
                                 assignment.name,
                                 assignment.type,
                                 assignment.description || '',
                                 assignment.points,
-                                formattedDueDate,
+                                assignment.dueDate,
                                 `
                                     <button class="btn btn-view-submissions" onclick="viewSubmissions(${assignment.id})">View Submissions</button>
                                     <button class="btn btn-delete" onclick="deleteAssignment(${assignment.id})">Delete</button>
                                     <button class="btn btn-grade" onclick="showAssignToGradeModal(${assignment.id})">Assign to Grade</button>
                                     <button class="btn btn-randomize" onclick="showRandomizeGradersModal(${assignment.id})">Randomize Graders</button>
-                                `
+                                    <button class="btn-exportOne" onclick="exportIndividualAssignment(${assignment.id})">Export Assignment</button>
+                                    <button class="btn-exportSubmissions" onclick="exportSubmissions(${assignment.id})">Export Assignment Submissions</button>
+                                    `
                             ]);
                         });
                         assignmentTable.draw();
@@ -362,7 +420,7 @@
                 const type = document.getElementById('assignmentType').value;
                 const description = document.getElementById('assignmentDescription').value;
                 const points = document.getElementById('assignmentPoints').value;
-                const dueDate = document.getElementById('assignmentDueDate').value;
+                const dueDate = formatDate(document.getElementById('assignmentDueDate').value);
 
                 const params = new URLSearchParams({
                     name, type, description, points, dueDate
@@ -408,6 +466,17 @@
                                     submission.grade || 'Not graded',
                                     `<button class="btn btn-grade" onclick="gradeSubmission(${submission.id})">Grade</button>`
                                 ]);
+                                studentNames = studentNames.slice(0, -2);
+                                row.innerHTML = `
+                                    <td>${studentNames}</td>
+                                    <td class="wrap-text">${submission.content || 'No content'}</td>
+                                    <td>${submission.comment || 'No comments'}</td>
+                                    <td>${submission.grade || 'Not graded'}</td>
+                                    <td>
+                                        <button class="btn btn-grade" onclick="gradeSubmission(${submission.id})">Grade</button>
+                                    </td>
+                                `;
+                                submissionsList.appendChild(row);
                             });
                         }
                         submissionsTable.draw();
@@ -775,6 +844,193 @@
             const day = String(date.getDate()).padStart(2, '0');
             const year = date.getFullYear();
             return `${month}/${day}/${year}`;
+        }
+
+        function exportAssignments() {
+
+            fetch('/api/assignments/bulk/extract', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!Array.isArray(data)) throw new Error("Invalid response format");
+
+                const headers = Object.keys(data[0]);
+                const csvRows = [];
+
+                csvRows.push(headers.join(','));
+
+                data.forEach(row => {
+                    const values = headers.map(header => {
+                        const val = row[header];
+                        if (val == null) return '';
+                        const strVal = String(val);
+                        return /[",\n]/.test(strVal) ? `"${strVal.replace(/"/g, '""')}"` : strVal;
+                    });
+                    csvRows.push(values.join(','));
+                });
+
+                const csvString = csvRows.join('\n');
+                const blob = new Blob([csvString], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'assignments.csv';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Error exporting assignments:', error);
+                alert('Failed to export assignments.');
+            })
+            .finally(() => {
+                exportButton.textContent = originalText;
+                exportButton.disabled = false;
+            });
+        }
+
+
+        function exportIndividualAssignment(id) {
+            fetch(`/api/assignments/extract/${id}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const dataArray = Array.isArray(data) ? data : [data];
+                
+                if (dataArray.length === 0) {
+                    alert('No data to export.');
+                    return;
+                }
+                
+                const headers = Object.keys(dataArray[0]);
+                
+                const csvHeaders = headers.join(',');
+                
+                const csvRows = dataArray.map(item => {
+                    return headers.map(header => {
+                        const value = item[header] || '';
+                        const escapedValue = String(value).replace(/"/g, '""');
+                        return /[",\n\r]/.test(escapedValue) ? `"${escapedValue}"` : escapedValue;
+                    }).join(',');
+                });
+                
+                const csvContent = [csvHeaders, ...csvRows].join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `assignment_${id}_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Error exporting assignment:', error);
+                alert('Failed to export assignment.');
+            });
+        }
+
+        function exportSubmissions(id) {
+            fetch(`/api/submissions/assignment/${id}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const submissions = Array.isArray(data) ? data : [data];
+                
+                if (submissions.length === 0) {
+                    alert('No submissions to export.');
+                    return;
+                }
+                
+                const flattenedData = submissions.map(submission => {
+                    const flattened = {
+                        submission_id: submission.id,
+                        assignment_id: submission.assignment?.id || '',
+                        assignment_name: submission.assignment?.name || '',
+                        assignment_type: submission.assignment?.type || '',
+                        assignment_description: submission.assignment?.description || '',
+                        assignment_points: submission.assignment?.points || '',
+                        assignment_due_date: submission.assignment?.dueDate || '',
+                        assignment_timestamp: submission.assignment?.timestamp || '',
+                        student_id: submission.students?.[0]?.id || '',
+                        student_name: submission.students?.[0]?.name || '',
+                        student_email: submission.students?.[0]?.email || '',
+                        student_uid: submission.students?.[0]?.uid || '',
+                        content: submission.content || '',
+                        comment: submission.comment || '',
+                        grade: submission.grade || '',
+                        feedback: submission.feedback || '',
+                        is_late: submission.isLate || false
+                    };
+                    return flattened;
+                });
+                
+                const headers = Object.keys(flattenedData[0]);
+                
+                const csvHeaders = headers.join(',');
+                
+                const csvRows = flattenedData.map(item => {
+                    return headers.map(header => {
+                        const value = item[header] || '';
+                        const escapedValue = String(value).replace(/"/g, '""');
+                        return /[",\n\r]/.test(escapedValue) ? `"${escapedValue}"` : escapedValue;
+                    }).join(',');
+                });
+                
+                const csvContent = [csvHeaders, ...csvRows].join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `submissions_assignment_${id}_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Error exporting submissions:', error);
+                alert('Failed to export submissions.');
+            });
         }
         
 
