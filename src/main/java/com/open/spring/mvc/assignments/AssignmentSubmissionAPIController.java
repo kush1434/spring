@@ -341,4 +341,29 @@ public class AssignmentSubmissionAPIController {
             
         return ResponseEntity.ok(assignedGraderIds);
     }
+
+    /**
+     * Extract all submissions for a specific assignment.
+     * 
+     * @param assignmentId the ID of the assignment whose submissions are to be extracted
+     * @return a ResponseEntity containing a list of all submissions for the assignment
+     */
+    @GetMapping("/extract/{assignmentId}")
+    @Transactional
+    public ResponseEntity<?> extractSubmissionsByAssignment(@PathVariable Long assignmentId) {
+        Assignment assignment = assignmentRepo.findById(assignmentId).orElse(null);
+        if (assignment == null) {
+            return new ResponseEntity<>(
+                Collections.singletonMap("error", "Assignment not found"), 
+                HttpStatus.NOT_FOUND
+            );
+        }
+
+        List<AssignmentSubmission> submissions = submissionRepo.findByAssignmentId(assignmentId);
+        List<AssignmentSubmissionReturnDto> submissionDtos = submissions.stream()
+            .map(AssignmentSubmissionReturnDto::new)
+            .collect(Collectors.toList());
+
+        return new ResponseEntity<>(submissionDtos, HttpStatus.OK);
+    }
 }

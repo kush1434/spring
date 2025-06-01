@@ -545,4 +545,13 @@ public class AssignmentsApiController {
     
         return ResponseEntity.ok("Graders randomized successfully!");
     }
+
+
+    @GetMapping("/extract/{id}")
+    public ResponseEntity<AssignmentDto> extractAssignment(@PathVariable Long id) {
+        Optional<Assignment> curAssignment = assignmentRepo.findById(id);
+        Assignment assignment = curAssignment.get();
+        AssignmentDto assignmentDto = new AssignmentDto(assignment);
+        return new ResponseEntity<>(assignmentDto, HttpStatus.OK);
+    }
 }
