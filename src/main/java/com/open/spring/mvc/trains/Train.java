@@ -43,6 +43,9 @@ public class Train {
     @Column(columnDefinition = "jsonb")
     private Map<String,List<Product>> cargo; //Product, amount available
 
+    
+    private Boolean inTransit;
+
     private String trainType;
 
     private String trainColor;
@@ -53,6 +56,8 @@ public class Train {
         train.setPosition(Float.valueOf(0));
         //defalt no cargo
         train.setCargo(new HashMap<String,List<Product>>());
+        //train does not start by moving
+        train.setInTransit(false);
         //assign type of train
         train.setTrainType("trolley");
         //assign a random color for the train

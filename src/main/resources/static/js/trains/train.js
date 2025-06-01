@@ -40,6 +40,7 @@ function fillCompanyHtml(container,companyInfo){
     let a = document.createElement("a");
     a.innerText = "owner";
     a.setAttribute("href","/mvc/person/read/"+companyInfo.id);
+    a.setAttribute("class","btn btn-info btn-sm")
 
     div.append(a);
 
