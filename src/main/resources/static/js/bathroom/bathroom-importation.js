@@ -22,7 +22,7 @@ document.getElementById("import-all").addEventListener("click", async () => {
     let file = input.files[0];
     let text = await file.text()
     if(!Array.isArray(JSON.parse(text))){
-        alert("This import is expecting an array.")
+        alert("Import should be in an array format.")
         return;
     }
     let content = await importTinkle(text);
