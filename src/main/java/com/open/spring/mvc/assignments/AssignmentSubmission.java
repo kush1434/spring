@@ -37,7 +37,6 @@ public class AssignmentSubmission {
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "assignment_id")
-    @JsonBackReference
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Assignment assignment;
 

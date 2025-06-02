@@ -153,7 +153,7 @@ public class AssignmentSubmissionAPIController {
         @RequestBody SubmitAssignmentDto submissionInfo
     ) {
         Assignment assignment = assignmentRepo.findById(assignmentId).orElse(null);
-
+        
         // TODO: A better way to do this would be to have this be part of some sort of SubmitterService
         Submitter submitter;
         if (submissionInfo.isGroup) {
@@ -167,11 +167,11 @@ public class AssignmentSubmissionAPIController {
             error.put("error", "Submitter not found");
             return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
         }
-
+        
         if (assignment != null) {
             AssignmentSubmission submission = new AssignmentSubmission(assignment, submitter, submissionInfo.content, submissionInfo.comment, submissionInfo.isLate);
             AssignmentSubmission savedSubmission = submissionRepo.save(submission);
-            return new ResponseEntity<>(savedSubmission, HttpStatus.CREATED);
+            return new ResponseEntity<>(new AssignmentSubmissionReturnDto(savedSubmission), HttpStatus.CREATED);
         }
         Map<String, String> error = new HashMap<>();
         error.put("error", "Assignment not found");
