@@ -20,6 +20,18 @@
                 <a href="#" class="d-flex align-items-center text-light text-decoration-none">
                     <span class="fs-4">Tinkle View</span>
                 </a>
+                <div sec:authorize="hasRole('ROLE_ADMIN')">
+                    <button class="btn btn-info btn-sm" id="export-all">Export Tinkle Data</button>
+                    <button class="btn btn-info btn-sm" id="clear-all">Clear Tinkle Data</button>
+                    <button class="btn btn-info btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#importCollaspe" aria-expanded="false" aria-controls="importCollaspe">Import Tinkle Data</button>
+                    <br>
+                    <div class="collapse" id="importCollaspe">
+                        <div class="card card-body bg-success border-muted">
+                            <input id="personAllFileUpload" type="file" accept=".json">
+                            <button id="import-all" class="btn btn-secondary btn-sm">Import Tinkle Data From File</button>
+                        </div>
+                    </div>
+                </div>
             </header>
 
             <header class="pb-3 mb-4">
@@ -337,4 +349,13 @@
         </script>
     </th:block>
 </body>
+<th:block layout:fragment="script" th:remove="tag">
+    <!-- script for extracting/importing people (not included if user is not admin)-->
+    <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/bathroom/bathroom-extraction.js"
+        th:src="@{/js/bathroom/bathroom-extraction.js}"></script>
+    <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/bathroom/bathroom-clear.js"
+        th:src="@{/js/bathroom/bathroom-clear.js}"></script>
+    <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/bathroom/bathroom-importation.js"
+        th:src="@{/js/bathroom/bathroom-importation.js}"></script>
+</th:block>
 </html>
