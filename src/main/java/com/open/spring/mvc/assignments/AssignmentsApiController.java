@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.open.spring.mvc.assignments.AssignmentSubmissionAPIController.PersonSubmissionDto;
 import com.open.spring.mvc.groups.GroupsJpaRepository;
 import com.open.spring.mvc.groups.Submitter;
 import com.open.spring.mvc.person.Person;
@@ -368,8 +369,47 @@ public class AssignmentsApiController {
 
         return ResponseEntity.ok("Persons assigned successfully");
     }
+    
+    @PostMapping("/teamteach/signup/{id}")
+    @Transactional
+    public ResponseEntity<?> signupForTeamteach(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You must be a logged in user to do this");
+        }
+        String uid = userDetails.getUsername();
+        Person user = personRepo.findByUid(uid);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You must be a logged in user to do this");
+        }
+        
+        Optional<Assignment> assignmentOptional = assignmentRepo.findById(id);
+        if (!assignmentOptional.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Assignment not found");
+        }
+
+        Assignment assignment = assignmentOptional.get();
+        if (!assignment.getType().equals("teamteach")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This assignment is not a team teach assignment");
+        }
+
+        // Check if user is already assigned to the assignment
+        if (assignment.getAssignedGraders().stream().anyMatch(assignedGrader -> assignedGrader.getId().equals(user.getId()))) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are already signed up for this team teach");
+        }
+
+        List<Person> assignedGraders = assignment.getAssignedGraders();
+        if (assignedGraders == null) {
+            assignedGraders = new ArrayList<>();
+        }
+        assignedGraders.add(user);
+        assignment.setAssignedGraders(assignedGraders);
+        assignmentRepo.save(assignment);
+
+        return ResponseEntity.ok("You have successfully signed up for the team teach assignment");        
+    }
 
     @GetMapping("/assignedGraders/{id}")
+    @Transactional
     public ResponseEntity<?> getAssignedGraders(@PathVariable Long id) {
         Optional<Assignment> assignmentOptional = assignmentRepo.findById(id);
         if (!assignmentOptional.isPresent()) {
@@ -380,10 +420,10 @@ public class AssignmentsApiController {
         List<Person> assignedGraders = assignment.getAssignedGraders();
         
         // Return just the IDs of assigned persons
-        List<Long> assignedGraderIds = assignedGraders.stream()
-            .map(Person::getId)
+        List<PersonSubmissionDto> assignedGraderIds = assignedGraders.stream()
+            .map(PersonSubmissionDto::new)
             .collect(Collectors.toList());
-            
+        
         return ResponseEntity.ok(assignedGraderIds);
     }
     
