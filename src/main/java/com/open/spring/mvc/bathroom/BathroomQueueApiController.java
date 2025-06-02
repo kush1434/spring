@@ -174,11 +174,11 @@ public class BathroomQueueApiController {
             String frontStudent = bathroomQueue.getFrontStudent();
 
             if (frontStudent != null && frontStudent.equals(queueDto.getStudentName())) {
-                // Student is already at the front and considered approved
+                bathroomQueue.approveStudent();
+                repository.save(bathroomQueue);
                 return new ResponseEntity<>("Approved " + queueDto.getStudentName(), HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("Student is not at the front of the queue", HttpStatus.BAD_REQUEST);
             }
+            return new ResponseEntity<>("Student is not at the front of the queue", HttpStatus.BAD_REQUEST);
         }
 
         return new ResponseEntity<>("Queue for " + queueDto.getTeacherEmail() + " not found", HttpStatus.NOT_FOUND);
