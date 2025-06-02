@@ -315,8 +315,6 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="submissionsList">
-                    </tbody>
                 </table>
             </div>
         </div>
@@ -349,7 +347,7 @@
                 info: true,
                 autoWidth: false,
                 columns: [
-                    { title: "Assignment/Student" }, // Placeholder, updated dynamically
+                    { title: "Student/Group" }, // Placeholder, updated dynamically
                     { title: "Content" },
                     { title: "Comments" },
                     { title: "Grade" },
@@ -458,25 +456,13 @@
                             submissionsTable.row.add(['No submissions found', '', '', '', '']);
                         } else {
                             submissions.forEach(submission => {
-                                const studentNames = submission.students.map(student => student.name).join(', ') || 'Unknown Student';
                                 submissionsTable.row.add([
-                                    studentNames,
+                                    submission.submitter.name,
                                     submission.content || 'No content',
                                     submission.comment || 'No comments',
                                     submission.grade || 'Not graded',
                                     `<button class="btn btn-grade" onclick="gradeSubmission(${submission.id})">Grade</button>`
                                 ]);
-                                studentNames = studentNames.slice(0, -2);
-                                row.innerHTML = `
-                                    <td>${studentNames}</td>
-                                    <td class="wrap-text">${submission.content || 'No content'}</td>
-                                    <td>${submission.comment || 'No comments'}</td>
-                                    <td>${submission.grade || 'Not graded'}</td>
-                                    <td>
-                                        <button class="btn btn-grade" onclick="gradeSubmission(${submission.id})">Grade</button>
-                                    </td>
-                                `;
-                                submissionsList.appendChild(row);
                             });
                         }
                         submissionsTable.draw();
