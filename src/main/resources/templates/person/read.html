@@ -56,9 +56,6 @@
                 <div class="card card-body bg-success border-muted">
                 <button id="export-all" class="btn btn-secondary btn-sm">export all</button>
                 <hr>
-                <p class="text-secondary font-weight-light">selection fields are located under the import/export column</p>
-                <button id="export-selected" class="btn btn-secondary btn-sm">export selected</button>
-                <hr>
                 <table class="table table-bordered table-responsive">
                     <thead>
                         <tr>
@@ -83,17 +80,14 @@
             </div>
             <div class="collapse" id="importCollaspe">
                 <div class="card card-body bg-success border-muted">
-                    <input id="personAllFileUpload" type="file" accept=".json" class="form-control">
-                    <button id="import-all" class="btn btn-secondary btn-sm">import people</button>
-                    <hr>
-                    <input id="personSingleFileUpload" type="file" accept=".json" class="form-control">
-                    <button id="import-single" class="btn btn-secondary btn-sm">import person</button>
+                    <input id="personAllFileUpload" type="file" accept=".json">
+                    <button id="import-all" class="btn btn-secondary btn-sm">import persons</button>
                 </div>
             </div>
             
         </div>
 
-        <div class="row align-items-md-stretch table-responsive">
+        <div class="row align-items-md-stretch">
             <!-- Table displaying the list of persons -->
             <table id="personTable" class="table">
                 <thead>
@@ -124,7 +118,7 @@
                         </td>
                         <td>
                             <div class="profile-picture-container">
-                                <a id="profile-link-${person.id}" th:data-person-id="${person.id}" target="_blank">
+                                <a id="profile-link-${person.id}" data-person-id="${person.id}" target="_blank">
                                     <img id="profile-img-${person.id}" th:src="|https://github.com/${person.uid}.png|"
                                         alt="Profile Picture"
                                         onerror="this.onerror=null; this.src='https://github.com/user-attachments/assets/13dec9b2-21d6-458e-b099-f5f85ae9caf2';" />
@@ -142,12 +136,8 @@
                                 class="btn btn-danger btn-sm">Delete</a>
                         </td>
                         <td>
-                            <input type="checkbox" name="export-select" class="form-check-input" th:export-select-id="${person.id}">
-                            <hr>
-                            <button class="btn btn-info btn-sm" name="export" th:export-id="${person.id}">Export</button>
-                            <hr>
-                            <input id="personSingleFileUpload" type="file" accept=".json" class="form-control">
-                            <button class="btn btn-info btn-sm" name="import" th:import-id="${person.id}">Import</button>
+                            <button>Import</button>
+                            <button>Export</button>
                         </td>
                     </tr>
                 </tbody>
