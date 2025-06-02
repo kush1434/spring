@@ -12,11 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import com.open.spring.mvc.person.Person;
-import com.open.spring.mvc.person.PersonDetailsService;
 import com.open.spring.mvc.person.PersonJpaRepository;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 
 import jakarta.persistence.Convert;
+import jakarta.validation.Valid;
 
 
 @Controller
@@ -26,8 +26,6 @@ public class ImportationViewController {
     /// Autowired Jpa Repositories
     @Autowired
     private PersonJpaRepository personJpaRepository;
-    @Autowired
-    private PersonDetailsService personDetailsService;
 
     /////////////////////////////////////////
     /// Export Objects
@@ -47,90 +45,6 @@ public class ImportationViewController {
         private Boolean kasmServerNeeded;
         private Map<String, Map<String, Object>> stats;
     }
-
-    /////////////////////////////////////////
-    /// Single Imports
-
-
-    //this import updates a single person, it does not create a new person
-    @Transactional
-    @PostMapping("person/{id}")
-    public ResponseEntity<String> importPersonById(@PathVariable("id") Long id, @RequestBody PersonEmpty person) {
-        if (!personJpaRepository.existsById(id)) {
-            return new ResponseEntity<String>(HttpStatus.NOT_FOUND);
-        }
-        
-        Person personToUpdate = personJpaRepository.findById(id).get();
-        //don't allow updating database users
-        Person[] defaultPersons = Person.init();
-        for(int i=0; i<defaultPersons.length; i++){
-            if(defaultPersons[i].getUid().equals(personToUpdate.getUid())){
-                return new ResponseEntity<String>(HttpStatus.FORBIDDEN);
-            }
-        }
-       
-        boolean samePassword = true;
-
-        if (person.getPassword() != null && !person.getPassword().isBlank()) {
-            personToUpdate.setPassword(person.getPassword());
-            samePassword = false;
-        }
-        if (person.getName() != null && !person.getName().isBlank() && !person.getName().equals(personToUpdate.getName())) {
-            personToUpdate.setName(person.getName());
-        }
-        if (person.getEmail() != null && !person.getEmail().isBlank() && !person.getEmail().equals(personToUpdate.getEmail())) {
-            personToUpdate.setEmail(person.getEmail());
-        }
-        if (person.getKasmServerNeeded() != null && !person.getKasmServerNeeded().equals(personToUpdate.getKasmServerNeeded())) {
-            personToUpdate.setKasmServerNeeded(person.getKasmServerNeeded());
-        }
-        if (person.getSid() != null && !person.getSid().equals(personToUpdate.getSid())) {
-            personToUpdate.setSid(person.getSid());
-        }
-
-        try{
-            personDetailsService.save(personToUpdate,samePassword);    
-        } catch(Exception e){
-            System.out.println(e.getStackTrace());
-            return new ResponseEntity<String>(HttpStatus.FAILED_DEPENDENCY);
-        }
-                
-        return new ResponseEntity<String>("success", HttpStatus.OK);
-    }
-
-    //this import creates a single person
-    @Transactional
-    @PostMapping("person")
-    public ResponseEntity<String> importPerson(@RequestBody PersonEmpty personEmpty) {
-        
-        //don't allow updating database users
-        Person[] defaultPersons = Person.init();
-        for(int i=0; i<defaultPersons.length; i++){
-            if(defaultPersons[i].getUid().equals(personEmpty.getUid())){
-                return new ResponseEntity<String>(HttpStatus.FORBIDDEN);
-            }
-        }
-       
-        Person temp = new Person();
-            temp.setUid(personEmpty.getUid());
-            temp.setPassword(personEmpty.getPassword());
-            temp.setEmail(personEmpty.getEmail());
-            temp.setName(personEmpty.getName());
-            temp.setPfp(personEmpty.getPfp());
-            temp.setSid(personEmpty.getSid());
-            temp.setKasmServerNeeded(personEmpty.getKasmServerNeeded());
-            temp.setStats(personEmpty.getStats());
-
-        try{
-            personJpaRepository.save(temp);
-        } catch(Exception e){
-            System.out.println(e.getStackTrace());
-            return new ResponseEntity<String>(HttpStatus.FAILED_DEPENDENCY);
-        }
-                
-        return new ResponseEntity<String>("success", HttpStatus.OK);
-    }
-
 
     /////////////////////////////////////////
     /// Multi Imports (all)
