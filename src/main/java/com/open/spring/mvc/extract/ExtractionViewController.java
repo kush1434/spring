@@ -77,7 +77,7 @@ public class ExtractionViewController {
     @GetMapping("/person/{id}")
     public ResponseEntity<PersonEmpty> extractPersonById(@PathVariable("id") long id) {
         if (!personJpaRepository.existsById(id)) {
-            return new ResponseEntity<PersonEmpty>(HttpStatus.NOT_FOUND);
+            new ResponseEntity<PersonEmpty>(HttpStatus.NOT_FOUND);
         }
         Person person = personJpaRepository.findById(id).get();
         //build a PersonEmpty based on the person
@@ -98,7 +98,7 @@ public class ExtractionViewController {
     @GetMapping("/group/{id}")
     public ResponseEntity<GroupEmpty> extractGroupById(@PathVariable("id") long id) {
         if (!groupsJpaRepository.findById(id).isPresent()) {
-            return new ResponseEntity<GroupEmpty>(HttpStatus.NOT_FOUND);
+            new ResponseEntity<GroupEmpty>(HttpStatus.NOT_FOUND);
         }
         Groups group = groupsJpaRepository.findById(id).get();
         GroupEmpty groupEmpty = new GroupEmpty(group.getId(), group.getName(), group.getPeriod());
@@ -109,7 +109,7 @@ public class ExtractionViewController {
     @Transactional(readOnly = true)
     public ResponseEntity<List<GroupMemberEmpty>> extractGroupMembersById(@PathVariable("id") long id) {
         if (!groupsJpaRepository.findById(id).isPresent()) {
-            return new ResponseEntity<List<GroupMemberEmpty>>(HttpStatus.NOT_FOUND);
+            new ResponseEntity<List<GroupMemberEmpty>>(HttpStatus.NOT_FOUND);
         }
         Groups group = groupsJpaRepository.findById(id).get();
         ArrayList<GroupMemberEmpty> groupMemberEmpties = new ArrayList<GroupMemberEmpty>(0);
