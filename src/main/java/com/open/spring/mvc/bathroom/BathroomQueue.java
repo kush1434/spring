@@ -86,7 +86,7 @@ public class BathroomQueue {
      * When they return, they are removed from the queue
      */
     public void approveStudent() {
-        if (this.peopleQueue != null && !this.peopleQueue.isEmpty()) {
+       if (this.peopleQueue != null && !this.peopleQueue.isEmpty()) {
             if (this.away == 0) {
                 // Student is approved to go away
                 this.away = 1;

@@ -3,13 +3,16 @@ package com.open.spring.mvc.bathroom;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -165,19 +168,50 @@ public class BathroomQueueApiController {
     @PostMapping("/approve")
     public ResponseEntity<Object> approveStudent(@RequestBody QueueDto queueDto) {
         Optional<BathroomQueue> queueEntry = repository.findByTeacherEmail(queueDto.getTeacherEmail());
+
         if (queueEntry.isPresent()) {
             BathroomQueue bathroomQueue = queueEntry.get();
             String frontStudent = bathroomQueue.getFrontStudent();
+
             if (frontStudent != null && frontStudent.equals(queueDto.getStudentName())) {
                 bathroomQueue.approveStudent();
                 repository.save(bathroomQueue);
                 return new ResponseEntity<>("Approved " + queueDto.getStudentName(), HttpStatus.OK);
-            } 
-            else {
-                return new ResponseEntity<>("Student is not at the front of the queue", HttpStatus.BAD_REQUEST);
+            }
+            return new ResponseEntity<>("Student is not at the front of the queue", HttpStatus.BAD_REQUEST);
+        }
+
+        return new ResponseEntity<>("Queue for " + queueDto.getTeacherEmail() + " not found", HttpStatus.NOT_FOUND);
+    }
+
+    @CrossOrigin(origins = {"http://localhost:8585", "https://pages.opencodingsociety.com"})
+    @PostMapping("/removeFront")
+    public ResponseEntity<Object> removeFrontStudent(@RequestBody QueueDto queueDto) {
+        Optional<BathroomQueue> queueEntry = repository.findByTeacherEmail(queueDto.getTeacherEmail());
+
+        if (queueEntry.isPresent()) {
+            BathroomQueue bathroomQueue = queueEntry.get();
+            String queue = bathroomQueue.getPeopleQueue();
+
+            if (queue != null && !queue.isEmpty()) {
+                String[] students = queue.split(",");
+                if (students.length > 1) {
+                    // Remove first student and rebuild queue
+                    String newQueue = String.join(",", Arrays.copyOfRange(students, 1, students.length));
+                    bathroomQueue.setPeopleQueue(newQueue);
+                } else {
+                    // Only one student in queue
+                    bathroomQueue.setPeopleQueue("");
+                }
+
+                repository.save(bathroomQueue);
+                return ResponseEntity.ok("Removed front student from queue");
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Queue is already empty");
             }
         }
-        return new ResponseEntity<>("Queue for " + queueDto.getTeacherEmail() + " not found", HttpStatus.NOT_FOUND);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Queue not found");
     }
 
     /**
@@ -226,5 +260,20 @@ public class BathroomQueueApiController {
     @GetMapping("/getActive")
     public ResponseEntity<Object> getActiveQueues() {
         return new ResponseEntity<>(repository.findAll(), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/clear")
+    public ResponseEntity<?> clearTable(@RequestParam(required = false) String role) {
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("status", "error", "message", "Unauthorized — Admin access required"));
+        }
+
+        repository.deleteAllRowsInBulk();
+
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "All bathroom queue records have been cleared"
+        ));
     }
 }

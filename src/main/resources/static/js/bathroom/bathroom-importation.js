@@ -1,6 +1,6 @@
-async function importPeople(fileContent) {
+async function importTinkle(fileContent) {
     let data1;
-    await fetch("/mvc/import/all/person", {  
+    await fetch("/api/tinkle/bulk/create", {  
         method: "POST",
         body: fileContent,
         cache: "no-cache",
@@ -25,5 +25,7 @@ document.getElementById("import-all").addEventListener("click", async () => {
         alert("This import is expecting an array.")
         return;
     }
-    let content = await importPeople(text);
+    let content = await importTinkle(text);
+    alert("Imported " + content.length + " tinkles successfully.");
+    location.reload();
 })

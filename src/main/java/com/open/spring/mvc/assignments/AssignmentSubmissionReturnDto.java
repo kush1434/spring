@@ -1,9 +1,8 @@
 package com.open.spring.mvc.assignments;
 
-import java.util.List;
-
 import com.open.spring.mvc.assignments.AssignmentSubmissionAPIController.AssignmentReturnDto;
-import com.open.spring.mvc.assignments.AssignmentSubmissionAPIController.PersonSubmissionDto;
+import com.open.spring.mvc.groups.Groups;
+import com.open.spring.mvc.groups.Submitter;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +12,9 @@ import lombok.Setter;
 public class AssignmentSubmissionReturnDto {
     public Long id;
     public AssignmentReturnDto assignment;
-    public List<PersonSubmissionDto> students;
+    public Submitter submitter;
+    public Boolean isGroup;
+    // public List<PersonSubmissionDto> students;
     public String content;
     public String comment;
     public Double grade;
@@ -23,7 +24,9 @@ public class AssignmentSubmissionReturnDto {
     public AssignmentSubmissionReturnDto(AssignmentSubmission submission) {
         this.id = submission.getId();
         this.assignment = new AssignmentReturnDto(submission.getAssignment());
-        this.students = submission.getStudents().stream().map(PersonSubmissionDto::new).toList();
+        this.isGroup = submission.getSubmitter() instanceof Groups;
+        this.submitter = submission.getSubmitter();
+        // this.students = submission.getSubmitter().getMembers().stream().map(PersonSubmissionDto::new).toList();
         this.content = submission.getContent();
         this.comment = submission.getComment();
         this.grade = submission.getGrade();

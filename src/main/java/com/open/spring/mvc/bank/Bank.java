@@ -74,7 +74,7 @@ public class Bank {
     // Track NPC progress
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private Map<String, Boolean> npcProgress = new LinkedHashMap<>();
+    private LinkedHashMap<String, Boolean> npcProgress = new LinkedHashMap<>();
 
     public Bank(Person person) {
         this.person = person;
@@ -102,9 +102,10 @@ public class Bank {
     
     private void initializeNpcProgress() {
         this.npcProgress.put("Stock-NPC", true);
+        this.npcProgress.put("Casino-NPC", false);
         this.npcProgress.put("Fidelity", false);
         this.npcProgress.put("Schwab", false);
-        this.npcProgress.put("Casino-NPC", false);
+        this.npcProgress.put("Mining-NPC", false);
         this.npcProgress.put("Crypto-NPC", false);
         this.npcProgress.put("Bank-NPC", false);
     }

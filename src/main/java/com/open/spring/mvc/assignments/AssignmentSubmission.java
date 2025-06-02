@@ -7,6 +7,9 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.open.spring.mvc.groups.Submitter;
 import com.open.spring.mvc.person.Person;
 
 import jakarta.persistence.Entity;
@@ -26,6 +29,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@JsonIgnoreProperties({"assignedGraders"})
 public class AssignmentSubmission {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -33,17 +37,14 @@ public class AssignmentSubmission {
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "assignment_id")
-    @JsonBackReference
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Assignment assignment;
 
-    @ManyToMany(cascade = jakarta.persistence.CascadeType.MERGE)
-    @JoinTable(
-        name = "assignment_submission_students",
-        joinColumns = @JoinColumn(name = "submission_id"),
-        inverseJoinColumns = @JoinColumn(name = "student_id")
-    )
-    private List<Person> students = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "submitter_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonManagedReference(value = "submitter-submissions")
+    private Submitter submitter;
 
     @ManyToMany
     @JoinTable(
@@ -62,31 +63,20 @@ public class AssignmentSubmission {
     private Long assignmentid;
 
     private Boolean isLate;
-
-    @PreRemove
-    private void removeStudentsFromSubmission() {
-        if (students != null) {
-            // before the submission is removed, remove the submission from the students' submissions list
-            for (Person student : students) {
-                student.getSubmissions().remove(this);
-            }
-        }
-    }
     
-    public AssignmentSubmission(Assignment assignment, List<Person> students, String content, String comment, boolean isLate) {
+    public AssignmentSubmission(Assignment assignment, Submitter submitter, String content, String comment, boolean isLate) {
         this.assignment = assignment;
-        this.students = students;
+        this.submitter = submitter;
         this.content = content;
         this.grade = null;
         this.feedback = null;
         this.comment = comment;
-        this.assignmentid=assignment.getId();
-        this.isLate=isLate;
-
+        this.assignmentid = assignment.getId();
+        this.isLate = isLate;
     }
 
     // Getter for assignment_id (foreign key column)
     public Long getAssignmentId2() {
         return assignment != null ? assignment.getId() : null;
-    }    
+    }
 }
