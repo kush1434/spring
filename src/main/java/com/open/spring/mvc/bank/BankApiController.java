@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Iterator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -265,6 +265,51 @@ public class BankApiController {
             Bank bank = findOrCreateBankByPersonId(personId);
             return ResponseEntity.ok((LinkedHashMap<String, Boolean>) bank.getNpcProgress());
         } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @PostMapping("/updateNpcProgress")
+    public ResponseEntity<LinkedHashMap<String, Boolean>> updateNpcProgress(@RequestBody npcProgress request) {
+        try {
+        String justCompletedNpc = request.getNpcId();
+        if (justCompletedNpc == null || justCompletedNpc.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Bank bank = findOrCreateBankByPersonId(request.getPersonId());
+
+        LinkedHashMap<String, Boolean> progressMap = bank.getNpcProgress();
+
+        /*
+          Iterate over the LinkedHashMap entries in insertion order.
+          Once we find the entry whose key == justCompletedNpc, we set its value to false,
+          then break out of that loop iteration and immediately set the VERY NEXT entry’s value to true.
+        */
+        boolean found = false;
+        Iterator<Map.Entry<String, Boolean>> iter = progressMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, Boolean> entry = iter.next();
+
+            if (!found) {
+                if (entry.getKey().equals(justCompletedNpc)) {
+                    found = true;
+                }
+            }
+            else {
+                entry.setValue(true);
+                break; 
+            }
+        }
+
+        bank.setNpcProgress(progressMap);
+        bankJpaRepository.save(bank);
+
+        @SuppressWarnings("unchecked")
+        LinkedHashMap<String, Boolean> result = (LinkedHashMap<String, Boolean>) bank.getNpcProgress();
+        return ResponseEntity.ok(result);
+
+        } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
@@ -589,4 +634,12 @@ class BankDto {
     private double loanAmount;
     private double dailyInterestRate;
     private int riskCategory;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class npcProgress {
+    private Long personId;
+    private String npcId;
 }
