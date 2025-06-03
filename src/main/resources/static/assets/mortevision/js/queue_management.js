@@ -254,25 +254,20 @@ function showAssignmentModal() {
 
     // Add event listener for the confirm button
     document.getElementById('confirmAssignment').addEventListener('click', () => {
-        let selectedAssignment = modalDropdown.value-1;
-        console.log(modalDropdown.value-1)
-        document.getElementById("viewingAssignmentTitle").innerText = `Viewing Assigment: ${modalDropdown.options[selectedAssignment].text}`
-        // if (modalDropdown.options[selectedAssignment].text != null) {
-        //     assignment = selectedAssignment; // Set the global assignment variable
-        //     fetchQueue();
-        //     startQueueUpdateInterval(10);
-        //     fetchTimerLength();
-        //     modal.style.display = 'none';
-        // } else {
-        //     alert('Please select an assignment.');
-        // }
-         assignment = selectedAssignment; // Set the global assignment variable
-            fetchQueue();
-            startQueueUpdateInterval(10);
-            fetchTimerLength();
-            modal.style.display = 'none';
+        let selectedAssignment = modalDropdown.value; // Use the actual assignment ID (like 58)
+        console.log('Selected assignment ID:', selectedAssignment);
+        
+        // Get the selected option's text directly
+        const selectedOptionText = modalDropdown.options[modalDropdown.selectedIndex].text;
+        
+        document.getElementById("viewingAssignmentTitle").innerText = `Viewing Assignment: ${selectedOptionText}`;
+        
+        assignment = selectedAssignment; // This will be the correct assignment ID (58, not 57)
+        fetchQueue();
+        startQueueUpdateInterval(10);
+        fetchTimerLength();
+        modal.style.display = 'none';
     });
-}
 
 async function loadGroups() {
     const response = await fetch('/api/groups');
@@ -435,4 +430,4 @@ socket.onclose = function (event) {
 
 socket.onopen = function (event) {
     console.log("WebSocket connection established.");
-};
+}};
