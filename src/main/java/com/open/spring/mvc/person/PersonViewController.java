@@ -257,11 +257,28 @@ public class PersonViewController {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 /// "Delete" Get mappings
+    private int numAdmins(){
+        int numAdmins = 0;
+        List<Person> personList = repository.listAll();
+        for(int i=0; i<personList.size();i++){
+            if(personList.get(i).hasRoleWithName("ROLE_ADMIN")){
+                numAdmins++;
+            }
+        }
+        return numAdmins;
+    }
+
 
     @GetMapping("/delete/user")
     public String personDelete(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        repository.delete(repository.getByUid(userDetails.getUsername()).getId());  // Delete the person by ID
+         //don't delete an admin account when only 1 exists
+        Person personToDelete = repository.getByUid(userDetails.getUsername());
+        if(personToDelete.hasRoleWithName("ROLE_ADMIN") && numAdmins()<2){
+            return "redirect:/error/401";
+        }
+        
+        repository.delete(personToDelete.getId());  // Delete the person by ID
         return "redirect:/logout";  // logout the user
     }
 
@@ -272,7 +289,13 @@ public class PersonViewController {
      * @return redirect to the read page after deletion
      */
     @GetMapping("/delete/{id}")
-    public String personDelete(Authentication authentication, @PathVariable("id") long id) {
+    public String personDelete(Authentication authentication, @PathVariable("id") long id) { 
+        //don't delete an admin account when only 1 exists
+        Person personToDelete = repository.get(id);
+         if(personToDelete.hasRoleWithName("ROLE_ADMIN") && numAdmins()<2){
+            return "redirect:/error/401";
+        }
+
         //don't redirect to read page if you delete yourself
         //check before deleting from database to avoid imploding the backend
         boolean deletingYourself = false;
@@ -284,7 +307,7 @@ public class PersonViewController {
             return "redirect:/logout"; //logout the user
         }
         
-        return "person/read";  // Redirect to the read page after deletion
+        return "redirect:/mvc/person/read";  // Redirect to the read page after deletion
     }
 
 ///////////////////////////////////////////////////////////////////////////////////////////

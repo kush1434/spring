@@ -86,6 +86,12 @@ document.getElementsByName("export").forEach((button)=>{
     })
 })
 
+document.getElementById("export-all").addEventListener("click",async ()=>{
+    let content = await getAllPeople();
+    const blob = new BlobBuilder(BlobBuilder.fileTypeEnum.json, content);
+    blob.downloadBlob("person");
+})
+
 
 document.getElementById("exportTableAddRow").addEventListener("click", () => {
     const row = document.createElement("tr");
