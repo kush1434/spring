@@ -156,6 +156,7 @@
 
                     <label for="cars">Choose a topic:</label>
                     <select id="topics">
+                        <option value="" disabled selected>-- Choose --</option>
                     </select><br><br>
                 </form>
 
@@ -203,6 +204,7 @@
                 .then(grades => {
                     data = grades;
                     const selecttopics = document.getElementById('topics');
+
 
 
                     grades.forEach(teamteach => {
