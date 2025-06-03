@@ -59,17 +59,6 @@ async function fetchQueue() {
     }
 }
 
-async function fetchTimerLength() {
-    console.log("test")
-    const response = await fetch(URL + `getPresentationLength/${assignment}`);
-    if (response.ok) {
-        const data = await response.json();
-        console.log(data);
-        timerlength = data;
-        document.getElementById('timerDisplay').textContent = `${Math.floor(timerlength / 60).toString().padStart(2, '0')}:${(timerlength % 60).toString().padStart(2, '0')}`;
-    }
-}
-
 // add user to waiting
 async function addToQueue() {
     await fetch(URL + `addToWaiting/${assignment}`, {
@@ -211,7 +200,6 @@ function startQueueUpdateInterval(intervalInSeconds) {
     queueUpdateInterval = setInterval(() => {
         console.log("Updating queue...");
         fetchQueue();
-        fetchTimerLength();
     }, intervalInSeconds * 1000);
 }
 
@@ -265,27 +253,30 @@ function showAssignmentModal() {
         assignment = selectedAssignment; // This will be the correct assignment ID (58, not 57)
         fetchQueue();
         startQueueUpdateInterval(10);
-        fetchTimerLength();
         modal.style.display = 'none';
     });
+}
 
-async function loadGroups() {
-    const response = await fetch('/api/groups');
-    const groups = await response.json();
-    const container = document.getElementById('group-checkboxes');
-    container.innerHTML = "<p>Select Groups:</p>";
+function loadGroups() {
+    fetch('/api/groups')
+        .then(response => response.json())
+        .then(groups => {
+            const container = document.getElementById('group-checkboxes');
+            container.innerHTML = "<p>Select Groups:</p>";
 
-    groups.forEach(group => {
-        const label = document.createElement('label');
-        label.innerHTML = `
-            <input type="checkbox" class="form-check-input" value="${group.id}" id="group-${group.id}"/>
-            <label class="form-check-label" for="group-${group.id}">
-                ${group.name}: ${group.members.map(m => m.name).join(', ')}
-            </label>
-        `;
-        container.appendChild(label);
-        container.appendChild(document.createElement('br'));
-    });
+            groups.forEach(group => {
+                const label = document.createElement('label');
+                label.innerHTML = `
+                    <input type="checkbox" class="form-check-input" value="${group.id}" id="group-${group.id}"/>
+                    <label class="form-check-label" for="group-${group.id}">
+                        ${group.name}: ${group.members.map(m => m.name).join(', ')}
+                    </label>
+                `;
+                container.appendChild(label);
+                container.appendChild(document.createElement('br'));
+            });
+        })
+        .catch(error => console.error("Error loading groups:", error));
 }
 
 document.addEventListener('DOMContentLoaded', loadGroups);
@@ -430,4 +421,4 @@ socket.onclose = function (event) {
 
 socket.onopen = function (event) {
     console.log("WebSocket connection established.");
-}};
+};
