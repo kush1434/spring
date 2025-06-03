@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.open.spring.mvc.assignments.AssignmentSubmissionAPIController.PersonSubmissionDto;
 import com.open.spring.mvc.groups.GroupsJpaRepository;
 import com.open.spring.mvc.groups.Submitter;
 import com.open.spring.mvc.person.Person;
@@ -74,6 +73,23 @@ public class AssignmentsApiController {
             this.points = assignment.getPoints();
             this.dueDate = assignment.getDueDate();
             this.timestamp = assignment.getTimestamp();
+        }
+    }
+
+    
+    @Getter
+    @Setter
+    public static class PersonSubmissionDto {
+        public Long id;
+        public String name;
+        public String email;
+        public String uid;
+
+        public PersonSubmissionDto(Person person) {
+            this.id = person.getId();
+            this.name = person.getName();
+            this.email = person.getEmail();
+            this.uid = person.getUid();
         }
     }
 
@@ -142,6 +158,14 @@ public class AssignmentsApiController {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * A GET endpoint to retrieve all submissions for a student.
+     * @param studentId The ID of the student.
+     * @return A list of all submissions for the student.
+     * If the student is not found, returns a 404 error.
+     * If the student has no submissions, returns an empty list.
+     * If the student has submissions, returns a list of AssignmentSubmissionReturnDto objects.
+     */
     @Transactional
     @GetMapping("/submissions/student/{studentId}")
     public ResponseEntity<?> getSubmissions(@PathVariable Long studentId) {
@@ -160,6 +184,11 @@ public class AssignmentsApiController {
         return ResponseEntity.ok(dtos);
     }
 
+    /**
+     * A GET endpoint to retrieve an assignment by its ID.
+     * @param id The ID of the assignment.
+     * @return The name of the assignment if found, or an error message if not found.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         Optional<Assignment> assignment = assignmentRepo.findById(id);
@@ -254,6 +283,11 @@ public class AssignmentsApiController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * A GET endpoint to retrieve the presentation length for an assignment.
+     * @param id The ID of the assignment.
+     * @return Presentation length for assignment, formatted in JSON
+     */
     @GetMapping("/getPresentationLength/{id}")
     public ResponseEntity<Long> getPresentationLength(@PathVariable long id) {
         Optional<Assignment> optional = assignmentRepo.findById(id);
@@ -353,6 +387,12 @@ public class AssignmentsApiController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * A POST endpoint to assign graders to an assignment
+     * @param id The ID of the assignment.
+     * @param personIds A list of person IDs to be assigned as graders.
+     * @return A response indicating success or failure.
+     */
     @PostMapping("/assignGraders/{id}")
     public ResponseEntity<?> assignGradersToAssignment( @PathVariable Long id, @RequestBody List<Long> personIds ) {
         Optional<Assignment> assignmentOptional = assignmentRepo.findById(id);
@@ -370,6 +410,12 @@ public class AssignmentsApiController {
         return ResponseEntity.ok("Persons assigned successfully");
     }
     
+    /**
+     * A POST endpoint to sign up for a team teach assignment.
+     * @param userDetails The authenticated user details.
+     * @param id The ID of the assignment.
+     * @return A response indicating success or failure.
+     */
     @PostMapping("/teamteach/signup/{id}")
     @Transactional
     public ResponseEntity<?> signupForTeamteach(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
@@ -408,6 +454,11 @@ public class AssignmentsApiController {
         return ResponseEntity.ok("You have successfully signed up for the team teach assignment");        
     }
 
+    /**
+     * A GET endpoint to retrieve the assigned graders for an assignment.
+     * @param id The ID of the assignment.
+     * @return A list of assigned graders for the assignment.
+     */
     @GetMapping("/assignedGraders/{id}")
     @Transactional
     public ResponseEntity<?> getAssignedGraders(@PathVariable Long id) {
@@ -427,6 +478,12 @@ public class AssignmentsApiController {
         return ResponseEntity.ok(assignedGraderIds);
     }
     
+    /**
+     * A GET endpoint to retrieve all assignments that the logged-in user is assigned to grade.
+     * @param userDetails The authenticated user details.
+     * @return A list of AssignmentDto objects representing the assignments assigned to the user.
+     * If the user is not logged in, returns a 404 error.
+     */
     @Transactional
     @GetMapping("/assigned")
     public ResponseEntity<?> getAssignedAssignments(@AuthenticationPrincipal UserDetails userDetails) {
@@ -456,6 +513,10 @@ public class AssignmentsApiController {
         return ResponseEntity.ok(formattedAssignments);
     }
 
+    /**
+     * A GET endpoint to bulk extract all assignments for backups.
+     * @return A list of AssignmentDto objects representing all assignments.
+     */
     @GetMapping("/bulk/extract")
     public ResponseEntity<List<AssignmentDto>> bulkExtractAssignments() {
         // Fetch all Assignment entities from the database
@@ -521,6 +582,13 @@ public class AssignmentsApiController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     
+    /**
+     * A POST endpoint to randomize peer graders for an assignment.
+     * This method shuffles the submissions and assigns each submission a random grader from the pool of submissions.
+     * @param id The ID of the assignment for which to randomize peer graders.
+     * @return A response indicating success or failure.
+     * If the assignment is not found, returns a 404 error.
+     */
     @PostMapping("/randomizeGraders/{id}")
     @Transactional
     public ResponseEntity<?> randomizePeerGraders(@PathVariable Long id) {
@@ -587,6 +655,13 @@ public class AssignmentsApiController {
     }
 
 
+    /**
+     * A GET endpoint to extract an assignment by its ID.
+     * This endpoint retrieves the assignment details and returns them as an AssignmentDto object.
+     * If the assignment is not found, it returns a 404 error.
+     * @param id The ID of the assignment to extract.
+     * @return A ResponseEntity containing the AssignmentDto object if found, or a 404 error if not found.
+     */
     @GetMapping("/extract/{id}")
     public ResponseEntity<AssignmentDto> extractAssignment(@PathVariable Long id) {
         Optional<Assignment> curAssignment = assignmentRepo.findById(id);

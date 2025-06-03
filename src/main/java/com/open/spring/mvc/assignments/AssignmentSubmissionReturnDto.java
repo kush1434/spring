@@ -14,7 +14,6 @@ public class AssignmentSubmissionReturnDto {
     public AssignmentReturnDto assignment;
     public Submitter submitter;
     public Boolean isGroup;
-    // public List<PersonSubmissionDto> students;
     public String content;
     public String comment;
     public Double grade;
@@ -26,7 +25,6 @@ public class AssignmentSubmissionReturnDto {
         this.assignment = new AssignmentReturnDto(submission.getAssignment());
         this.isGroup = submission.getSubmitter() instanceof Groups;
         this.submitter = submission.getSubmitter();
-        // this.students = submission.getSubmitter().getMembers().stream().map(PersonSubmissionDto::new).toList();
         this.content = submission.getContent();
         this.comment = submission.getComment();
         this.grade = submission.getGrade();
