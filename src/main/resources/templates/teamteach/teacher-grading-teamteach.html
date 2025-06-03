@@ -233,8 +233,7 @@
                 .then(grades => {
                     submissions = grades;
                     submissions.forEach(submission => {
-                        var students = submission.students;
-                        students.forEach(student => {
+                        var student = submission.submitter;
                             var studentName = student.name;
                             var submissionId = submission.id;
                             const row = document.createElement('tr');
@@ -244,7 +243,6 @@
                                 <td><input type=text" id="input-${submissionId}"></td>
                             `;
                             tableBody.appendChild(row);
-                        })
                     });
                 });
             }
@@ -270,6 +268,8 @@
                 var student = row.id;
                 const input = document.getElementById("input-" + student);
                 var grade = input.value;
+                
+                await delay(1000); // 1 second delay between each step help with SQL Lock
                 saveGradeforStudent(student, grade, commentText)
 
                 await delay(1000); // 1 second delay between each step help with SQL Lock
