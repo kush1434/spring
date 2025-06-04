@@ -66,6 +66,9 @@ public class SynergyApiController {
         private Long requestId;
     }
 
+    /**
+     * A data transfer object that stores information about a grade.
+     */
     @Getter
     public static class SynergyGradeDto {
         private Long id;
@@ -240,6 +243,7 @@ public class SynergyApiController {
      * Rejects a grade request.
      * @param body The JSON data passed in, of the format requestId: Long
      * @return A JSON object signifying that the request was rejected.
+     * @see SynergyGradeRequest
      */
     @PostMapping("/grade/requests/reject")
     public ResponseEntity<Map<String, String>> rejectRequest(@RequestBody SynergyGradeRequestIdDto body) throws ResponseStatusException {
@@ -265,6 +269,15 @@ public class SynergyApiController {
         return ResponseEntity.ok(Map.of("message", "Successfully rejected the grade request."));
     }
 
+    /**
+     * Returns a map of all the grades for a student, where the key is the assignment ID and the value is the grade.
+     * This is useful for displaying grades in a table format.
+     * @param userId The ID of the student whose grades we want to retrieve.
+     * @throws ResponseStatusException if the student is not found.
+     * @return A map of assignment IDs to grades for the student.
+     * @see SynergyGrade
+     * @see SynergyGradeJpaRepository
+     */
     @GetMapping("/grades/map/{userId}")
     public ResponseEntity<Map<Long, Double>> getStudentGradesAsMap(@PathVariable Long userId) {
         Person student = personRepository.findById(userId).orElseThrow(() -> 
