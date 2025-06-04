@@ -228,6 +228,7 @@ async function fetchUser() {
         person = userInfo.name;
     }
 }
+
 function showAssignmentModal() {
     const modal = document.getElementById('assignmentModal');
     const modalDropdown = document.getElementById('modalAssignmentDropdown');
