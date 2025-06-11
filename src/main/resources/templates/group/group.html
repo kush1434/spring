@@ -211,19 +211,13 @@
 <th:block layout:fragment="script" th:remove="tag">
     <script>
         // setup
-        if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
-            javaURI = "http://localhost:8585";
-        } else {
-            javaURI = "https://spring.opencodingsociety.com";
-        }
+        // Removed javaURI and absolute URL logic; use relative URLs instead
 
-
-        const javaURL = javaURI + "/api/groups"
-
+        const javaURL = "/api/groups";
+        const personURL = "/api/people"; // Use relative URL for user API endpoint
 
         // get table
         const $tableBody = $("#groupTableBody");
-
 
         // Filter groups
         $("#searchInput").on("keyup", function () {
@@ -234,10 +228,8 @@
                 const match = groupId.includes(search) || members.includes(search);
                 $(this).toggle(match);
 
-
                 const memberDetails = $(`#members-${groupId}`);
                 memberDetails.toggle(match);
-
 
                 // Reset the style when search is cleared
                 if (search === "") {
@@ -246,71 +238,56 @@
             });
         });
 
+        document.getElementById("importBtn").addEventListener("click", async () => {
+            const fileInput = document.getElementById("importFile");
+            const file = fileInput.files[0];
 
- document.getElementById("importBtn").addEventListener("click", async () => {
-    const fileInput = document.getElementById("importFile");
-    const file = fileInput.files[0];
+            if (!file) {
+                alert("Please select a file to import.");
+                return;
+            }
 
+            try {
+                const text = await file.text();
+                const json = JSON.parse(text);
 
-    if (!file) {
-        alert("Please select a file to import.");
-        return;
-    }
+                if (!Array.isArray(json)) {
+                    alert("Import file must be a JSON array.");
+                    return;
+                }
 
+                const response = await fetch("/api/groups/bulk/create", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(json),
+                });
 
-    try {
-        const text = await file.text();
-        const json = JSON.parse(text);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || `HTTP error ${response.status}`);
+                }
 
+                const result = await response.json();
 
-        if (!Array.isArray(json)) {
-            alert("Import file must be a JSON array.");
-            return;
-        }
+                let msg = "";
+                if (result.created?.length) msg += `Created: ${result.created.join(", ")}.\n`;
+                if (result.duplicates?.length) msg += `Duplicates: ${result.duplicates.join(", ")}.\n`;
+                if (result.errors?.length) msg += `Errors: ${result.errors.join(", ")}.\n`;
 
+                alert(msg || "Groups imported successfully!");
 
-        const response = await fetch("/api/groups/bulk/create", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(json),
+                fileInput.value = "";
+                var importModal = bootstrap.Modal.getInstance(document.getElementById("importModal"));
+                importModal.hide();
+                location.reload();
+
+            } catch (error) {
+                console.error("Import error:", error);
+                alert("An error occurred during import: " + error.message);
+            }
         });
-
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || `HTTP error ${response.status}`);
-        }
-
-
-        const result = await response.json();
-
-
-        let msg = "";
-        if (result.created?.length) msg += `Created: ${result.created.join(", ")}.\n`;
-        if (result.duplicates?.length) msg += `Duplicates: ${result.duplicates.join(", ")}.\n`;
-        if (result.errors?.length) msg += `Errors: ${result.errors.join(", ")}.\n`;
-
-
-        alert(msg || "Groups imported successfully!");
-
-
-        fileInput.value = "";
-        var importModal = bootstrap.Modal.getInstance(document.getElementById("importModal"));
-        importModal.hide();
-        location.reload();
-
-
-    } catch (error) {
-        console.error("Import error:", error);
-        alert("An error occurred during import: " + error.message);
-    }
-});
-
-
-        const personURL = javaURI + "/api/people"; // Replace with your actual user API endpoint
-
 
         // Populate user list in modal
         function fetchUsers() {
@@ -322,7 +299,6 @@
                 .then(users => {
                     const userList = document.getElementById("createUserList");
                     userList.innerHTML = "";
-
 
                     users.forEach(user => {
                         const div = document.createElement("div");
@@ -343,24 +319,20 @@
                 });
         }
 
-
         // Open modal and load users
         $('#createGroupModal').on('show.bs.modal', function () {
             fetchUsers();
         });
-
 
         // Create group handler
         document.getElementById("createGroupBtn").addEventListener("click", function () {
             const selectedUserIds = Array.from(document.querySelectorAll('.user-checkbox:checked'))
                 .map(cb => parseInt(cb.value));
 
-
             if (selectedUserIds.length === 0) {
                 alert("Please select at least one user.");
                 return;
             }
-
 
             // Step 1: Create group with empty personUids, name and period
             fetch(javaURL, {
@@ -378,7 +350,6 @@
             })
             .then(newGroup => {
                 const groupId = newGroup.id;
-
 
                 // Step 2: Add people to group
                 return fetch(`${javaURL}/${groupId}/addPeople`, {
@@ -399,18 +370,15 @@
             });
         });
 
-
         // Open edit modal and pre-fill
         $(document).on("click", ".edit-group", function () {
             const groupId = $(this).data("groupid");
             const name = $(this).data("name");
             const period = $(this).data("period");
 
-
             document.getElementById("editGroupId").value = groupId;
             document.getElementById("editGroupName").value = name;
             document.getElementById("editGroupPeriod").value = period;
-
 
             // Load users and precheck current members
             Promise.all([
@@ -427,9 +395,7 @@
                 const editUserList = document.getElementById("editUserList");
                 editUserList.innerHTML = "";
 
-
                 const memberIds = groupData.members.map(m => m.uid);
-
 
                 allUsers.forEach(user => {
                     const div = document.createElement("div");
@@ -445,7 +411,6 @@
                     editUserList.appendChild(div);
                 });
 
-
                 $('#editGroupModal').modal('show');
             })
             .catch(error => {
@@ -454,14 +419,12 @@
             });
         });
 
-
         // Save edit
         document.getElementById("saveEditBtn").addEventListener("click", function () {
             const groupId = document.getElementById("editGroupId").value;
             const newName = document.getElementById("editGroupName").value;
             const newPeriod = document.getElementById("editGroupPeriod").value;
             const newUserIds = Array.from(document.querySelectorAll('.edit-user-checkbox:checked')).map(cb => parseInt(cb.value));
-
 
             // 1. Get current group members
             fetch(`${javaURL}/${groupId}`)
@@ -472,10 +435,8 @@
             .then(group => {
                 const currentIds = group.members.map(m => m.id);
 
-
                 const toRemove = currentIds.filter(id => !newUserIds.includes(id));
                 const toAdd = newUserIds.filter(id => !currentIds.includes(id));
-
 
                 // 2. Update name/period
                 return fetch(`${javaURL}/${groupId}`, {
@@ -519,11 +480,9 @@
             });
         });
 
-
         document.getElementById("userSearchEdit").addEventListener("input", function () {
             const searchTerm = this.value.toLowerCase();
             const checkboxes = document.querySelectorAll("#editUserList .form-check-label");
-
 
             checkboxes.forEach(label => {
                 const userText = label.textContent.toLowerCase();
@@ -532,11 +491,9 @@
             });
         });
 
-
         document.getElementById("userSearchCreate").addEventListener("input", function () {
             const searchTerm = this.value.toLowerCase();
             const checkboxes = document.querySelectorAll("#createUserList .form-check-label");
-
 
             checkboxes.forEach(label => {
                 const userText = label.textContent.toLowerCase();
@@ -545,7 +502,7 @@
             });
         });
     </script>
-       <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/group-extraction.js"
+    <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/group-extraction.js"
         th:src="@{/js/group-extraction.js}"></script>
 </th:block>
 

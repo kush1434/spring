@@ -29,19 +29,15 @@ function toggleLeftSidebar() {
     document.querySelectorAll(".directionalityFlip").forEach(el => el.style.transform = "rotate(0deg) translateX(-8px)")
 }
 
-let socketURI
-let javaURI
+// --- Removed javaURI and socketURI definitions ---
 
-if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
-    javaURI = "http://localhost:8585";
-    socketURI = "ws://localhost:8585/websocket";
-} else {
-    javaURI = "https://spring.opencodingsociety.com";
-    socketURI = "wss://spring.opencodingsociety.com/websocket";
-}
+// Dynamically construct WebSocket URI based on current protocol and host
+const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+const wsHost = window.location.host;
+const socketURI = wsProtocol + wsHost + "/websocket";
+
 let assignment = null;
 let currentQueue = [];
-
 
 document.getElementById('resetQueue').addEventListener('click', resetQueue);
 
@@ -49,7 +45,7 @@ let timerInterval;
 let timerlength;
 let queueUpdateInterval;
 
-const URL = javaURI + "/api/assignments/"
+const URL = "/api/assignments/"
 
 async function fetchQueue() {
     const response = await fetch(URL + `getQueue/${assignment}`);
@@ -214,7 +210,7 @@ window.addEventListener('load', () => {
 });
 
 async function fetchUser() {
-    const response = await fetch(javaURI + `/api/person/get`, {
+    const response = await fetch(`/api/person/get`, {
         method: 'GET',
         cache: "no-cache",
         credentials: 'include',
