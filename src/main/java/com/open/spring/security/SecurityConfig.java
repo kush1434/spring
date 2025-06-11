@@ -95,6 +95,7 @@ public class SecurityConfig {
                         .requestMatchers("/mvc/person/delete/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/mvc/bathroom/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/authenticateForm").permitAll()
                         .requestMatchers("/mvc/synergy/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/mvc/synergy/gradebook").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN", "ROLE_STUDENT")
