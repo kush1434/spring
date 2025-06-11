@@ -35,6 +35,8 @@ public class MvcConfig implements WebMvcConfigurer {
             .allowedOrigins(
                 "https://pages.opencodingsociety.com",
                 "https://open-coding-society.github.io",
+                "https://spring.opencodingsociety.com",
+                "https://springstu.opencodingsociety.com",
                 "http://127.0.0.1:4500",
                 "http://localhost:4500"
             )
