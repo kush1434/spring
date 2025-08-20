@@ -108,7 +108,11 @@ public class PersonViewController {
             return "person/create";
         }
         repository.save(person);
-        repository.addRoleToPerson(person.getUid(), "ROLE_STUDENT");
+
+        if (!(person.hasRoleWithName("ROLE_ADMIN") || person.hasRoleWithName("ROLE_TEACHER"))) {
+            repository.addRoleToPerson(person.getUid(), "ROLE_STUDENT");
+        }
+        
         // Redirect to next step
         return "redirect:/mvc/person/read";
     }

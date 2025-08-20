@@ -91,20 +91,15 @@ public class GroupsApiController {
     @Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getAllGroups(@AuthenticationPrincipal UserDetails userDetails) {
         String uid = userDetails.getUsername();
-        Person grader = personRepository.findByUid(uid);
-        if (grader == null) {
+        Person student = personRepository.findByUid(uid);
+        if (student == null) {
             throw new ResponseStatusException(
                 HttpStatus.FORBIDDEN, "You must be a logged in user to retrieve the groups"
             );
         }
         
-        List<Groups> groups;
-        if (grader.hasRoleWithName("ROLE_TEACHER") || grader.hasRoleWithName("ROLE_ADMIN")) {
-            groups = groupsRepository.findAll();
-        } else {
-            groups = groupsRepository.findGroupsByPersonId(grader.getId());
-        }
-        
+        List<Groups> groups = groupsRepository.findAll();
+
         List<Map<String, Object>> groupsWithMembers = new ArrayList<>();
        
         for (Groups group : groups) {

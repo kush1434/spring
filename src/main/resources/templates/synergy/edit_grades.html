@@ -94,22 +94,28 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="student : ${students}">
-                        <td th:text="${student.name}">Student Name</td>
-                        <td th:each="assignment : ${assignments}">
+                    <tr th:each="studentRow : ${studentGradeRows}">
+                        <td th:text="${studentRow.studentName}">Student Name</td>
+                        <td th:each="grade : ${studentRow.grades}">
                             <div class="grade-cell">
                                 <input type="number" min="0" step="any" class="grade-input"
-                                    th:name="'grades[' + ${assignment.id} + '][' + ${student.id} + ']'"
-                                    th:value="${grades[assignment.id][student.id] != null ? grades[assignment.id][student.id] : ''}"
-                                    th:placeholder="${grades[assignment.id][student.id] != null ? '' : 'N/A'}" />
+                                    th:name="'grades[' + ${grade.assignmentId} + '][' + ${studentRow.studentId} + ']'"
+                                    th:value="${grade.grade != null ? grade.grade : ''}"
+                                    th:placeholder="${grade.grade != null ? '' : 'N/A'}" />
                                 <span class="points-separator">/</span>
-                                <span class="total-points" th:text="${assignment.points}">100</span>
+                                
+                                
+                                <th:block th:each="assignment : ${assignments}"
+                                        th:if="${assignment.id == grade.assignmentId}">
+                                    <span class="total-points" th:text="${assignment.points}">Uh-oh</span>
+                                </th:block>
 
-                                <th:block th:with="requestKey=${assignment.id + '-' + student.id}">
+
+                                <th:block th:with="requestKey=${grade.assignmentId + '-' + studentRow.studentId}">
                                     <th:block th:with="pendingRequests=${pendingRequestsMap.get(requestKey)}">
                                         <button type="button" class="btn btn-warning btn-sm"
                                             th:if="${pendingRequests != null and not pendingRequests.isEmpty()}"
-                                            th:onclick="'showGradeRequestModal(' + ${assignment.id} + ', ' + ${student.id} + ')'">⚠️</button>
+                                            th:onclick="'showGradeRequestModal(' + ${grade.assignmentId} + ', ' + ${studentRow.studentId} + ')'">⚠️</button>
                                     </th:block>
                                 </th:block>
                             </div>

@@ -21,6 +21,7 @@ import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonJpaRepository;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Controller
 @RequestMapping("/mvc/synergy")
@@ -55,6 +56,32 @@ public class SynergyViewController {
             this.id = request.getId();
         }
     }
+    
+    @Getter
+    @Setter
+    public class StudentGradeDto {
+        private Long assignmentId;
+        private Double grade;
+
+        public StudentGradeDto(Long assignmentId, Double grade) {
+            this.assignmentId = assignmentId;
+            this.grade = grade;
+        }
+    }
+
+    @Getter
+    @Setter
+    public class StudentGradeRowDto {
+        private Long studentId;
+        private String studentName;
+        private List<StudentGradeDto> grades;
+
+        public StudentGradeRowDto(Long studentId, String studentName, List<StudentGradeDto> grades) {
+            this.studentId = studentId;
+            this.studentName = studentName;
+            this.grades = grades;
+        }
+    }
 
     /**
      * Opens the teacher or student gradebook. The teacher gradebook is for editing grades, while the student gradebook allows them to view grades.
@@ -77,26 +104,14 @@ public class SynergyViewController {
         List<Assignment> assignments = assignmentRepository.findAll();
 
         // If the user is a student, allow them to view their grades, else allow them to edit grades
-        if (user.hasRoleWithName("ROLE_STUDENT")) {
-            List<SynergyGrade> studentGrades = gradeRepository.findByStudent(user);
-        
-            Map<Long, SynergyGrade> assignmentGrades = new HashMap<>();
-            for (SynergyGrade grade : studentGrades) {
-                assignmentGrades.put(grade.getAssignment().getId(), grade);
-            }
-        
-            model.addAttribute("assignments", assignments);
-            model.addAttribute("assignmentGrades", assignmentGrades);
-            return "synergy/view_student_grades";
-        } else if (user.hasRoleWithName("ROLE_TEACHER") || user.hasRoleWithName("ROLE_ADMIN")) {
+        if (user.hasRoleWithName("ROLE_TEACHER") || user.hasRoleWithName("ROLE_ADMIN")) {
             // Load info from db, for now we'll show everyone but ideally it should only show students in future
             // List<Person> students = personRepository.findPeopleWithRole("ROLE_STUDENT");
             List<Person> students = personRepository.findAll();
             List<SynergyGrade> gradesList = gradeRepository.findAll();
             List<SynergyGradeRequest> gradeRequests = gradeRequestRepository.findAll();
 
-            // Preprocess grades into a map so that they can be easily accessed on the frontend
-            Map<Long, Map<Long, Double>> grades = createGradesMap(gradesList, assignments, students);
+            List<StudentGradeRowDto> studentGradeRows = buildStudentGradeRows(students, assignments, gradesList);
             
             // Preprocess pending requests into a map so that they can be easily accessed on the frontend
             Map<String, List<SynergyGradeRequestDto>> pendingRequestsMap = new HashMap<>();
@@ -109,12 +124,22 @@ public class SynergyViewController {
             
             // Pass in information to thymeleaf template
             model.addAttribute("assignments", assignments);
-            model.addAttribute("students", students);
-            model.addAttribute("grades", grades);
+            model.addAttribute("studentGradeRows", studentGradeRows);
             model.addAttribute("pendingRequestsMap", pendingRequestsMap);
             model.addAttribute("gradeRequests", gradeRequests);
 
             return "synergy/edit_grades";
+        } else if (user.hasRoleWithName("ROLE_STUDENT")) {
+            List<SynergyGrade> studentGrades = gradeRepository.findByStudent(user);
+        
+            Map<Long, SynergyGrade> assignmentGrades = new HashMap<>();
+            for (SynergyGrade grade : studentGrades) {
+                assignmentGrades.put(grade.getAssignment().getId(), grade);
+            }
+        
+            model.addAttribute("assignments", assignments);
+            model.addAttribute("assignmentGrades", assignmentGrades);
+            return "synergy/view_student_grades";
         }
 
         throw new ResponseStatusException(
@@ -122,32 +147,27 @@ public class SynergyViewController {
         );
     }
 
-    /**
-     * Formats the grades, students, and assignments for displaying for teachers
-     * @param gradesList A list of grades
-     * @param assignments A list of assignments
-     * @param students A list of students
-     * @return A map of format Map[ASSIGNMENT_ID: Map[STUDENT_ID: Grade]]
-     */
-    private Map<Long, Map<Long, Double>> createGradesMap(List<SynergyGrade> gradesList, List<Assignment> assignments, List<Person> students) {
-        Map<Long, Map<Long, Double>> gradesMap = new HashMap<>();
-
-        // Default values
-        for (Assignment assignment : assignments) {
-            gradesMap.put(assignment.getId(), new HashMap<>());
-            for (Person student : students) {
-                gradesMap.get(assignment.getId()).put(student.getId(), null);
-            }
+    private List<StudentGradeRowDto> buildStudentGradeRows(List<Person> students, List<Assignment> assignments, List<SynergyGrade> allGrades) {
+        // Build a lookup table: Map<studentId-assignmentId, grade>
+        Map<String, Double> gradeLookup = new HashMap<>();
+        for (SynergyGrade g : allGrades) {
+            String key = g.getStudent().getId() + "-" + g.getAssignment().getId();
+            gradeLookup.put(key, g.getGrade());
         }
 
-        // Create the map
-        for (SynergyGrade grade : gradesList) {
-            if (gradesMap.containsKey(grade.getAssignment().getId())) {
-                gradesMap.get(grade.getAssignment().getId()).put(grade.getStudent().getId(), grade.getGrade());
+        List<StudentGradeRowDto> rows = new ArrayList<>();
+
+        for (Person student : students) {
+            List<StudentGradeDto> gradeDtos = new ArrayList<>();
+            for (Assignment assignment : assignments) {
+                String key = student.getId() + "-" + assignment.getId();
+                Double grade = gradeLookup.getOrDefault(key, null);
+                gradeDtos.add(new StudentGradeDto(assignment.getId(), grade));
             }
+            rows.add(new StudentGradeRowDto(student.getId(), student.getName(), gradeDtos));
         }
 
-        return gradesMap;
+        return rows;
     }
 
     /**
