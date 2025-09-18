@@ -10,21 +10,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
-/*
-* To enable HTTP Security in Spring
-*/
-
-/*
- * THIS FILE IS IMPORTANT
- * 
- * you can configure which http requests need to be authenticated or not
- * for example, you can change the /authenticate to "authenticated()" or "permitAll()"
- * --> obviously, you want to set it to permitAll() so anyone can login. it doesn't make sense
- *     to have to login first before authenticating!
- * 
- * another example is /mvc/person/create/** which i changed to permitAll() so anyone can make an account.
- * it doesn't make sense to have to login to make your account!
- */
 
 @Configuration
 public class SecurityConfig {
@@ -46,15 +31,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/analytics/**").permitAll()   
                         .requestMatchers(HttpMethod.POST, "/api/person/**").permitAll()           
-                        .requestMatchers(HttpMethod.GET,"/api/person/{id}/balance").permitAll() // Allow unauthenticated access to this endpoint
+                        .requestMatchers(HttpMethod.GET,"/api/person/{id}/balance").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/person/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/people/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/person/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/person/**").hasAuthority("ROLE_ADMIN")
+                        
+                        .requestMatchers(HttpMethod.GET, "/api/plant/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/plant/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/plant/**").permitAll()
+                        
                         .requestMatchers(HttpMethod.POST, "/api/synergy/grades/requests").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/synergy/**").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
                         
-
                         .requestMatchers(HttpMethod.DELETE, "/api/synergy/saigai/").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/calendar/add").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/calendar/add_event").permitAll()
