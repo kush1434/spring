@@ -41,7 +41,6 @@ public class LessonProgressController {
             existing.setBadges(updatedProgress.getBadges());
             existing.setReflectionText(updatedProgress.getReflectionText());
             existing.setCurrentFlashcardIndex(updatedProgress.getCurrentFlashcardIndex());
-            existing.setFlashcardProgress(updatedProgress.getFlashcardProgress());
             return progressRepo.save(existing);
         }).orElseThrow(() -> new RuntimeException("Progress not found"));
     }
