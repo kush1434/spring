@@ -12,7 +12,7 @@ import java.util.List;
 public interface QuizScoreRepository extends JpaRepository<QuizScore, Long> {
 
     /**
-     * Retrieve all quiz scores across all users,
+     * Retrieve all quiz scores across all users and whatnot,
      * ordered by highest score first, then earliest creation time.
      *
      * @return sorted list of QuizScore objects
