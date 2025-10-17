@@ -62,13 +62,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/calendar/delete/{id}").permitAll()
                     
                         .requestMatchers(HttpMethod.GET,"/api/train/**").authenticated()
-                        
-                        // Social Media Post endpoints
-                        .requestMatchers(HttpMethod.GET, "/api/post/page").permitAll()  // Public viewing of posts
-                        .requestMatchers(HttpMethod.GET, "/api/post/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/post/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/post/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/post/**").authenticated()
 
                 )
                 .cors(Customizer.withDefaults())
