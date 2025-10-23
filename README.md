@@ -33,10 +33,21 @@ The site is build on Springboot.  The project is primarly used to store and retr
 
 ## Getting started
 
-- Install favorite Java JDK on machine (ie adoptopenjdk:17)
-- Clone project and open in VSCode
-- Java source (src/main/java/...) has Java files.  
-- HTML source (src/main/resources/...) had templates and supporting files.  Find index.html as this file is launched by defaul in Spring.
+Java 21 or higher is requirement using VSCode tooling.
+
+- Install Java 21: **macOS** `brew install --cask temurin@21` | **Linux** `sudo apt install openjdk-21-jdk`
+- Clone project, open in VSCode
+- Run `Main.java` (if issues: `Ctrl+Shift+P` → "Java: Reload Projects")
+- Browse to http://127.0.0.1:8585/
+
+**Build Commands:**
+```bash
+./mvnw clean compile    # Build
+./mvnw test            # Test  
+./mvnw spring-boot:run # Run
+```
+
+**Key Files:** Java source (`src/main/java/...`) | templates and application.properties (`src/main/resources/templates/...`)
 
 ### Configuration Requirements
 
