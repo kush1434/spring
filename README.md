@@ -33,10 +33,21 @@ The site is build on Springboot.  The project is primarly used to store and retr
 
 ## Getting started
 
-- Install favorite Java JDK on machine (ie adoptopenjdk:17)
-- Clone project and open in VSCode
-- Java source (src/main/java/...) has Java files.  
-- HTML source (src/main/resources/...) had templates and supporting files.  Find index.html as this file is launched by defaul in Spring.
+Java 21 or higher is requirement using VSCode tooling.
+
+- Install Java 21: **macOS** `brew install --cask temurin@21` | **Linux** `sudo apt install openjdk-21-jdk`
+- Clone project, open in VSCode
+- Run `Main.java` (if issues: `Ctrl+Shift+P` → "Java: Reload Projects")
+- Browse to http://127.0.0.1:8585/
+
+**Build Commands:**
+```bash
+./mvnw clean compile    # Build
+./mvnw test            # Test  
+./mvnw spring-boot:run # Run
+```
+
+**Key Files:** Java source (`src/main/java/...`) | templates and application.properties (`src/main/resources/templates/...`)
 
 ### Configuration Requirements
 
@@ -60,6 +71,60 @@ socket.port=8589
 - Load loopback:port in browser (http://127.0.0.1:8585/)
 - Login to ADMIN (toby) user using ADMIN_PASSWORD, examing menus and data
 - Try API endpoint: http://127.0.0.1:8585/api/jokes/
+
+## Database migration (backup, reset, import)
+
+Common flows you can run from the project root:
+
+1) Reset to clean schema + default data (fast)
+
+```bash
+scripts/db_init.sh
+```
+
+2) Migrate from deployed server (fetch all tables, then import)
+
+```bash
+# No prompts
+FORCE_YES=true scripts/db_migrate.sh --import
+
+# With prompts
+scripts/db_migrate.sh --import
+```
+
+3) Export current local data to JSON (admin endpoint)
+
+```bash
+scripts/export_current_json.sh
+# → volumes/backups/exports_YYYYMMDD_HHMMSS.json
+```
+
+4) Preserve Users/Groups/Bathroom across updates (export → reset → selective import)
+
+```bash
+scripts/db_preserve.sh
+# Default preserves person, groups, tinkle
+
+# Customize tables to restore
+IMPORT_TABLES=person,groups,tinkle,bathroom_queue scripts/db_preserve.sh
+```
+
+5) Import from a JSON file
+
+```bash
+# Import ALL tables from a JSON file
+python3 scripts/import_json_to_sqlite.py volumes/data.json volumes/sqlite.db
+
+# Explicitly import ALL
+IMPORT_TABLES=ALL python3 scripts/import_json_to_sqlite.py volumes/backups/exports_*.json volumes/sqlite.db
+
+# Import only selected tables
+IMPORT_TABLES=person,groups,tinkle python3 scripts/import_json_to_sqlite.py volumes/backups/exports_*.json volumes/sqlite.db
+```
+
+Notes:
+- The importer auto-matches JSON keys to actual DB columns and JSON-serializes nested dict/list values.
+- If port 8585 is busy, stop the app before running migration scripts.
 
 ## IDE management
 
