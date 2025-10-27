@@ -1,29 +1,65 @@
-## Recent Changes
+# Runtime links
 
-[Upgrading old dependencies to newest versions.](https://github.com/open-coding-society/spring_portfolio/issues/12)
+Backend UI
 
-# [Spring Portfolio Starter](https://opencodingsociety.com/projectsearch/details/Spring%20Portfolio%20Starter)
+Use login with .env setup user to manage and restore data.
 
 - Runtime link: https://spring.opencodingsociety.com/
-- JWT Login: https://pages.opencodingsociety.com/login
+
+API access
+
+Validate system is up by testing an endpoint
+
 - Jokes endpoint: https://spring.opencodingsociety.com/api/jokes/
 
-## Visual thoughts
+Examine JWT Login
 
-- Starter code should be fun and practical
-- Organize with Bootstrap menu 
-- Add some color and fun through VANTA Visuals (, halo, solar, net)
-- Show some practical and fun links (hrefs) like Twitter, Git, Youtube
-- Show student project specific links (hrefs) per page
-- Show student About me pages
+Review cookies after accessing a page that needs them (ie Groups)
+
+- JWT Login: https://pages.opencodingsociety.com/login
+
+## Backend UI purpose
+
+This Backend UI is to manage adminstrative functions like reseting passwords and managing database content: CRUD, Backup, and Restore.
+
+- Thymeleaf UI should be visual and practical
+- Home page is organized with Bootstrap menu and cards
+- Most menus and operations are dedicated to Tables
+- Some sample menus exist to reference basic capability
+
+## Backend Primary purpose
+
+The site is build on Springboot.  The project is primarly used to store and retrieve data through APIs.  The site has JWT authorization and implements security.  In optimal deployed form the data would be served through a professional database, it supports SQLite for development and deployment verification.
 
 ## Getting started
 
+- Install favorite Java JDK on machine (ie adoptopenjdk:17)
 - Clone project and open in VSCode
-- Verify Project Structure to use a good Java JDK (adoptopenjdk:17)
-- Play or entry point is Main.java, look for Run option in code.  This eanbles Spring to load
-- Java source (src/main/java/...) has Java files.  Find "controllers" path, these files enable HTTP route and HTML file relationship.
-- HTML source (src/main/resources/...) had templates and supporting files.  Find index.html as this file is launched by defaul in Spring.  Other HTML files are loaded by building an "@Controller"
+- Java source (src/main/java/...) has Java files.  
+- HTML source (src/main/resources/...) had templates and supporting files.  Find index.html as this file is launched by defaul in Spring.
+
+### Configuration Requirements
+
+- Create custom `.env` file to setup default user passwords to satisfy code in Person.java.  Students of OCS should leave users as default until competency is obtained.
+
+```java
+final String adminPassword = dotenv.get("ADMIN_PASSWORD");
+final String defaultPassword = dotenv.get("DEFAULT_PASSWORD");
+```
+
+- Modify `application.properties` ports to be unique for your indivdual project.
+
+```text
+server.port=8585
+socket.port=8589
+```
+
+## Run Project
+
+- Play or click entry point is Main.java, look for Run option in code.  This eanbles Springboot to build and load.
+- Load loopback:port in browser (http://127.0.0.1:8585/)
+- Login to ADMIN (toby) user using ADMIN_PASSWORD, examing menus and data
+- Try API endpoint: http://127.0.0.1:8585/api/jokes/
 
 ## IDE management
 
