@@ -55,7 +55,6 @@ import com.open.spring.mvc.synergy.SynergyGrade;
 import com.open.spring.mvc.synergy.SynergyGradeJpaRepository;
 import com.open.spring.mvc.user.UserJpaRepository;
 import com.open.spring.mvc.quiz.QuizScore;
-import com.open.spring.mvc.quiz.QuizScoreRepository;
 
 
 @Component
