@@ -1,4 +1,4 @@
-package com.open.spring.system;
+package com.open.spring.mvc.assignments;
 
 import jakarta.persistence.*;
 

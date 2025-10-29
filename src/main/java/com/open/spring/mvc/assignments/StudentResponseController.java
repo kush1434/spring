@@ -1,7 +1,5 @@
-package com.open.spring.mvc;
+package com.open.spring.mvc.assignments;
 
-import com.open.spring.system.StudentResponse;
-import com.open.spring.system.StudentResponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
