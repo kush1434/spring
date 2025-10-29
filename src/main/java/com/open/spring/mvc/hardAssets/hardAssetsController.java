@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @RestController // annotation to simplify the creation of RESTful web services
 @RequestMapping("/api/jokes")  // all requests in file begin with this URI
-public class JokesApiController {
+public class hardAssetsController {
 
     // Autowired enables Control to connect URI request and POJO Object to easily for Database CRUD operations
     @Autowired
@@ -20,7 +20,7 @@ public class JokesApiController {
      * @GetMapping annotation is used for mapping HTTP GET requests onto specific handler methods.
      */
     @GetMapping("/")
-    public ResponseEntity<List<Jokes>> getJokes() {
+    public ResponseEntity<List<hardAssets>> getJokes() {
         // ResponseEntity returns List of Jokes provide by JPA findAll()
         return new ResponseEntity<>( repository.findAll(), HttpStatus.OK);
     }
@@ -30,15 +30,15 @@ public class JokesApiController {
      * @PathVariable annotation extracts the templated part {id}, from the URI
      */
     @PostMapping("/like/{id}")
-    public ResponseEntity<Jokes> setLike(@PathVariable long id) {
+    public ResponseEntity<hardAssets> setLike(@PathVariable long id) {
         /* 
         * Optional (below) is a container object which helps determine if a result is present. 
         * If a value is present, isPresent() will return true
         * get() will return the value.
         */
-        Optional<Jokes> optional = repository.findById(id);
+        Optional<hardAssets> optional = repository.findById(id);
         if (optional.isPresent()) {  // Good ID
-            Jokes joke = optional.get();  // value from findByID
+            hardAssets joke = optional.get();  // value from findByID
             joke.setHaha(joke.getHaha()+1); // increment value
             repository.save(joke);  // save entity
             return new ResponseEntity<>(joke, HttpStatus.OK);  // OK HTTP response: status code, headers, and body
@@ -50,10 +50,10 @@ public class JokesApiController {
     /* Update Jeer
      */
     @PostMapping("/jeer/{id}")
-    public ResponseEntity<Jokes> setJeer(@PathVariable long id) {
-        Optional<Jokes> optional = repository.findById(id);
+    public ResponseEntity<hardAssets> setJeer(@PathVariable long id) {
+        Optional<hardAssets> optional = repository.findById(id);
         if (optional.isPresent()) {  // Good ID
-            Jokes joke = optional.get();
+            hardAssets joke = optional.get();
             joke.setBoohoo(joke.getBoohoo()+1);
             repository.save(joke);
             return new ResponseEntity<>(joke, HttpStatus.OK);
