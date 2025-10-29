@@ -61,7 +61,7 @@ import com.open.spring.mvc.quiz.QuizScoreRepository;
 @Component
 @Configuration // Scans Application for ModelInit Bean, this detects CommandLineRunner
 public class ModelInit {
-    @Autowired JokesJpaRepository jokesRepo;
+    @Autowired hardAssetsRepisitory jokesRepo;
     @Autowired NoteJpaRepository noteRepo;
     @Autowired PersonRoleJpaRepository roleJpaRepository;
     @Autowired PersonDetailsService personDetailsService;
