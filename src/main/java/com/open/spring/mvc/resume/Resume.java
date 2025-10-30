@@ -20,6 +20,6 @@ public class Resume {
 
     private String professionalSummary;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<JobExperience> experiences;
 }
