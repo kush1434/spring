@@ -121,7 +121,7 @@ public class Person extends Submitter implements Comparable<Person> {
 
 
     /** Profile picture (pfp) in base64 */
-    @Column(length = 255, nullable = true) /** Figure out a better way to store data */
+    @Column(length = 255, nullable = true)
     private String pfp;
 
 
