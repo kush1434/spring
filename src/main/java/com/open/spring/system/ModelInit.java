@@ -231,20 +231,6 @@ public class ModelInit {
                 }
             }
 
-            // ------ Resume Init ------
-            if (resumeJpaRepository.count() == 0) {
-                Resume sample = new Resume(
-                    null, // id auto-generated
-                    "demo_user", // username
-                    "Experienced Developer with focus on Java and Spring Boot.", // professionalSummary
-                    java.util.List.of(
-                        new com.open.spring.mvc.resume.JobExperience("Software Engineer", "Tech Company", "Jan 2020 - Present", "Developed scalable microservices."),
-                        new com.open.spring.mvc.resume.JobExperience("Intern", "Startup", "Jun 2019 - Aug 2019", "Worked on frontend features.")
-                    )
-                );
-                resumeJpaRepository.save(sample);
-            }
-
             // Teacher API is populated with starting announcements
             List<Teacher> teachers = Teacher.init();
             for (Teacher teacher : teachers) {
