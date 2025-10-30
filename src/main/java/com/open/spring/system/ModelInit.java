@@ -56,6 +56,8 @@ import com.open.spring.mvc.synergy.SynergyGradeJpaRepository;
 import com.open.spring.mvc.user.UserJpaRepository;
 import com.open.spring.mvc.quiz.QuizScore;
 import com.open.spring.mvc.quiz.QuizScoreRepository;
+import com.open.spring.mvc.resume.Resume;
+import com.open.spring.mvc.resume.ResumeJpaRepository;
 
 
 @Component
@@ -85,6 +87,7 @@ public class ModelInit {
     @Autowired GameJpaRepository gameJpaRepository;
     @Autowired MediaJpaRepository mediaJpaRepository;
     @Autowired QuizScoreRepository quizScoreRepository;
+    @Autowired ResumeJpaRepository resumeJpaRepository;
 
     @Bean
     @Transactional
@@ -226,6 +229,20 @@ public class ModelInit {
                 if(queueFound.isEmpty()) {
                     studentQueueJPA.save(queue);
                 }
+            }
+
+            // ------ Resume Init ------
+            if (resumeJpaRepository.count() == 0) {
+                Resume sample = new Resume(
+                    null, // id auto-generated
+                    "demo_user", // username
+                    "Experienced Developer with focus on Java and Spring Boot.", // professionalSummary
+                    java.util.List.of(
+                        new com.open.spring.mvc.resume.JobExperience("Software Engineer", "Tech Company", "Jan 2020 - Present", "Developed scalable microservices."),
+                        new com.open.spring.mvc.resume.JobExperience("Intern", "Startup", "Jun 2019 - Aug 2019", "Worked on frontend features.")
+                    )
+                );
+                resumeJpaRepository.save(sample);
             }
 
             // Teacher API is populated with starting announcements

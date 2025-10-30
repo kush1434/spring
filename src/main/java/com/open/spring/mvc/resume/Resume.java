@@ -23,14 +23,3 @@ public class Resume {
     @ElementCollection
     private List<JobExperience> experiences;
 }
-
-@Embeddable
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class JobExperience {
-    private String jobTitle;
-    private String company;
-    private String dates;
-    private String description;
-}
