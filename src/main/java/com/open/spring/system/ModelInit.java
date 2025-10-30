@@ -1,6 +1,7 @@
 package com.open.spring.system;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -299,6 +300,15 @@ public class ModelInit {
                 
                 if (!scoreExists) {
                     quizScoreRepository.save(quizScore);
+                }
+            }
+
+            // Resume initialization via static init on Resume class
+            Resume[] resumes = Resume.init();
+            for (Resume resume : resumes) {
+                Optional<Resume> existing = resumeJpaRepository.findByUsername(resume.getUsername());
+                if (existing.isEmpty()) {
+                    resumeJpaRepository.save(resume);
                 }
             }
         };
