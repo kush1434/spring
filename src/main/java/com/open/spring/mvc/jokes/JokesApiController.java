@@ -14,7 +14,7 @@ public class JokesApiController {
 
     // Autowired enables Control to connect URI request and POJO Object to easily for Database CRUD operations
     @Autowired
-    private hardAssetsRepisitory repository;
+    private JokesJpaRepository repository;
 
     /* GET List of Jokes
      * @GetMapping annotation is used for mapping HTTP GET requests onto specific handler methods.
