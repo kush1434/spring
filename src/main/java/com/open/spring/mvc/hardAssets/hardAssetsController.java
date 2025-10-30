@@ -18,15 +18,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/upload")
-public class hardAssetsController {
+public class HardAssetsController {
 
     private static final String UPLOAD_DIR = "./uploads/";
 
     @Autowired
-    private hardAssetsRepisitory repository;
+    private HardAssetsRepository repository;
 
     @GetMapping("")
-    public ResponseEntity<List<hardAssets>> getUploads() {
+    public ResponseEntity<List<HardAsset>> getUploads() {
         System.out.println("GET request for /api/upload");
         return new ResponseEntity<>(repository.findAll(), HttpStatus.OK);
     }
@@ -48,7 +48,7 @@ public class hardAssetsController {
             Path filePath = Paths.get(UPLOAD_DIR + fileName);
             Files.copy(file.getInputStream(), filePath);
 
-            hardAssets newAsset = new hardAssets(fileName);
+            HardAsset newAsset = new HardAsset(fileName);
             repository.save(newAsset);
             System.out.println("File uploaded and saved to database: " + fileName);
             return new ResponseEntity<>("Successfully uploaded and saved '" + fileName + "'", HttpStatus.OK);

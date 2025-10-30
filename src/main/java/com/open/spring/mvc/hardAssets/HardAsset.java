@@ -6,17 +6,17 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
-public class hardAssets {
+public class HardAsset {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String fileName;
 
-    public hardAssets() {
+    public HardAsset() {
     }
 
-    public hardAssets(String fileName) {
+    public HardAsset(String fileName) {
         this.fileName = fileName;
     }
 
