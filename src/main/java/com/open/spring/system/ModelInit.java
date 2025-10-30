@@ -25,10 +25,10 @@ import com.open.spring.mvc.bathroom.Issue;
 import com.open.spring.mvc.bathroom.IssueJPARepository;
 import com.open.spring.mvc.bathroom.Teacher;
 import com.open.spring.mvc.bathroom.TeacherJpaRepository;
-import com.open.spring.mvc.bathroom.Tinkle;
 import com.open.spring.mvc.bathroom.TinkleJPARepository;
 import com.open.spring.mvc.comment.Comment;
 import com.open.spring.mvc.comment.CommentJPA;
+import com.open.spring.mvc.hardAssets.HardAssetsRepository;
 import com.open.spring.mvc.jokes.Jokes;
 import com.open.spring.mvc.jokes.JokesJpaRepository;
 import com.open.spring.mvc.media.MediaJpaRepository;
@@ -40,6 +40,7 @@ import com.open.spring.mvc.person.PersonDetailsService;
 import com.open.spring.mvc.person.PersonJpaRepository;
 import com.open.spring.mvc.person.PersonRole;
 import com.open.spring.mvc.person.PersonRoleJpaRepository;
+import com.open.spring.mvc.quiz.QuizScore;
 import com.open.spring.mvc.quiz.QuizScoreRepository;
 import com.open.spring.mvc.rpg.adventureChoice.AdventureChoice;
 import com.open.spring.mvc.rpg.adventureChoice.AdventureChoiceJpaRepository;
@@ -64,6 +65,7 @@ import com.open.spring.mvc.resume.ResumeJpaRepository;
 @Configuration // Scans Application for ModelInit Bean, this detects CommandLineRunner
 public class ModelInit {
     @Autowired JokesJpaRepository jokesRepo;
+    @Autowired HardAssetsRepository hardAssetsRepository;
     @Autowired NoteJpaRepository noteRepo;
     @Autowired PersonRoleJpaRepository roleJpaRepository;
     @Autowired PersonDetailsService personDetailsService;
