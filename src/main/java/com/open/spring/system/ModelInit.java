@@ -56,6 +56,8 @@ import com.open.spring.mvc.synergy.SynergyGradeJpaRepository;
 import com.open.spring.mvc.user.UserJpaRepository;
 import com.open.spring.mvc.quiz.QuizScore;
 import com.open.spring.mvc.quiz.QuizScoreRepository;
+import com.open.spring.mvc.resume.Resume;
+import com.open.spring.mvc.resume.ResumeJpaRepository;
 
 
 @Component
@@ -85,6 +87,7 @@ public class ModelInit {
     @Autowired GameJpaRepository gameJpaRepository;
     @Autowired MediaJpaRepository mediaJpaRepository;
     @Autowired QuizScoreRepository quizScoreRepository;
+    @Autowired ResumeJpaRepository resumeJpaRepository;
 
     @Bean
     @Transactional
