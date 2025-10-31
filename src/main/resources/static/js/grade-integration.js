@@ -32,10 +32,10 @@ async function submitGradesToBackend(gradeData) {
     
     const result = await response.json();
     
-    console.log('✅ Grades successfully saved!');
-    console.log(`📊 Total grades saved: ${result.totalGradesSaved}`);
-    console.log(`👥 Total students: ${result.totalStudents}`);
-    console.log(`📝 Students: ${result.studentNames.join(', ')}`);
+    console.log(' Grades successfully saved!');
+    console.log(` Total grades saved: ${result.totalGradesSaved}`);
+    console.log(` Total students: ${result.totalStudents}`);
+    console.log(` Students: ${result.studentNames.join(', ')}`);
     
     // Display student summaries
     if (result.studentSummaries) {
@@ -54,7 +54,7 @@ async function submitGradesToBackend(gradeData) {
     return result;
     
   } catch (error) {
-    console.error('❌ Error submitting grades:', error);
+    console.error(' Error submitting grades:', error);
     throw error;
   }
 }
@@ -129,18 +129,18 @@ async function collectAndSubmitGrades(useMockData = false) {
   
   try {
     // Step 1: Collect grades using the JavaScript system
-    console.log('📊 Step 1: Collecting grades from submodules...');
+    console.log(' Step 1: Collecting grades from submodules...');
     const gradeData = await CSPortfolioGrades.runGradeCollection(useMockData);
     
     // Step 2: Submit to backend
-    console.log('\n📤 Step 2: Submitting grades to backend...');
+    console.log('\n Step 2: Submitting grades to backend...');
     const result = await submitGradesToBackend(gradeData);
     
-    console.log('\n✅ Workflow complete!');
+    console.log('\n Workflow complete!');
     return result;
     
   } catch (error) {
-    console.error('❌ Workflow failed:', error);
+    console.error(' Workflow failed:', error);
     throw error;
   }
 }
@@ -179,12 +179,12 @@ async function checkBackendHealth() {
     const response = await fetch(`${BACKEND_CONFIG.baseUrl}${BACKEND_CONFIG.apiPath}/health`);
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Backend is running:', data.message);
+      console.log(' Backend is running:', data.message);
       return true;
     }
     return false;
   } catch (error) {
-    console.error('❌ Backend is not accessible:', error.message);
+    console.error(' Backend is not accessible:', error.message);
     return false;
   }
 }
@@ -214,29 +214,6 @@ window.GradeBackendAPI = {
 console.log(`
 Grade Backend Integration Loaded!
 
-Usage Examples:
-  1. Check if backend is running:
-     await GradeBackendAPI.checkBackendHealth();
-  
-  2. Collect grades and submit to backend:
-     const result = await GradeBackendAPI.collectAndSubmit();
-  
-  3. Collect with mock data and submit:
-     const result = await GradeBackendAPI.collectAndSubmit(true);
-  
-  4. Get list of all students:
-     const students = await GradeBackendAPI.getStudentList();
-  
-  5. Get summary for a specific student:
-     await GradeBackendAPI.displayStudentSummary('Taylor Jones');
-  
-  6. Get all grades for a student:
-     const grades = await GradeBackendAPI.getStudentGrades('Taylor Jones');
-  
-  7. Get grades by category:
-     const frontendGrades = await GradeBackendAPI.getGradesByCategory('frontend');
 
-Note: Backend must be running on ${BACKEND_CONFIG.baseUrl}
-Update BACKEND_CONFIG.baseUrl if your backend runs on a different port.
 `);
 
