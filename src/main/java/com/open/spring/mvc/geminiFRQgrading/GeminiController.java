@@ -60,12 +60,12 @@ public class GeminiController {
             String prompt = String.format("""
                 You are an expert tutor grading a student's answer to a free-response question.
                 Your task is to:
-                1. Determine a grade for the student's response based on the following 0.55-1.0 scale, where 0.55 is the lowest, 0.9 is really good, and 1.0 is immaculate (don't often hand out grades higher than 0.92):
-                   - 5: The answer addresses all parts of the question and is detailed and comprehensive.
-                   - 4: The answer is correct and addresses most parts of the question.
-                   - 3: The answer is correct but may be incomplete or lack detail.
-                   - 2: The answer has significant inaccuracies or is incomplete.
-                   - 1: The answer is incorrect or does not address the question.
+                1. Determine a grade for the student's response on a 0.55-1.0 scale, where 0.55 means they failed the question and 0.9 means it's really good. Very rarely give out a score above 0.9. Scores may be between any of these scores:
+                   - 1.0: The answer addresses all parts of the question and is detailed and comprehensive.
+                   - 0.9: The answer is correct and addresses most parts of the question.
+                   - 0.8: The answer is correct but may be incomplete or lack detail.
+                   - 0.7: The answer has significant inaccuracies or is incomplete.
+                   - 0.55: The answer is incorrect or does not address the question.
                    Write the grade like this: "Grade: (0.55-1.0)/1.0"
                 2. Provide detailed, constructive feedback explaining the grade.
                 3. Offer very short suggestions on what the user could improve on.
@@ -101,8 +101,7 @@ public class GeminiController {
             // Parse and modify response to update only the grading text
             ObjectMapper mapper = new ObjectMapper();
             JsonNode responseNode = mapper.readTree(gradingResult);
-            
-            // Update the text in candidates[0].content.parts[0].text with just the grading feedback
+
             String extractedText = extractGradingText(gradingResult);
             ((com.fasterxml.jackson.databind.node.ObjectNode) responseNode
                     .get("candidates")
@@ -112,22 +111,17 @@ public class GeminiController {
                     .get(0))
                 .put("text", extractedText);
 
-            // Persist grading to DB without userId
+            // Persist grading to DB
             Gemini record = new Gemini(question, answer);
             record.setGradingResult(extractedText);
-            Gemini saved = geminiRepository.save(record);
+            geminiRepository.save(record);
 
-            // Return concise payload
-            return ResponseEntity.ok(
-                Map.of(
-                    "status", "success",
-                    "id", saved.getId(),
-                    "question", saved.getQuestion(),
-                    "answer", saved.getAnswer(),
-                    "gradingResult", saved.getGradingResult(),
-                    "createdAt", saved.getCreatedAt()
-                )
-            );
+            // Add top-level feedback for frontend fallback
+            ((com.fasterxml.jackson.databind.node.ObjectNode) responseNode)
+                .put("feedback", extractedText);
+
+            // Return the tree the frontend expects
+            return ResponseEntity.ok(responseNode);
 
         } catch (HttpClientErrorException.TooManyRequests e) {
             return ResponseEntity.status(429).body(Map.of("error", "Gemini quota exceeded. Please try again later."));
