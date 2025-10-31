@@ -51,7 +51,8 @@ public class SpecificBackupsController {
         new BackupEndpoint("/bank/bulk/extract", "bank")
     );
 
-    @EventListener
+    // Temporarily disabled to see startup errors
+    // @EventListener
     public void handleContextClose(ContextClosedEvent event) {
         for (BackupEndpoint endpoint : endpoints) {
             try {
