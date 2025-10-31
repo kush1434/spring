@@ -51,9 +51,7 @@ public class SpecificBackupsController {
         new BackupEndpoint("/bank/bulk/extract", "bank")
     );
 
-    
     @EventListener
-    
     public void handleContextClose(ContextClosedEvent event) {
         for (BackupEndpoint endpoint : endpoints) {
             try {
