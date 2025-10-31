@@ -132,7 +132,8 @@ public class BackupsController {
     }
 
     // This method will be called just before the server stops
-    @jakarta.annotation.PreDestroy
+    // Temporarily disabled to see startup errors
+    // @jakarta.annotation.PreDestroy
     public void onShutdown() {
         System.out.println("Server is stopping. Exporting data...");
 
