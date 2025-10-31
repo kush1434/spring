@@ -1,6 +1,7 @@
 package com.open.spring.system;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,6 +56,11 @@ import com.open.spring.mvc.student.StudentQueueJPARepository;
 import com.open.spring.mvc.synergy.SynergyGrade;
 import com.open.spring.mvc.synergy.SynergyGradeJpaRepository;
 import com.open.spring.mvc.user.UserJpaRepository;
+import com.open.spring.mvc.quiz.QuizScore;
+import com.open.spring.mvc.quiz.QuizScoreRepository;
+import com.open.spring.mvc.resume.Resume;
+import com.open.spring.mvc.resume.ResumeJpaRepository;
+
 
 @Component
 @Configuration // Scans Application for ModelInit Bean, this detects CommandLineRunner
@@ -84,6 +90,7 @@ public class ModelInit {
     @Autowired GameJpaRepository gameJpaRepository;
     @Autowired MediaJpaRepository mediaJpaRepository;
     @Autowired QuizScoreRepository quizScoreRepository;
+    @Autowired ResumeJpaRepository resumeJpaRepository;
 
     @Bean
     @Transactional
@@ -295,6 +302,15 @@ public class ModelInit {
                 
                 if (!scoreExists) {
                     quizScoreRepository.save(quizScore);
+                }
+            }
+
+            // Resume initialization via static init on Resume class
+            Resume[] resumes = Resume.init();
+            for (Resume resume : resumes) {
+                Optional<Resume> existing = resumeJpaRepository.findByUsername(resume.getUsername());
+                if (existing.isEmpty()) {
+                    resumeJpaRepository.save(resume);
                 }
             }
         };
