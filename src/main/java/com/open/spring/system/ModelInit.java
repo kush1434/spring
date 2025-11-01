@@ -328,9 +328,9 @@ public class ModelInit {
                 // Create an array of initial stats data
                 // These usernames should match the 'uid' from Person.init()
                 Stats[] statsArray = {
-                    new Stats("tobytest", 20.0, 30.0, 40.0, 50.0, 60.0),
-                    new Stats("hoptest", 100.0, 80.0, 90.0, 70.0, 85.0),
-                    new Stats("curietest", 50.0, 50.0, 50.0, 50.0, 50.0),
+                    new Stats(null, "tobytest", 20.0, 30.0, 40.0, 50.0, 60.0),
+                    new Stats(null, "hoptest", 100.0, 80.0, 90.0, 70.0, 85.0),
+                    new Stats(null, "curietest", 50.0, 50.0, 50.0, 50.0, 50.0),
                 };
 
                 // Loop and save if they don't exist
