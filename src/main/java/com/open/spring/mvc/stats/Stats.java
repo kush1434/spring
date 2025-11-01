@@ -11,7 +11,7 @@ public class Stats {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // not added to db in backend
 
     @Column(unique = true) // Usernames should be unique
     private String username;
