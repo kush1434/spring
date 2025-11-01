@@ -60,6 +60,8 @@ import com.open.spring.mvc.quiz.QuizScore;
 import com.open.spring.mvc.quiz.QuizScoreRepository;
 import com.open.spring.mvc.resume.Resume;
 import com.open.spring.mvc.resume.ResumeJpaRepository;
+import com.open.spring.mvc.stats.Stats; // curators - stats api
+import com.open.spring.mvc.stats.StatsRepository;
 
 
 @Component
@@ -91,6 +93,7 @@ public class ModelInit {
     @Autowired MediaJpaRepository mediaJpaRepository;
     @Autowired QuizScoreRepository quizScoreRepository;
     @Autowired ResumeJpaRepository resumeJpaRepository;
+    @Autowired StatsRepository statsRepository; // curators - stats
 
     @Bean
     @Transactional
@@ -319,6 +322,28 @@ public class ModelInit {
                     }
                 }
             } catch (Exception ignored) {
+            }
+
+            try { // initialize Stats data
+                // Create an array of initial stats data
+                // These usernames should match the 'uid' from Person.init()
+                Stats[] statsArray = {
+                    new Stats("tobytest", 20.0, 30.0, 40.0, 50.0, 60.0),
+                    new Stats("hoptest", 100.0, 80.0, 90.0, 70.0, 85.0),
+                    new Stats("curietest", 50.0, 50.0, 50.0, 50.0, 50.0),
+                };
+
+                // Loop and save if they don't exist
+                for (Stats stats : statsArray) {
+                    // Check if user stats already exist
+                    Optional<Stats> statsFound = statsRepository.findByUsername(stats.getUsername());
+                    if (statsFound.isEmpty()) {
+                        statsRepository.save(stats);
+                    }
+                }
+            } catch (Exception e) {
+                // Handle exception, e.g., log it, but don't stop startup
+                System.err.println("Error initializing Stats data: " + e.getMessage());
             }
         };
     }
