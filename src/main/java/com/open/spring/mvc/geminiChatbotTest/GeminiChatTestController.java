@@ -18,9 +18,11 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.open.spring.mvc.geminiChatbot.GeminiChatbotController.ChatRequest;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @RestController
 @RequestMapping("/apiTest")
@@ -32,6 +34,14 @@ public class GeminiChatTestController {
     private final Dotenv dotenv = Dotenv.load();
     private final String geminiApiKey = dotenv.get("GEMINI_API_KEY");
     private final String geminiApiUrl = dotenv.get("GEMINI_API_URL");
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ChatRequest {
+        private String userId;
+        private String message;
+    }
 
 
      @GetMapping("/hello")
