@@ -25,24 +25,6 @@ public class StatsController {
         return new ResponseEntity<>(statsList, HttpStatus.OK);
     }
 
-    /**
-     * GET /api/stats/{username}
-     * Helper endpoint to get stats for a single user.
-     */
-    @GetMapping("/{username}")
-    public ResponseEntity<Stats> getStatsByUsername(@PathVariable String username) {
-        Optional<Stats> optionalStats = statsRepository.findByUsername(username);
-        if (!optionalStats.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(optionalStats.get(), HttpStatus.OK);
-    }
-
-    /**
-     * POST /api/stats/create
-     * A standard endpoint to create a new Stats record.
-     * The request body should be a full Stats JSON object.
-     */
     @PostMapping("/create")
     public ResponseEntity<Stats> createStats(@RequestBody Stats stats) {
         // Check if username already exists
@@ -55,14 +37,12 @@ public class StatsController {
 
     /**
      * POST /api/stats/update/{username}
-     * Fulfills the request to "add to a specific column for a specific username."
-     * This endpoint updates a single field for an existing user.
-     *
-     * Request Body Example:
      * {
      * "column": "frontend",
      * "value": 95.5
      * }
+     * 
+     * This currently doesn't work. needs to fix!!
      */
     @PostMapping("/update/{username}")
     public ResponseEntity<Stats> updateStats(
@@ -72,41 +52,23 @@ public class StatsController {
         // 1. Find the user
         Optional<Stats> optionalStats = statsRepository.findByUsername(username);
         if (!optionalStats.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // User not found
+            return ResponseEntity.notFound().build(); // User not found
         }
 
         Stats statsToUpdate = optionalStats.get();
 
         // 2. Use the DTO to figure out which column to update
-        boolean updated = false;
         switch (updateRequest.getColumn().toLowerCase()) {
-            case "frontend":
-                statsToUpdate.setFrontend(updateRequest.getValue());
-                updated = true;
-                break;
-            case "backend":
-                statsToUpdate.setBackend(updateRequest.getValue());
-                updated = true;
-                break;
-            case "data":
-                statsToUpdate.setData(updateRequest.getValue());
-                updated = true;
-                break;
-            case "resume":
-                statsToUpdate.setResume(updateRequest.getValue());
-                updated = true;
-                break;
-            case "ai":
-                statsToUpdate.setAi(updateRequest.getValue());
-                updated = true;
-                break;
-            default:
-                // If the "column" name in the DTO doesn't match
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            case "frontend" -> statsToUpdate.setFrontend(updateRequest.getValue());
+            case "backend" -> statsToUpdate.setBackend(updateRequest.getValue());
+            case "data" -> statsToUpdate.setData(updateRequest.getValue());
+            case "resume" -> statsToUpdate.setResume(updateRequest.getValue());
+            case "ai" -> statsToUpdate.setAi(updateRequest.getValue());
+            default -> return ResponseEntity.badRequest().build();
         }
 
         // 3. Save the updated object
         Stats updatedStats = statsRepository.save(statsToUpdate);
-        return new ResponseEntity<>(updatedStats, HttpStatus.OK);
+        return ResponseEntity.ok(updatedStats);
     }
 }
