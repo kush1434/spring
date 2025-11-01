@@ -6,4 +6,6 @@ import lombok.Data;
 @Data
 public class StatsDeleteDto {
     private String username;
+    private String module;
+    private Integer submodule;
 }

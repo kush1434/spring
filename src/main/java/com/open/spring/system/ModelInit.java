@@ -325,18 +325,19 @@ public class ModelInit {
             }
 
             try { // initialize Stats data
-                // Create an array of initial stats data
-                // These usernames should match the 'uid' from Person.init()
                 Stats[] statsArray = {
-                    new Stats(null, "tobytest", 20.0, 30.0, 40.0, 50.0, 60.0),
-                    new Stats(null, "hoptest", 100.0, 80.0, 90.0, 70.0, 85.0),
-                    new Stats(null, "curietest", 50.0, 50.0, 50.0, 50.0, 50.0),
+                    new Stats(null, "tobytest", "frontend", 1, Boolean.TRUE, 185.0),
+                    new Stats(null, "tobytest", "backend", 1, Boolean.FALSE, 0.0),
+                    new Stats(null, "tobytest", "ai", 2, Boolean.TRUE, 240.5),
+                    new Stats(null, "hoptest", "data", 1, Boolean.TRUE, 142.3),
+                    new Stats(null, "hoptest", "resume", 3, Boolean.FALSE, 15.2),
+                    new Stats(null, "curietest", "frontend", 2, Boolean.TRUE, 98.6),
+                    new Stats(null, "curietest", "backend", 2, Boolean.FALSE, 35.4),
                 };
 
-                // Loop and save if they don't exist
                 for (Stats stats : statsArray) {
-                    // Check if user stats already exist
-                    Optional<Stats> statsFound = statsRepository.findByUsername(stats.getUsername());
+                    Optional<Stats> statsFound = statsRepository.findByUsernameAndModuleAndSubmodule(
+                            stats.getUsername(), stats.getModule(), stats.getSubmodule());
                     if (statsFound.isEmpty()) {
                         statsRepository.save(stats);
                     }

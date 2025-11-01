@@ -32,11 +32,11 @@ public class StatsController {
         }
         
         // Otherwise, get stats for the specific username
-        Optional<Stats> optionalStats = statsRepository.findByUsername(getRequest.getUsername());
-        if (!optionalStats.isPresent()) {
+        List<Stats> statsList = statsRepository.findAllByUsername(getRequest.getUsername());
+        if (statsList.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(optionalStats.get(), HttpStatus.OK);
+        return new ResponseEntity<>(statsList, HttpStatus.OK);
     }
 
     /**
@@ -45,18 +45,17 @@ public class StatsController {
      * 
      * Request Body Example:
      * {
-     * "username": "toby",
-     * "frontend": 20.0,
-     * "backend": 30.0,
-     * "data": 40.0,
-     * "resume": 50.0,
-     * "ai": 60.0
+     * "username": "nolan",
+     * "module": "ai",
+     * "submodule": 2,
      * }
      */
     @PostMapping
     public ResponseEntity<Stats> createStats(@RequestBody Stats stats) {
-        if (statsRepository.findByUsername(stats.getUsername()).isPresent()) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT); // Conflict, user exists
+        Optional<Stats> existingStats = statsRepository.findByUsernameAndModuleAndSubmodule(
+                stats.getUsername(), stats.getModule(), stats.getSubmodule());
+        if (existingStats.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT); // Conflict, record exists
         }
         Stats newStats = statsRepository.save(stats);
         return new ResponseEntity<>(newStats, HttpStatus.CREATED);
@@ -68,42 +67,42 @@ public class StatsController {
      * 
      * Request Body Example:
      * {
-     * "username": "toby",
-     * "column": "frontend",
-     * "value": 95.5
+     *   "username": "toby",
+     *   "module": "ai",
+     *   "submodule": 2,
+     *   "finished": true,
+     *   "time": 321.4
      * }
      */
     @PutMapping
     public ResponseEntity<Stats> updateStats(@RequestBody StatsUpdateDto updateRequest) {
 
         // 1. Find the user from the DTO
-        Optional<Stats> optionalStats = statsRepository.findByUsername(updateRequest.getUsername());
+        if (updateRequest.getUsername() == null || updateRequest.getModule() == null || updateRequest.getSubmodule() == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        Optional<Stats> optionalStats = statsRepository.findByUsernameAndModuleAndSubmodule(
+                updateRequest.getUsername(), updateRequest.getModule(), updateRequest.getSubmodule());
         if (!optionalStats.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND); // User not found
         }
 
         Stats statsToUpdate = optionalStats.get();
 
-        // 2. Use the DTO to figure out which column to update
-        switch (updateRequest.getColumn().toLowerCase()) {
-            case "frontend":
-                statsToUpdate.setFrontend(updateRequest.getValue());
-                break;
-            case "backend":
-                statsToUpdate.setBackend(updateRequest.getValue());
-                break;
-            case "data":
-                statsToUpdate.setData(updateRequest.getValue());
-                break;
-            case "resume":
-                statsToUpdate.setResume(updateRequest.getValue());
-                break;
-            case "ai":
-                statsToUpdate.setAi(updateRequest.getValue());
-                break;
-            default:
-                // If the "column" name in the DTO doesn't match
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        // 2. Update fields if provided
+        boolean updated = false;
+        if (updateRequest.getFinished() != null) {
+            statsToUpdate.setFinished(updateRequest.getFinished());
+            updated = true;
+        }
+        if (updateRequest.getTime() != null) {
+            statsToUpdate.setTime(updateRequest.getTime());
+            updated = true;
+        }
+
+        if (!updated) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         // 3. Save the updated object
@@ -123,11 +122,44 @@ public class StatsController {
     @DeleteMapping
     public ResponseEntity<String> deleteStats(@RequestBody StatsDeleteDto deleteRequest) {
 
-        // 1. Find the user by username from the DTO
-        Optional<Stats> optionalStats = statsRepository.findByUsername(deleteRequest.getUsername());
+        if (deleteRequest.getUsername() == null || deleteRequest.getUsername().isEmpty()) {
+            return new ResponseEntity<>("Username is required.", HttpStatus.BAD_REQUEST);
+        }
+
+        // Delete all user stats if module not provided
+        if (deleteRequest.getModule() == null || deleteRequest.getModule().isEmpty()) {
+            List<Stats> statsList = statsRepository.findAllByUsername(deleteRequest.getUsername());
+            if (statsList.isEmpty()) {
+                return new ResponseEntity<>("User '" + deleteRequest.getUsername() + "' not found.", HttpStatus.NOT_FOUND);
+            }
+            statsRepository.deleteAll(statsList);
+            return new ResponseEntity<>("All stats for '" + deleteRequest.getUsername() + "' deleted successfully.", HttpStatus.OK);
+        }
+
+        // Delete all submodules for module if submodule not provided
+        if (deleteRequest.getSubmodule() == null) {
+            List<Stats> statsList = statsRepository.findAllByUsernameAndModule(
+                    deleteRequest.getUsername(), deleteRequest.getModule());
+            if (statsList.isEmpty()) {
+                return new ResponseEntity<>(
+                        "No stats for '" + deleteRequest.getUsername() + "' in module '" + deleteRequest.getModule() + "'.",
+                        HttpStatus.NOT_FOUND);
+            }
+            statsRepository.deleteAll(statsList);
+            return new ResponseEntity<>(
+                    "Stats for '" + deleteRequest.getUsername() + "' in module '" + deleteRequest.getModule() + "' deleted successfully.",
+                    HttpStatus.OK);
+        }
+
+        // Delete specific module/submodule entry
+        Optional<Stats> optionalStats = statsRepository.findByUsernameAndModuleAndSubmodule(
+                deleteRequest.getUsername(), deleteRequest.getModule(), deleteRequest.getSubmodule());
         if (!optionalStats.isPresent()) {
             // Return Not Found if the user doesn't exist
-            return new ResponseEntity<>("User '" + deleteRequest.getUsername() + "' not found.", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(
+                    "No stats for '" + deleteRequest.getUsername() + "' in module '" + deleteRequest.getModule() +
+                            "' submodule '" + deleteRequest.getSubmodule() + "'.",
+                    HttpStatus.NOT_FOUND);
         }
 
         // 2. Get the stats object and delete it
@@ -135,6 +167,9 @@ public class StatsController {
         statsRepository.delete(statsToDelete);
 
         // 3. Return a success message
-        return new ResponseEntity<>("Stats for '" + deleteRequest.getUsername() + "' deleted successfully.", HttpStatus.OK);
+        return new ResponseEntity<>(
+                "Stats for '" + deleteRequest.getUsername() + "' in module '" + deleteRequest.getModule() +
+                        "' submodule '" + deleteRequest.getSubmodule() + "' deleted successfully.",
+                HttpStatus.OK);
     }
 }

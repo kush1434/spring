@@ -7,9 +7,11 @@ public class StatsUpdateDto {
     // We add username here, so it's part of the JSON body
     private String username;
     
-    // The name of the column to update (e.g., "frontend", "backend")
-    private String column;
-    
-    // The new value to set for that column
-    private double value;
+    // Module/submodule uniquely identify the stat entry to update
+    private String module;
+    private Integer submodule;
+
+    // Fields that can be updated
+    private Boolean finished;
+    private Double time;
 }

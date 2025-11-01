@@ -7,4 +7,3 @@ public class StatsGetDto {
     // Username to get stats for. If null or empty, get all stats.
     private String username;
 }
-
