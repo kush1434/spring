@@ -1,36 +1,40 @@
-package com.open.spring.mvc.geminiChatbot;
+package com.open.spring.mvc.geminiChatbotTest;
 
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.open.spring.mvc.geminiChatbot.GeminiChatbotController.ChatRequest;
+
 import io.github.cdimascio.dotenv.Dotenv;
-import lombok.*;
 
 @RestController
-@RequestMapping("/api")
-public class GeminiChatbotController {
+@RequestMapping("/apiTest")
+public class GeminiChatTestController {
 
-   // @Autowired
-   // private GeminiChatRepository chatRepository;
+    @Autowired
+    private GeminiChatTestRepository geminiChatTestRepository;
 
     private final Dotenv dotenv = Dotenv.load();
     private final String geminiApiKey = dotenv.get("GEMINI_API_KEY");
     private final String geminiApiUrl = dotenv.get("GEMINI_API_URL");
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ChatRequest {
-        private String userId;
-        private String message;
-    }
 
-    @GetMapping("/hello")
+     @GetMapping("/hello")
     public ResponseEntity<String> sayHello() {
         return ResponseEntity.ok("Hello from GET endpoint of GeminiChatBot!");
     }
@@ -69,9 +73,9 @@ public class GeminiChatbotController {
 
             String geminiResponse = extractResponseText(response.getBody());
 
-            // GeminiChat chat = new GeminiChat(userId, message);
-            // chat.setGeminiResponse(geminiResponse);
-            // chatRepository.save(chat);
+            GeminiChatTest chat = new GeminiChatTest(userId, message);
+            chat.setGeminiResponse(geminiResponse);
+            geminiChatTestRepository.save(chat);
 
             return ResponseEntity.ok(Map.of("response", geminiResponse));
 
@@ -103,4 +107,4 @@ public class GeminiChatbotController {
 
         return "Error parsing Gemini response";
     }
-}
+ }

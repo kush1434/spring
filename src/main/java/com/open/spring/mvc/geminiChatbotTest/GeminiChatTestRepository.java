@@ -1,12 +1,10 @@
-package com.open.spring.mvc.geminiChatbot;
+package com.open.spring.mvc.geminiChatbotTest;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-
-
 @Repository
-public interface GeminiChatRepository extends JpaRepository<GeminiChat, Long> {
+public interface GeminiChatTestRepository extends JpaRepository<GeminiChatTest, Long> {
     // This interface is intentionally left blank. 
     // Default JPA methods are used for database operations.
 }

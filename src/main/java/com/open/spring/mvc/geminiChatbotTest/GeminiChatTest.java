@@ -1,15 +1,19 @@
-package com.open.spring.mvc.geminiChatbot;
+package com.open.spring.mvc.geminiChatbotTest;
 
-import jakarta.persistence.*;
-import lombok.*;
-import com.open.spring.mvc.geminiFRQgrading.Gemini;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class GeminiChat {
+public class GeminiChatTest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,7 +30,7 @@ public class GeminiChat {
     @Column(nullable = false, updatable = false)
     private Long createdAt;
 
-    public GeminiChat(String userId, String userMessage) {
+    public GeminiChatTest(String userId, String userMessage) {
         this.userId = userId;
         this.userMessage = userMessage;
         this.createdAt = System.currentTimeMillis();
