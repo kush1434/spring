@@ -150,3 +150,14 @@ Notes:
 - The controller is mainly "personViewController" for the backend, but other controllers include "personApiController" for the front end.
 - Techincally the image is wrong, "personDetailsService" is a controller. It is used by other controllers to change the database, so it seemed more accurate to call it a part of the model, rather than a controller.
 - The person.java is the pojo (object) that is used for the database schema.
+
+
+## Database Management Workflow with Scripts
+
+If you are working with the database, follow the below procedure to safely interact with the remote DB.
+
+1. Initialize your local DB with clean Data
+> scripts/db_init.sh
+
+2. Pull the database content from the remote DB onto your local machine
+> scripts/db_migrate.sh
