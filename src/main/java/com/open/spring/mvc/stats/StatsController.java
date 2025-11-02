@@ -232,8 +232,8 @@ public class StatsController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        String prompt = "Grade the student's response to the question on a numeric scale between 0.55 and 0.9 inclusive. " +
-                "Return ONLY the numeric grade. No explanation.\nQuestion: " + question + "\nResponse: " + response;
+        String prompt = "Grade the student's response to the question on a numeric scale between 0.55 and 0.9 inclusive. If there are multiple questions given, they will given be numbered in an ordered list. The responses will also be given in an ordered list. You will need to grade each response individually then give provide the average grade in the numeric grading scale from 0.55 to 0.9, inclusive." +
+                "No explanation. Return ONLY the numeric grade. \nQuestion: " + question + "\nResponse: " + response;
 
         ObjectNode requestBody = objectMapper.createObjectNode();
         ArrayNode contents = requestBody.putArray("contents");
