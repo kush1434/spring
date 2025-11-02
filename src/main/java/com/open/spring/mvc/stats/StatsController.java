@@ -100,6 +100,10 @@ public class StatsController {
             statsToUpdate.setTime(updateRequest.getTime());
             updated = true;
         }
+        if (updateRequest.getGrades() != null) {
+            statsToUpdate.setGrades(updateRequest.getGrades());
+            updated = true;
+        }
 
         if (!updated) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
