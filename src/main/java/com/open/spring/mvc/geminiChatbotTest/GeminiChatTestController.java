@@ -36,6 +36,7 @@ public class GeminiChatTestController {
         private String message;
     }
 
+    // Test API from web browser
     @GetMapping("/hello")
     public ResponseEntity<String> sayHello() {
         return ResponseEntity.ok("Hello from GET endpoint of GeminiChatBot!");
@@ -77,6 +78,7 @@ public class GeminiChatTestController {
 
             String geminiResponse = extractResponseText(response.getBody());
 
+            // created an object incase we want to save chat history later
             GeminiChatTest chat = new GeminiChatTest(userId, message);
             chat.setGeminiResponse(geminiResponse);
 
