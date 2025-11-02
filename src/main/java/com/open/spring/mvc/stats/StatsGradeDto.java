@@ -7,5 +7,6 @@ public class StatsGradeDto {
     private String username;
     private String module;
     private Integer submodule;
-    private Double grade;
+    private String question;
+    private String response;
 }
