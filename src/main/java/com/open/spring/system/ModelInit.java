@@ -1,6 +1,7 @@
 package com.open.spring.system;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +29,7 @@ import com.open.spring.mvc.bathroom.TeacherJpaRepository;
 import com.open.spring.mvc.bathroom.TinkleJPARepository;
 import com.open.spring.mvc.comment.Comment;
 import com.open.spring.mvc.comment.CommentJPA;
+import com.open.spring.mvc.hardAssets.HardAssetsRepository;
 import com.open.spring.mvc.jokes.Jokes;
 import com.open.spring.mvc.jokes.JokesJpaRepository;
 import com.open.spring.mvc.media.MediaJpaRepository;
@@ -54,12 +56,19 @@ import com.open.spring.mvc.student.StudentQueueJPARepository;
 import com.open.spring.mvc.synergy.SynergyGrade;
 import com.open.spring.mvc.synergy.SynergyGradeJpaRepository;
 import com.open.spring.mvc.user.UserJpaRepository;
+import com.open.spring.mvc.quiz.QuizScore;
+import com.open.spring.mvc.quiz.QuizScoreRepository;
+import com.open.spring.mvc.resume.Resume;
+import com.open.spring.mvc.resume.ResumeJpaRepository;
+import com.open.spring.mvc.stats.Stats; // curators - stats api
+import com.open.spring.mvc.stats.StatsRepository;
 
 
 @Component
 @Configuration // Scans Application for ModelInit Bean, this detects CommandLineRunner
 public class ModelInit {
     @Autowired JokesJpaRepository jokesRepo;
+    @Autowired HardAssetsRepository hardAssetsRepository;
     @Autowired NoteJpaRepository noteRepo;
     @Autowired PersonRoleJpaRepository roleJpaRepository;
     @Autowired PersonDetailsService personDetailsService;
@@ -83,6 +92,8 @@ public class ModelInit {
     @Autowired GameJpaRepository gameJpaRepository;
     @Autowired MediaJpaRepository mediaJpaRepository;
     @Autowired QuizScoreRepository quizScoreRepository;
+    @Autowired ResumeJpaRepository resumeJpaRepository;
+    @Autowired StatsRepository statsRepository; // curators - stats
 
     @Bean
     @Transactional
@@ -283,18 +294,57 @@ public class ModelInit {
                 }
             }
 
-            // Quiz Score initialization
-            QuizScore[] quizScoreArray = QuizScore.init();
-            for (QuizScore quizScore : quizScoreArray) {
-                List<QuizScore> existingScores = quizScoreRepository.findByUsernameIgnoreCaseOrderByScoreDesc(quizScore.getUsername());
-                
-                // Only add if this exact score doesn't exist for this user
-                boolean scoreExists = existingScores.stream()
-                    .anyMatch(s -> s.getScore() == quizScore.getScore());
-                
-                if (!scoreExists) {
-                    quizScoreRepository.save(quizScore);
+            // Quiz Score initialization (guarded in case the table doesn't exist yet)
+            try {
+                QuizScore[] quizScoreArray = QuizScore.init();
+                for (QuizScore quizScore : quizScoreArray) {
+                    List<QuizScore> existingScores = quizScoreRepository
+                        .findByUsernameIgnoreCaseOrderByScoreDesc(quizScore.getUsername());
+
+                    boolean scoreExists = existingScores.stream()
+                        .anyMatch(s -> s.getScore() == quizScore.getScore());
+
+                    if (!scoreExists) {
+                        quizScoreRepository.save(quizScore);
+                    }
                 }
+            } catch (Exception ignored) {
+                // If the quiz_scores table is missing or unavailable at startup, skip seeding
+            }
+
+            // Resume initialization via static init on Resume class (guard missing table)
+            try {
+                Resume[] resumes = Resume.init();
+                for (Resume resume : resumes) {
+                    Optional<Resume> existing = resumeJpaRepository.findByUsername(resume.getUsername());
+                    if (existing.isEmpty()) {
+                        resumeJpaRepository.save(resume);
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+
+            try { // initialize Stats data
+                Stats[] statsArray = {
+                    new Stats(null, "tobytest", "frontend", 1, Boolean.TRUE, 185.0),
+                    new Stats(null, "tobytest", "backend", 1, Boolean.FALSE, 0.0),
+                    new Stats(null, "tobytest", "ai", 2, Boolean.TRUE, 240.5),
+                    new Stats(null, "hoptest", "data", 1, Boolean.TRUE, 142.3),
+                    new Stats(null, "hoptest", "resume", 3, Boolean.FALSE, 15.2),
+                    new Stats(null, "curietest", "frontend", 2, Boolean.TRUE, 98.6),
+                    new Stats(null, "curietest", "backend", 2, Boolean.FALSE, 35.4),
+                };
+
+                for (Stats stats : statsArray) {
+                    Optional<Stats> statsFound = statsRepository.findByUsernameAndModuleAndSubmodule(
+                            stats.getUsername(), stats.getModule(), stats.getSubmodule());
+                    if (statsFound.isEmpty()) {
+                        statsRepository.save(stats);
+                    }
+                }
+            } catch (Exception e) {
+                // Handle exception, e.g., log it, but don't stop startup
+                System.err.println("Error initializing Stats data: " + e.getMessage());
             }
         };
     }
