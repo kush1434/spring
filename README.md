@@ -104,7 +104,7 @@ socket.port=8589
 If you are working with the database, follow the below procedure to safely interact with the remote DB.
 
 1. Initialize your local DB with clean Data
-> scripts/db_init.py
+> python scripts/db_init.py
 
 2. Pull the database content from the remote DB onto your local machine
-> scripts/db_prod2local.py
+> python scripts/db_prod2local.py
