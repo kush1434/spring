@@ -2,7 +2,7 @@ package com.open.spring.mvc.geminiChatbotTest;
 
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -28,8 +28,8 @@ import lombok.NoArgsConstructor;
 @RequestMapping("/apiTest")
 public class GeminiChatTestController {
 
-    @Autowired
-    private GeminiChatTestRepository geminiChatTestRepository;
+    // @Autowired
+    // private GeminiChatTestRepository geminiChatTestRepository;
 
     private final Dotenv dotenv = Dotenv.load();
     private final String geminiApiKey = dotenv.get("GEMINI_API_KEY");
@@ -44,7 +44,7 @@ public class GeminiChatTestController {
     }
 
 
-     @GetMapping("/hello")
+    @GetMapping("/hello")
     public ResponseEntity<String> sayHello() {
         return ResponseEntity.ok("Hello from GET endpoint of GeminiChatBot!");
     }
@@ -85,7 +85,8 @@ public class GeminiChatTestController {
 
             GeminiChatTest chat = new GeminiChatTest(userId, message);
             chat.setGeminiResponse(geminiResponse);
-            geminiChatTestRepository.save(chat);
+            System.out.println("geminiReponse before saving to db: " + geminiResponse);
+            //geminiChatTestRepository.save(chat);
 
             return ResponseEntity.ok(Map.of("response", geminiResponse));
 
