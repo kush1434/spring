@@ -1,8 +1,6 @@
 package com.open.spring.mvc.geminiChatbotTest;
 
 import java.util.Map;
-
-//import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -15,21 +13,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @RestController
-@RequestMapping("/apiTest")
+@RequestMapping("/api")
 public class GeminiChatTestController {
-
-    // @Autowired
-    // private GeminiChatTestRepository geminiChatTestRepository;
 
     private final Dotenv dotenv = Dotenv.load();
     private final String geminiApiKey = dotenv.get("GEMINI_API_KEY");
@@ -42,7 +35,6 @@ public class GeminiChatTestController {
         private String userId;
         private String message;
     }
-
 
     @GetMapping("/hello")
     public ResponseEntity<String> sayHello() {
@@ -59,6 +51,8 @@ public class GeminiChatTestController {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "Missing userId or message"));
             }
+
+            System.out.println("/chat endpoint hit by userId: " + userId);
 
             String prompt = String.format("Respond conversationally to the user message: \"%s\"", message);
 
@@ -85,8 +79,6 @@ public class GeminiChatTestController {
 
             GeminiChatTest chat = new GeminiChatTest(userId, message);
             chat.setGeminiResponse(geminiResponse);
-            System.out.println("geminiReponse before saving to db: " + geminiResponse);
-            //geminiChatTestRepository.save(chat);
 
             return ResponseEntity.ok(Map.of("response", geminiResponse));
 
@@ -97,6 +89,7 @@ public class GeminiChatTestController {
             return ResponseEntity.status(500).body(Map.of("error", "Internal server error: " + e.getMessage()));
         }
     }
+
 
     private String extractResponseText(String jsonResponse) {
         try {
@@ -118,4 +111,4 @@ public class GeminiChatTestController {
 
         return "Error parsing Gemini response";
     }
- }
+}
