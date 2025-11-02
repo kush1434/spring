@@ -107,4 +107,4 @@ If you are working with the database, follow the below procedure to safely inter
 > scripts/db_init.py
 
 2. Pull the database content from the remote DB onto your local machine
-> scripts/db_migrate.py
+> scripts/db_prod2local.py
