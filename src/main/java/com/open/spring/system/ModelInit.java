@@ -339,12 +339,12 @@ public class ModelInit {
 
             try { // initialize Stats data
                 Stats[] statsArray = {
-                    new Stats(null, "tobytest", "frontend", 1, Boolean.TRUE, 185.0, 92.0),
+                    new Stats(null, "tobytest", "frontend", 1, Boolean.TRUE, 185.0, .92),
                     new Stats(null, "tobytest", "backend", 1, Boolean.FALSE, 0.0, null),
-                    new Stats(null, "tobytest", "ai", 2, Boolean.TRUE, 240.5, 95.5),
-                    new Stats(null, "hoptest", "data", 1, Boolean.TRUE, 142.3, 88.0),
+                    new Stats(null, "tobytest", "ai", 2, Boolean.TRUE, 240.5, .95),
+                    new Stats(null, "hoptest", "data", 1, Boolean.TRUE, 142.3, .88),
                     new Stats(null, "hoptest", "resume", 3, Boolean.FALSE, 15.2, null),
-                    new Stats(null, "curietest", "frontend", 2, Boolean.TRUE, 98.6, 90.0),
+                    new Stats(null, "curietest", "frontend", 2, Boolean.TRUE, 98.6, 0.90),
                     new Stats(null, "curietest", "backend", 2, Boolean.FALSE, 35.4, null),
                 };
 

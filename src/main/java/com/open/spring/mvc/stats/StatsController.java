@@ -114,6 +114,34 @@ public class StatsController {
         return new ResponseEntity<>(updatedStats, HttpStatus.OK);
     }
 
+    @PostMapping("/grade")
+    public ResponseEntity<Stats> submitGrade(@RequestBody StatsGradeDto gradeRequest) {
+        if (gradeRequest.getUsername() == null || gradeRequest.getUsername().isEmpty()
+                || gradeRequest.getModule() == null || gradeRequest.getModule().isEmpty()
+                || gradeRequest.getSubmodule() == null
+                || gradeRequest.getGrade() == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        Optional<Stats> optionalStats = statsRepository.findByUsernameAndModuleAndSubmodule(
+                gradeRequest.getUsername(), gradeRequest.getModule(), gradeRequest.getSubmodule());
+
+        if (optionalStats.isPresent()) {
+            Stats existingStats = optionalStats.get();
+            existingStats.setGrades(gradeRequest.getGrade());
+            Stats savedStats = statsRepository.save(existingStats);
+            return new ResponseEntity<>(savedStats, HttpStatus.OK);
+        }
+
+        Stats newStats = new Stats();
+        newStats.setUsername(gradeRequest.getUsername());
+        newStats.setModule(gradeRequest.getModule());
+        newStats.setSubmodule(gradeRequest.getSubmodule());
+        newStats.setGrades(gradeRequest.getGrade());
+        Stats savedStats = statsRepository.save(newStats);
+        return new ResponseEntity<>(savedStats, HttpStatus.CREATED);
+    }
+
     /**
      * DELETE /api/stats
      * Delete a user's stats.
