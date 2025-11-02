@@ -101,10 +101,35 @@ socket.port=8589
 
 ## Database Management Workflow with Scripts
 
-If you are working with the database, follow the below procedure to safely interact with the remote DB.
+If you are working with the database, follow the below procedure to safely interact with the remote DB while applying changes locally. Certain scripts require spring to be running while others don't, so follow the instructions that the scripts provide.
 
-1. Initialize your local DB with clean Data
+1. Initialize your local DB with clean data. For example, this would be good to see that a schema update works correctly.
 > python scripts/db_init.py
 
-2. Pull the database content from the remote DB onto your local machine
+2. Pull the database content from the remote DB onto your local machine. This allows you to work with real data and test that real data works with your local changes.
 > python scripts/db_prod2local.py
+
+3. TEST TEST TEST! Make sure your changes work correctly with the local DB.
+
+4. Now go onto the remote DB and back up the db using "cp sqlite.db backups/sqlite_year-month-day.db" in the volumes directory of the spring directory on cockpit. Then, run `git pull` to ensure that spring has been updated with the latest code. Then, run `python scripts/db_init.py` again to ensure that the remote DB schema is up to date with the latest code.
+
+5. Once you are satisfied with your changes, push the local DB content to the remote DB. This requires authentication, so you need to replace the ADMIN_PASSWORD in the .env file of "spring" with the production admin password.
+> python scripts/db_local2prod.py
+
+## Condensed DB/Schema update simple steps
+
+**(a copy of what's above, just condensed)**
+
+1. Initialize local DB: `python scripts/db_init.py`
+
+2. Pull production data to local: `python scripts/db_prod2local.py`
+
+3. Test your changes locally
+
+4. On production server (in cockpit):
+- Backup DB in volumes directory: `cp sqlite.db backups/sqlite_year-month-day.db`
+- Update code: `git pull`
+- Update schema: `python scripts/db_init.py`
+
+5. Push local changes to production: `python scripts/db_local2prod.py`
+(Requires admin password from production in .env)
