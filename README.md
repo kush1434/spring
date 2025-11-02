@@ -73,59 +73,6 @@ socket.port=8589
 - Login to ADMIN (toby) user using ADMIN_PASSWORD, examing menus and data
 - Try API endpoint: http://127.0.0.1:8585/api/jokes/
 
-## Database migration (backup, reset, import)
-
-Common flows you can run from the project root:
-
-1) Reset to clean schema + default data (fast)
-
-```bash
-scripts/db_init.sh
-```
-
-2) Migrate from deployed server (fetch all tables, then import)
-
-```bash
-# No prompts
-FORCE_YES=true scripts/db_migrate.sh --import
-
-# With prompts
-scripts/db_migrate.sh --import
-```
-
-3) Export current local data to JSON (admin endpoint)
-
-```bash
-scripts/export_current_json.sh
-# → volumes/backups/exports_YYYYMMDD_HHMMSS.json
-```
-
-4) Preserve Users/Groups/Bathroom across updates (export → reset → selective import)
-
-```bash
-scripts/db_preserve.sh
-# Default preserves person, groups, tinkle
-
-# Customize tables to restore
-IMPORT_TABLES=person,groups,tinkle,bathroom_queue scripts/db_preserve.sh
-```
-
-5) Import from a JSON file
-
-```bash
-# Import ALL tables from a JSON file
-python3 scripts/import_json_to_sqlite.py volumes/data.json volumes/sqlite.db
-
-# Explicitly import ALL
-IMPORT_TABLES=ALL python3 scripts/import_json_to_sqlite.py volumes/backups/exports_*.json volumes/sqlite.db
-
-# Import only selected tables
-IMPORT_TABLES=person,groups,tinkle python3 scripts/import_json_to_sqlite.py volumes/backups/exports_*.json volumes/sqlite.db
-```
-
-Notes:
-- The importer auto-matches JSON keys to actual DB columns and JSON-serializes nested dict/list values.
-- If port 8585 is busy, stop the app before running migration scripts.
 
 ## IDE management
 
@@ -157,7 +104,7 @@ Notes:
 If you are working with the database, follow the below procedure to safely interact with the remote DB.
 
 1. Initialize your local DB with clean Data
-> scripts/db_init.sh
+> scripts/db_init.py
 
 2. Pull the database content from the remote DB onto your local machine
-> scripts/db_migrate.sh
+> scripts/db_migrate.py
