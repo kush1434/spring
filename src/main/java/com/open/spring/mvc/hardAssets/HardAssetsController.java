@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/upload")
+@RequestMapping("/api/assets")
 public class HardAssetsController {
 
     private static final String UPLOAD_DIR = "./uploads/";
@@ -29,7 +29,7 @@ public class HardAssetsController {
     @Autowired
     private HardAssetsRepository repository;
 
-    @GetMapping("/getUploadByID/{id}")
+    @GetMapping("/upload/{id}")
     public ResponseEntity<HardAsset> getAsset(@PathVariable Long id) {
         Optional<HardAsset> optional = repository.findById(id);
         if (optional.isPresent()) { // Good ID
@@ -40,7 +40,21 @@ public class HardAssetsController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @PostMapping("")
+    @GetMapping("/uploads")
+    public ResponseEntity<List<HardAsset>> getUploads(@RequestParam(required = false) String uid, @AuthenticationPrincipal UserDetails userDetails) {
+        String targetUid = uid;
+        if (targetUid == null) {
+            if (userDetails == null) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+            targetUid = userDetails.getUsername();
+        }
+        
+        List<HardAsset> assets = repository.findByOwnerUID(targetUid);
+        return new ResponseEntity<>(assets, HttpStatus.OK);
+    }
+
+    @PostMapping("/upload")
     public ResponseEntity<String> postUpload(@RequestParam("file") MultipartFile file, @AuthenticationPrincipal UserDetails userDetails) {
         System.out.println("POST request for /api/upload");
         if (file.isEmpty()) {
