@@ -103,6 +103,8 @@ socket.port=8589
 
 If you are working with the database, follow the below procedure to safely interact with the remote DB while applying changes locally. Certain scripts require spring to be running while others don't, so follow the instructions that the scripts provide.
 
+Note, steps 1,2,3,5 are on your development (LOCAL) server. You need to update your .env on development server and be sure all PRs are completed, pulled, and tested before you start pushing to production.
+
 1. Initialize your local DB with clean data. For example, this would be good to see that a schema update works correctly.
 > python scripts/db_init.py
 
