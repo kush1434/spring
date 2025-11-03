@@ -21,7 +21,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/chatbot")
 public class GeminiChatTestController {
 
     private final Dotenv dotenv = Dotenv.load();
