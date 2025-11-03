@@ -1,5 +1,6 @@
 package com.open.spring.mvc.hardAssets;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,11 +14,26 @@ public class HardAsset {
 
     private String fileName;
 
+    private String localFileUUID;
+
+    @Column(nullable = false)
+    private String ownerUID;
+
     public HardAsset() {
     }
 
-    public HardAsset(String fileName) {
+    public HardAsset(String fileName, String localFileUUID, String ownerUID) {
         this.fileName = fileName;
+        this.localFileUUID = localFileUUID;
+        this.ownerUID = ownerUID;
+    }
+
+    public String getOwnerUID() {
+        return ownerUID;
+    }
+
+    public void setOwnerUID(String ownerUID) {
+        this.ownerUID = ownerUID;
     }
 
     public Long getId() {
@@ -34,5 +50,9 @@ public class HardAsset {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public String getLocalFileUUID() {
+        return localFileUUID;
     }
 }
