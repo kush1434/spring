@@ -26,7 +26,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/gemini-frq")
 public class GeminiController {
 
     @Autowired

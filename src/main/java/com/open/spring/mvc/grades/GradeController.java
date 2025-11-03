@@ -14,6 +14,10 @@ public class GradeController {
     @Autowired
     private GradeRepository gradeRepository;
 
+    @GetMapping
+    public List<Grade> getAllGrades() {
+        return gradeRepository.findAll();
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Grade> getGradeById(@PathVariable Long id) {
@@ -59,5 +63,3 @@ public class GradeController {
         return ResponseEntity.notFound().build();
     }
 }
-
-
