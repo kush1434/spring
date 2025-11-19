@@ -9,4 +9,7 @@ import java.util.Optional;
 public interface PlayerRepository extends JpaRepository<Player, Long> {
     Optional<Player> findByUsername(String username);
     List<Player> findByStatus(String status);
+    // numerical queries
+    List<Player> findByLevel(int level);
+    List<Player> findByXBetweenAndYBetween(double x1, double x2, double y1, double y2);
 }

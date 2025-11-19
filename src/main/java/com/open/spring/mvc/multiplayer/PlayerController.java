@@ -57,4 +57,46 @@ public class PlayerController {
         player.setStatus("offline");
         playerRepository.save(player);
     }
+    @PutMapping("/location")
+    public Player updateLocation(@RequestBody Map<String, Object> request) {
+        String username = (String) request.get("username");
+        double x = (double) request.get("x");
+        double y = (double) request.get("y");
+
+        Player player = playerRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("Player not found"));
+
+        player.setX(x);
+        player.setY(y);
+        player.setLastActive(LocalDateTime.now());
+
+        return playerRepository.save(player);
+    }
+    @PutMapping("/level")
+        public Player updateLevel(@RequestBody Map<String, Object> request) {
+        String username = (String) request.get("username");
+        int level = (int) request.get("level");
+
+        Player player = playerRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("Player not found"));
+
+        player.setLevel(level);
+        player.setLastActive(LocalDateTime.now());
+
+        return playerRepository.save(player);
+    }      
+
+    // for multiplayer locations if needed:
+    @GetMapping("/locations")
+    public Map<String, Object> getPlayerLocations() {
+        List<Player> players = playerRepository.findByStatus("online");
+
+        return Map.of("players", players.stream().map(p -> Map.of(
+                "username", p.getUsername(),
+                "x", p.getX(),
+                "y", p.getY(),
+                "level", p.getLevel()
+        )).toList());
+    }
+
 }
