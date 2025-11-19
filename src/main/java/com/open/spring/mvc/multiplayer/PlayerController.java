@@ -72,5 +72,17 @@ public class PlayerController {
 
         return playerRepository.save(player);
     }
+    @PutMapping("/level")
+        public Player updateLevel(@RequestBody Map<String, Object> request) {
+        String username = (String) request.get("username");
+        int level = (int) request.get("level");
 
+        Player player = playerRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("Player not found"));
+
+        player.setLevel(level);
+        player.setLastActive(LocalDateTime.now());
+
+        return playerRepository.save(player);
+    }      
 }
