@@ -57,4 +57,20 @@ public class PlayerController {
         player.setStatus("offline");
         playerRepository.save(player);
     }
+    @PutMapping("/location")
+    public Player updateLocation(@RequestBody Map<String, Object> request) {
+        String username = (String) request.get("username");
+        double x = (double) request.get("x");
+        double y = (double) request.get("y");
+
+        Player player = playerRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("Player not found"));
+
+        player.setX(x);
+        player.setY(y);
+        player.setLastActive(LocalDateTime.now());
+
+        return playerRepository.save(player);
+    }
+
 }
