@@ -85,4 +85,18 @@ public class PlayerController {
 
         return playerRepository.save(player);
     }      
+
+    // for multiplayer locations if needed:
+    @GetMapping("/locations")
+    public Map<String, Object> getPlayerLocations() {
+        List<Player> players = playerRepository.findByStatus("online");
+
+        return Map.of("players", players.stream().map(p -> Map.of(
+                "username", p.getUsername(),
+                "x", p.getX(),
+                "y", p.getY(),
+                "level", p.getLevel()
+        )).toList());
+    }
+
 }
