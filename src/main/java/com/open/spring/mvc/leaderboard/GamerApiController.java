@@ -27,8 +27,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Controller
-@RequestMapping("/player")
-public class PlayerApiController {
+@RequestMapping("/gamer")
+public class GamerApiController {
     @Autowired
     private PlayerService playerService;
 
@@ -48,9 +48,9 @@ public class PlayerApiController {
             return ResponseEntity.badRequest().body("Password cannot be empty!");
         }
     
-        Optional<Player> playerOptional = playerService.findByUsername(request.getUsername());
+        Optional<Gamer> playerOptional = playerService.findByUsername(request.getUsername());
         if (playerOptional.isPresent()) {
-            Player player = playerOptional.get();
+            Gamer player = playerOptional.get();
             if (playerService.checkPassword(request.getPassword(), player.getPassword())) {
                 return ResponseEntity.ok("Redirecting to game");
             }
@@ -124,7 +124,7 @@ class ScoreUpdateRequest {
 @Service
 class PlayerService implements UserDetailsService {
     @Autowired
-    private PlayerJpaRepository playerRepository;
+    private GamerJpaRepository playerRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -132,7 +132,7 @@ class PlayerService implements UserDetailsService {
     @Override
     public org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String username) 
             throws UsernameNotFoundException {
-        Player player = playerRepository.findByUsername(username)
+        Gamer player = playerRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Player not found"));
 
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + player.getRole()));
@@ -145,15 +145,15 @@ class PlayerService implements UserDetailsService {
                 .build();
     }
 
-    public Player registerPlayer(String username, String password) {
-        Player player = new Player();
+    public Gamer registerPlayer(String username, String password) {
+        Gamer player = new Gamer();
         player.setUsername(username);
         player.setPassword(passwordEncoder.encode(password));
         player.setHighScore(0);
         return playerRepository.save(player);
     }
 
-    public Optional<Player> findByUsername(String username) {
+    public Optional<Gamer> findByUsername(String username) {
         return playerRepository.findByUsername(username);
     }
 
@@ -162,7 +162,7 @@ class PlayerService implements UserDetailsService {
     }
 
     public void updateHighScore(String username, int score) {
-        Player player = playerRepository.findByUsername(username)
+        Gamer player = playerRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Player not found"));
 
         // Only update if the new score is higher than the current high score
@@ -173,14 +173,14 @@ class PlayerService implements UserDetailsService {
     }
 
     public int getHighScore(String username) {
-        Player player = playerRepository.findByUsername(username)
+        Gamer player = playerRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Player not found"));
         return player.getHighScore();
     }
 
     public List<LeaderboardEntry> getTopPlayersByScore() {
         return playerRepository.findAll().stream()
-                .sorted(Comparator.comparingInt(Player::getHighScore).reversed())
+                .sorted(Comparator.comparingInt(Gamer::getHighScore).reversed())
                 .limit(10)
                 .map(player -> new LeaderboardEntry(player.getUsername(), player.getHighScore()))
                 .collect(Collectors.toList());

@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Player {
+public class Gamer {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -32,7 +32,7 @@ public class Player {
     @Column(nullable = false)
     private int highScore = 0;
 
-    public Player(String username, String password, String role, boolean enabled, int highScore) {
+    public Gamer(String username, String password, String role, boolean enabled, int highScore) {
         this.username = username;
         this.password = password;
         this.role = role;
@@ -40,8 +40,8 @@ public class Player {
         this.highScore = highScore;
     }
 
-    public static Player createPlayer(String username, String password, String role, boolean enabled, int highScore) {
-        Player player = new Player();
+    public static Gamer createPlayer(String username, String password, String role, boolean enabled, int highScore) {
+        Gamer player = new Gamer();
         player.setUsername(username);
         player.setPassword(password);
         player.setRole(role);
@@ -50,15 +50,16 @@ public class Player {
         return player;
     }
 
-    public static Player[] init() {
-        ArrayList<Player> players = new ArrayList<>();
+    public static Gamer[] init() {
+        ArrayList<Gamer> players = new ArrayList<>();
         
-        players.add(createPlayer("ProGamer123", "pass123", "PLAYER", true, 15000));
-        players.add(createPlayer("SpeedRunner", "pass456", "PLAYER", true, 28500));
-        players.add(createPlayer("ElitePlayer", "pass789", "PLAYER", true, 42000));
-        players.add(createPlayer("NoobMaster", "pass321", "PLAYER", true, 8500));
-        players.add(createPlayer("GamerGod", "pass654", "PLAYER", true, 55000));
+        players.add(createPlayer("Avika", "pass123", "PLAYER", true, 15000));
+        players.add(createPlayer("Soni", "pass456", "PLAYER", true, 28500));
+        players.add(createPlayer("Nora", "pass789", "PLAYER", true, 42000));
+        players.add(createPlayer("Gurshawn", "pass321", "PLAYER", true, 8500));
+        players.add(createPlayer("Xavier", "pass654", "PLAYER", true, 55000));
+        players.add(createPlayer("Spencer", "pass765", "PLAYER", true, 54000));
 
-        return players.toArray(new Player[0]);
+        return players.toArray(new Gamer[0]);
     }
 }
