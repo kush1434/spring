@@ -58,6 +58,8 @@ import com.open.spring.mvc.resume.Resume;
 import com.open.spring.mvc.resume.ResumeJpaRepository;
 import com.open.spring.mvc.stats.Stats; // curators - stats api
 import com.open.spring.mvc.stats.StatsRepository;
+import com.open.spring.mvc.rpg.adventure.Adventure;
+import com.open.spring.mvc.rpg.adventure.AdventureJpaRepository;
 
 
 @Component
@@ -77,6 +79,8 @@ public class ModelInit {
     @Autowired IssueJPARepository issueJPARepository;
     @Autowired
     DataSource dataSource;
+    @Autowired
+    AdventureJpaRepository adventureJpaRepository;
     
     @Autowired UserJpaRepository userJpaRepository;
     @Autowired AssignmentJpaRepository assignmentJpaRepository;
@@ -121,6 +125,20 @@ public class ModelInit {
                                 + ");";
                         st.execute(create);
                         System.out.println("Ensured 'adventure' table exists");
+                        // Seed default adventure rows if none exist (instantiate in code)
+                        try {
+                            long advCount = 0L;
+                            try { advCount = adventureJpaRepository.count(); } catch (Exception ignore) { advCount = 0L; }
+                            if (advCount == 0L) {
+                                Adventure[] defaults = Adventure.init();
+                                for (Adventure a : defaults) {
+                                    try { adventureJpaRepository.save(a); } catch (Exception ignored) {}
+                                }
+                                System.out.println("Seeded default Adventure rows via Adventure.init()");
+                            }
+                        } catch (Throwable t) {
+                            // don't fail startup for seeding issues
+                        }
                     }
                 }
             } catch (SQLException e) {

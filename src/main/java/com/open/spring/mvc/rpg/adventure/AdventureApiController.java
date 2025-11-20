@@ -11,6 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -95,6 +98,41 @@ public class AdventureApiController {
         }
 
         return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
+
+    // Create a new Adventure row via POST /adventure
+    @PostMapping
+    public ResponseEntity<Adventure> createAdventure(@RequestBody Adventure adventure) {
+        Adventure saved = adventureJpaRepository.save(adventure);
+        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    }
+
+    // Update an existing Adventure row via PUT /adventure/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<Adventure> updateAdventure(@PathVariable Long id, @RequestBody Adventure update) {
+        Optional<Adventure> existing = adventureJpaRepository.findById(id);
+        if (existing.isEmpty()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        Adventure a = existing.get();
+        // copy allowed fields (simple approach)
+        a.setPersonId(update.getPersonId());
+        a.setPersonUid(update.getPersonUid());
+        a.setQuestionId(update.getQuestionId());
+        a.setQuestionTitle(update.getQuestionTitle());
+        a.setQuestionContent(update.getQuestionContent());
+        a.setQuestionCategory(update.getQuestionCategory());
+        a.setQuestionPoints(update.getQuestionPoints());
+        a.setChoiceId(update.getChoiceId());
+        a.setChoiceText(update.getChoiceText());
+        a.setChoiceIsCorrect(update.getChoiceIsCorrect());
+        a.setAnswerIsCorrect(update.getAnswerIsCorrect());
+        a.setAnswerContent(update.getAnswerContent());
+        a.setChatScore(update.getChatScore());
+        a.setRubricRuid(update.getRubricRuid());
+        a.setRubricCriteria(update.getRubricCriteria());
+        a.setBalance(update.getBalance());
+        a.setCreatedAt(update.getCreatedAt());
+        Adventure saved = adventureJpaRepository.save(a);
+        return new ResponseEntity<>(saved, HttpStatus.OK);
     }
 
 }
