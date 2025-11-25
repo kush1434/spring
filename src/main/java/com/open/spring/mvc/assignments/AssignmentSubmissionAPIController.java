@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.open.spring.mvc.groups.Groups;
 import com.open.spring.mvc.groups.GroupsJpaRepository;
 import com.open.spring.mvc.groups.Submitter;
@@ -367,5 +368,49 @@ public class AssignmentSubmissionAPIController {
             .collect(Collectors.toList());
 
         return new ResponseEntity<>(submissionDtos, HttpStatus.OK);
+    }
+// Add this to your AssignmentSubmissionAPIController to get submissions with parsed data
+
+    @Getter
+    @Setter
+    public static class SubmissionDisplayDto {
+        public Long id;
+        public String studentName;
+        public String submissionType;
+        public Object submissionData;
+        public String content;
+        public Double grade;
+        public String feedback;
+        public String submittedAt;
+
+        public SubmissionDisplayDto(AssignmentSubmission submission) {
+            this.id = submission.getId();
+            this.studentName = submission.getSubmitter().getMembers().get(0).getName();
+            this.submissionType = submission.getComment(); // Type is stored in comment
+            this.content = submission.getContent();
+            this.grade = submission.getGrade();
+            this.feedback = submission.getFeedback();
+            
+            // Try to parse the content as JSON submission data
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                this.submissionData = mapper.readValue(submission.getContent(), Object.class);
+            } catch (Exception e) {
+                this.submissionData = submission.getContent();
+            }
+        }
+    }
+
+    /**
+     * Get submissions for an assignment in a display-friendly format
+     */
+    @GetMapping("/assignment/{assignmentId}/display")
+    public ResponseEntity<?> getSubmissionsForDisplay(@PathVariable Long assignmentId) {
+        List<AssignmentSubmission> submissions = submissionRepo.findByAssignmentId(assignmentId);
+        List<SubmissionDisplayDto> displayDtos = submissions.stream()
+            .map(SubmissionDisplayDto::new)
+            .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(displayDtos);
     }
 }
