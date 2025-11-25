@@ -447,7 +447,7 @@
                 }
             };
             window.viewSubmissions = function (id) {
-                fetch(`/api/submissions/assignment/${id}/display`) // Use the new display endpoint
+                fetch(`/api/submissions/assignment/${id}`)
                     .then(response => response.json())
                     .then(submissions => {
                         submissionsTable.clear();
@@ -459,14 +459,14 @@
                                 let contentPreview = '';
                                 
                                 // Parse submission data based on type
-                                if (submission.submissionData) {
+                                if (submission.content) {
                                     try {
-                                        const data = submission.submissionData;
-                                        if (submission.submissionType === 'github') {
+                                        const data = JSON.parse(submission.content);
+                                        if (submission.comment === 'github') {
                                             contentPreview = data.url || 'GitHub Issue';
-                                        } else if (submission.submissionType === 'link') {
+                                        } else if (submission.comment === 'link') {
                                             contentPreview = data.link || 'Link Submission';
-                                        } else if (submission.submissionType === 'file') {
+                                        } else if (submission.comment === 'file') {
                                             contentPreview = (data.files || []).join(', ') || 'Files';
                                         }
                                         displayContent = contentPreview;
@@ -475,17 +475,34 @@
                                     }
                                 }
                                 
+                                // Display grade status
+                                let gradeDisplay;
+                                let actionButton;
+                                
+                                if (submission.grade !== null && submission.grade !== undefined) {
+                                    // Show "Complete" with the grade
+                                    gradeDisplay = `✓ Complete (${submission.grade})`;
+                                    actionButton = `<button class="btn btn-grade" onclick="gradeSubmission(${submission.id})">Edit Grade</button>`;
+                                } else {
+                                    gradeDisplay = 'Not graded';
+                                    actionButton = `<button class="btn btn-grade" onclick="gradeSubmission(${submission.id})">Grade</button>`;
+                                }
+                                
                                 submissionsTable.row.add([
-                                    submission.studentName,
+                                    submission.submitter?.name || 'Unknown',
                                     displayContent,
-                                    submission.submissionType,
-                                    submission.grade || 'Not graded',
-                                    `<button class="btn btn-grade" onclick="gradeSubmission(${submission.id}, ${submission.studentId})">Grade</button>`
+                                    submission.comment || 'No type',
+                                    gradeDisplay,
+                                    actionButton
                                 ]);
                             });
                         }
                         submissionsTable.draw();
-                        document.getElementById('submissionsModal').style.display = 'block';
+                        
+                        // Store the assignment ID so we can refresh later
+                        const modal = document.getElementById('submissionsModal');
+                        modal.dataset.assignmentId = id;
+                        modal.style.display = 'block';
                     })
                     .catch(error => {
                         console.error('Error fetching submissions:', error);
