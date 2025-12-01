@@ -61,7 +61,7 @@ import com.open.spring.mvc.stats.StatsRepository;
 import com.open.spring.mvc.rpg.adventure.Adventure;
 import com.open.spring.mvc.rpg.adventure.AdventureJpaRepository;
 import com.open.spring.mvc.rpg.games.Game;
-import com.open.spring.mvc.rpg.games.GameJpaRepository;
+import com.open.spring.mvc.rpg.games.UnifiedGameRepository;
 
 
 @Component
