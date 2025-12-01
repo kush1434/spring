@@ -340,16 +340,16 @@
                     { title: "Actions", orderable: false }
                 ]
             });
-
+        
             const submissionsTable = $('#submissionsTable').DataTable({
                 paging: true,
                 searching: true,
                 info: true,
                 autoWidth: false,
                 columns: [
-                    { title: "Student" },
+                    { title: "Student/Group" }, // Placeholder, updated dynamically
                     { title: "Content" },
-                    { title: "Type" },
+                    { title: "Comments" },
                     { title: "Grade" },
                     { title: "Actions", orderable: false }
                 ]
@@ -446,6 +446,7 @@
                     }).then(fetchAssignments);
                 }
             };
+
             window.viewSubmissions = function (id) {
                 fetch(`/api/submissions/assignment/${id}`)
                     .then(response => response.json())
@@ -455,54 +456,17 @@
                             submissionsTable.row.add(['No submissions found', '', '', '', '']);
                         } else {
                             submissions.forEach(submission => {
-                                let displayContent = 'No content';
-                                let contentPreview = '';
-                                
-                                // Parse submission data based on type
-                                if (submission.content) {
-                                    try {
-                                        const data = JSON.parse(submission.content);
-                                        if (submission.comment === 'github') {
-                                            contentPreview = data.url || 'GitHub Issue';
-                                        } else if (submission.comment === 'link') {
-                                            contentPreview = data.link || 'Link Submission';
-                                        } else if (submission.comment === 'file') {
-                                            contentPreview = (data.files || []).join(', ') || 'Files';
-                                        }
-                                        displayContent = contentPreview;
-                                    } catch (e) {
-                                        displayContent = submission.content || 'No content';
-                                    }
-                                }
-                                
-                                // Display grade status
-                                let gradeDisplay;
-                                let actionButton;
-                                
-                                if (submission.grade !== null && submission.grade !== undefined) {
-                                    // Show "Complete" with the grade
-                                    gradeDisplay = `✓ Complete (${submission.grade})`;
-                                    actionButton = `<button class="btn btn-grade" onclick="gradeSubmission(${submission.id})">Edit Grade</button>`;
-                                } else {
-                                    gradeDisplay = 'Not graded';
-                                    actionButton = `<button class="btn btn-grade" onclick="gradeSubmission(${submission.id})">Grade</button>`;
-                                }
-                                
                                 submissionsTable.row.add([
-                                    submission.submitter?.name || 'Unknown',
-                                    displayContent,
-                                    submission.comment || 'No type',
-                                    gradeDisplay,
-                                    actionButton
+                                    submission.submitter.name,
+                                    submission.content || 'No content',
+                                    submission.comment || 'No comments',
+                                    submission.grade || 'Not graded',
+                                    `<button class="btn btn-grade" onclick="gradeSubmission(${submission.id})">Grade</button>`
                                 ]);
                             });
                         }
                         submissionsTable.draw();
-                        
-                        // Store the assignment ID so we can refresh later
-                        const modal = document.getElementById('submissionsModal');
-                        modal.dataset.assignmentId = id;
-                        modal.style.display = 'block';
+                        document.getElementById('submissionsModal').style.display = 'block';
                     })
                     .catch(error => {
                         console.error('Error fetching submissions:', error);
@@ -605,39 +569,6 @@
                         console.error('Error randomizing graders:', error);
                         alert('Failed to randomize graders: ' + error.message);
                     });
-            };
-
-            window.gradeSubmission = function (submissionId, studentId) {
-                const grade = prompt('Enter grade:');
-                const feedback = prompt('Enter feedback (optional):');
-
-                if (grade !== null) {
-                    const params = new URLSearchParams({
-                        grade,
-                        feedback: feedback || ''
-                    });
-
-                    fetch(`/api/submissions/grade/${submissionId}`, {
-                        method: 'POST',
-                        body: params
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            alert('Submission graded successfully');
-                            // Refresh submissions
-                            const modal = document.getElementById('submissionsModal');
-                            if (modal.dataset.assignmentId) {
-                                viewSubmissions(modal.dataset.assignmentId);
-                            }
-                        } else {
-                            throw new Error('Grading failed');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error grading submission:', error);
-                        alert('Failed to grade submission');
-                    });
-                }
             };
 
             window.viewStudentSubmissions = function (studentId, studentName) {
