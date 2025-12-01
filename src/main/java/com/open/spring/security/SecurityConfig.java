@@ -44,6 +44,7 @@ public class SecurityConfig {
 
         http
                 // JWT related configuration
+                .securityMatcher("/api/**", "/authenticate")
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
