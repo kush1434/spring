@@ -36,7 +36,7 @@ public class SecurityConfig {
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
 
-    // Inject the RateLimitFilter
+    // Inject the RateLimitFilter for SecurityConfig
     @Autowired
     private RateLimitFilter rateLimitFilter;
 
