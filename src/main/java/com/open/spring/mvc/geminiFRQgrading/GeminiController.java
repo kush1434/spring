@@ -26,7 +26,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/gemini-frq")
 public class GeminiController {
 
     @Autowired
@@ -117,7 +117,9 @@ public class GeminiController {
             record.setGradingResult(extractedText);
             Gemini saved = geminiRepository.save(record);
 
-            // Return concise payload
+            // Return concise payload plus compatibility fields the frontend expects:
+            // - "feedback" (string)
+            // - "candidates": [{ "content": { "parts": [{ "text": "<feedback>" }] } }]
             return ResponseEntity.ok(
                 Map.of(
                     "status", "success",
@@ -125,7 +127,17 @@ public class GeminiController {
                     "question", saved.getQuestion(),
                     "answer", saved.getAnswer(),
                     "gradingResult", saved.getGradingResult(),
-                    "createdAt", saved.getCreatedAt()
+                    "createdAt", saved.getCreatedAt(),
+                    "feedback", extractedText,
+                    "candidates", List.of(
+                        Map.of(
+                            "content", Map.of(
+                                "parts", List.of(
+                                    Map.of("text", extractedText)
+                                )
+                            )
+                        )
+                    )
                 )
             );
 

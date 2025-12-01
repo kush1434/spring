@@ -49,6 +49,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,"/api/person/{id}/balance").permitAll() // Allow unauthenticated access to this endpoint
                         .requestMatchers(HttpMethod.GET, "/api/person/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/people/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/assets/upload").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/assets/upload/{id}").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/assets/uploads").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/person/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/person/**").hasAuthority("ROLE_ADMIN")
                         
