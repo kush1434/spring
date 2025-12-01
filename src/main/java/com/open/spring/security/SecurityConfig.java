@@ -24,6 +24,7 @@ import org.springframework.security.web.header.writers.StaticHeadersWriter;
  * 
  * another example is /mvc/person/create/** which i changed to permitAll() so anyone can make an account.
  * it doesn't make sense to have to login to make your account!
+ * additionally, this file is important for security configuration, please do not remove it
  */
 
 @Configuration
