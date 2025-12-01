@@ -38,9 +38,11 @@ public class SecurityConfig {
     private final RateLimitFilter rateLimitFilter;
 
     public SecurityConfig(JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-                          JwtRequestFilter jwtRequestFilter) {
+                          JwtRequestFilter jwtRequestFilter,
+                          RateLimitFilter rateLimitFilter) {
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtRequestFilter = jwtRequestFilter;
+        this.rateLimitFilter = rateLimitFilter; 
     }
 
     @Bean
@@ -99,7 +101,8 @@ public class SecurityConfig {
 
 
                 // Session related configuration
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitFilter, JwtRequestFilter.class);
 
         return http.build();
     }
