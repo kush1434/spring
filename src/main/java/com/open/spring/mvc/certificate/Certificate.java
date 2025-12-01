@@ -2,8 +2,6 @@ package com.open.spring.mvc.certificate;
 
 import java.util.Date;
 
-import org.checkerframework.checker.units.qual.C;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -22,9 +20,20 @@ public class Certificate {
     @Column(nullable = false)
     private Date dateCreated;
 
+    public Certificate() {
+    }
+
     public Certificate(String title, Date dateCreated) {
         this.dateCreated = dateCreated;
         this.title = title;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
  
     public void setTitle(String title) {
@@ -37,5 +46,9 @@ public class Certificate {
 
     public Date getDateCreated() {
         return dateCreated;
+    }
+
+    public void setDateCreated(Date dateCreated) {
+        this.dateCreated = dateCreated;
     }
 }
