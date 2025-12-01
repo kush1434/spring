@@ -35,6 +35,10 @@ public class SecurityConfig {
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
 
+    // Inject the RateLimitFilter
+    @Autowired
+    private RateLimitFilter rateLimitFilter;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -84,15 +88,21 @@ public class SecurityConfig {
                                 "DELETE", "OPTIONS", "HEAD")))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                
+                // Add Rate Limit Filter BEFORE the JWT Filter and UsernamePasswordAuthenticationFilter
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // Session related configuration
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                // Note: You had jwtRequestFilter added twice in your original code. 
+                // It is generally not necessary to add it again unless intended for a specific sub-chain logic.
+                // Keeping it here to maintain your original logic flow if it was intentional.
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/mvc/person/search/**").authenticated()
                         .requestMatchers("/mvc/person/create/**").permitAll()
-                        .requestMatchers("/mvc/person/reset/**").permitAll()
+                        .requestMatchers("mvc/person/reset/**").permitAll()
                         .requestMatchers("/mvc/person/read/**").authenticated()
                         .requestMatchers("/mvc/person/cookie-clicker").authenticated()
                         .requestMatchers(HttpMethod.GET,"/mvc/person/update/user").authenticated()
