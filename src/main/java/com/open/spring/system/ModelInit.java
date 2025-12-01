@@ -84,7 +84,7 @@ public class ModelInit {
     @Autowired
     AdventureJpaRepository adventureJpaRepository;
     @Autowired
-    GameJpaRepository gameJpaRepository;
+    UnifiedGameRepository gameJpaRepository;
     
     @Autowired UserJpaRepository userJpaRepository;
     @Autowired AssignmentJpaRepository assignmentJpaRepository;

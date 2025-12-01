@@ -12,7 +12,7 @@ import java.util.Optional;
 public class GameWebController {
 
     @Autowired
-    private GameJpaRepository repo;
+    private UnifiedGameRepository repo;
 
     @GetMapping("/delete/{id}")
     public String deleteById(@PathVariable("id") Long id) {

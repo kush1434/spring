@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 public class GameApiController {
 
     @Autowired
-    private GameJpaRepository repo;
+    private UnifiedGameRepository repo;
 
     @GetMapping("/combined/{personid}")
     public ResponseEntity<?> combined(@PathVariable("personid") Long personid) {

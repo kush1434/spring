@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class GameMvcController {
 
     @Autowired
-    private GameJpaRepository gameJpaRepository;
+    private UnifiedGameRepository gameJpaRepository;
 
     @GetMapping("/read")
     public String readView(Model model) {
