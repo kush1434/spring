@@ -1,5 +1,6 @@
 package com.open.spring.mvc.academicProgress;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +35,12 @@ public class AcademicProgressController {
     @Autowired
     private AcademicProgressRepository repository;
 
+    @Autowired
+    private AcademicPredictionRepository predictionRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private RandomForest model;
     private Map<String, Map<String, Integer>> encoders;
 
@@ -48,9 +56,43 @@ public class AcademicProgressController {
     @GetMapping("/train")
     public ResponseEntity<?> train() {
         try {
+            String sql = "CREATE TABLE IF NOT EXISTS academic_progress (" +
+                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                         "student_id INTEGER, " +
+                         "assignment_id TEXT, " +
+                         "score INTEGER, " +
+                         "max_score INTEGER, " +
+                         "submission_date TEXT, " +
+                         "due_date TEXT, " +
+                         "completion_status TEXT, " +
+                         "assignment_type TEXT, " +
+                         "difficulty_level TEXT, " +
+                         "topic TEXT)";
+            jdbcTemplate.execute(sql);
+
             String csvPath = "src/main/java/com/open/spring/mvc/academicProgress/fake-records.csv";
             
             DataFrame data = Read.csv(csvPath, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+            if (repository.count() == 0) {
+                List<AcademicProgress> records = new ArrayList<>();
+                for (int i = 0; i < data.nrows(); i++) {
+                    Tuple row = data.get(i);
+                    AcademicProgress ap = new AcademicProgress();
+                    ap.setStudentId(((Number) row.getAs("student_id")).longValue());
+                    ap.setAssignmentId(row.getString("assignment_id"));
+                    ap.setScore(((Number) row.getAs("score")).intValue());
+                    ap.setMaxScore(((Number) row.getAs("max_score")).intValue());
+                    ap.setSubmissionDate(row.getString("submission_date"));
+                    ap.setDueDate(row.getString("due_date"));
+                    ap.setCompletionStatus(row.getString("completion_status"));
+                    ap.setAssignmentType(row.getString("assignment_type"));
+                    ap.setDifficultyLevel(row.getString("difficulty_level"));
+                    ap.setTopic(row.getString("topic"));
+                    records.add(ap);
+                }
+                repository.saveAll(records);
+            }
 
             data = data.select("score", "assignment_type", "difficulty_level", "topic", "completion_status");
 
@@ -103,6 +145,15 @@ public class AcademicProgressController {
         }
 
         try {
+            String sql = "CREATE TABLE IF NOT EXISTS academic_prediction (" +
+                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                         "assignment_type TEXT, " +
+                         "difficulty_level TEXT, " +
+                         "topic TEXT, " +
+                         "completion_status TEXT, " +
+                         "predicted_score REAL, " +
+                         "created_at INTEGER)";
+            jdbcTemplate.execute(sql);
 
             String[] featureNames = {"assignment_type", "difficulty_level", "topic", "completion_status"};
             
@@ -129,9 +180,19 @@ public class AcademicProgressController {
 
             double prediction = model.predict(instance);
 
+            AcademicPrediction record = new AcademicPrediction(
+                (String) features.get("assignment_type"),
+                (String) features.get("difficulty_level"),
+                (String) features.get("topic"),
+                (String) features.get("completion_status"),
+                prediction
+            );
+            predictionRepository.save(record);
+
             return ResponseEntity.ok(Map.of(
                 "predicted_score", prediction,
-                "status", "success"
+                "status", "success",
+                "prediction_id", record.getId()
             ));
 
         } catch (Exception e) {
