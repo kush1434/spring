@@ -25,22 +25,17 @@ import org.springframework.security.web.header.writers.StaticHeadersWriter;
  *
  * another example is /mvc/person/create/** which i changed to permitAll() so anyone can make an account.
  * it doesn't make sense to have to login to make your account!
- * additionally, this file is important for security configuration, please do not remove it
  */
 
 
 @Configuration
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    
-    @Autowired
-    private JwtRequestFilter jwtRequestFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtRequestFilter jwtRequestFilter;
 
-    // Inject the RateLimitFilter for SecurityConfig
-    @Autowired
-    private RateLimitFilter rateLimitFilter;
+    // Inject the RateLimitFilter
+    private final RateLimitFilter rateLimitFilter;
 
     public SecurityConfig(JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
                           JwtRequestFilter jwtRequestFilter) {
