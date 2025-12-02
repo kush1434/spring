@@ -16,16 +16,36 @@ import org.springframework.security.web.header.writers.StaticHeadersWriter;
 
 /*
  * THIS FILE IS IMPORTANT
- *
- * you can configure which http requests need to be authenticated or not
- * for example, you can change the /authenticate to "authenticated()" or "permitAll()"
- * --> obviously, you want to set it to permitAll() so anyone can login. it doesn't make sense
- *     to have to login first before authenticating!
- *
- * another example is /mvc/person/create/** which i changed to permitAll() so anyone can make an account.
- * it doesn't make sense to have to login to make your account!
+ * 
+ * API Security Configuration
+ * 
+ * This file configures security for all API endpoints (/api/**) and the JWT authentication endpoint (/authenticate).
+ * It uses JWT token-based authentication with stateless sessions.
+ * 
+ * Key Configuration:
+ * - Order(1): This filter chain is processed FIRST before MvcSecurityConfig
+ * - Security Matcher: Only handles requests to /api/** and /authenticate
+ * - Authentication: Uses JWT tokens via JwtRequestFilter
+ * - CSRF: Disabled (standard for stateless JWT APIs)
+ * - CORS: Enabled with custom headers for cross-origin requests
+ * - Rate Limiting: Applied via RateLimitFilter to prevent abuse
+ * 
+ * Endpoint Access Levels:
+ * - permitAll(): Anyone can access (e.g., /authenticate, /api/person/create)
+ * - authenticated(): Requires valid JWT token (e.g., /api/people/**, /api/assets/**)
+ * - hasAuthority("ROLE_ADMIN"): Requires admin role (e.g., DELETE /api/person/**)
+ * - hasAnyAuthority(...): Requires one of the specified roles (e.g., /api/synergy/**)
+ * 
+ * IMPORTANT: 
+ * - Always set authentication endpoints to permitAll() so users can login without being logged in
+ * - Always set account creation endpoints to permitAll() so users can create accounts
+ * - For MVC endpoint security (form-based login), see MvcSecurityConfig.java
+ * 
+ * Filter Chain Order:
+ * 1. RateLimitFilter - Rate limiting
+ * 2. JwtRequestFilter - JWT token validation
+ * 3. Standard Spring Security filters
  */
-
 
 @Configuration
 public class SecurityConfig {

@@ -8,6 +8,27 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
+/*
+ * MvcSecurityConfig.java
+ * 
+ * MVC Security Configuration - handles web pages and form-based login
+ * 
+ * Key Points:
+ * - Order(2): Processed AFTER the API security chain (Order 1)
+ * - Matches: All requests not handled by API chain (/**)
+ * - Authentication: Traditional form login with sessions
+ * - Login: /login page, redirects to /mvc/person/read on success
+ * - Logout: Deletes session cookie, redirects to homepage
+ * 
+ * Access Levels:
+ * - permitAll(): /login, /mvc/person/create, /mvc/person/reset
+ * - authenticated(): Most /mvc/** endpoints
+ * - ROLE_ADMIN: /mvc/person/delete, /mvc/extract, /mvc/import
+ * - ROLE_TEACHER/STUDENT: /mvc/synergy/** endpoints
+ * 
+ * For API security (JWT-based), see SecurityConfig.java
+ */
+
 @Configuration
 public class MvcSecurityConfig {
 
