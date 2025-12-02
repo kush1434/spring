@@ -7,7 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Column;
 
-import com.open.spring.mvc.user.User;
+import com.open.spring.mvc.person.Person;
 
 import java.util.Date;
 
@@ -17,8 +17,8 @@ public class UserCertificate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(targetEntity = User.class, optional = false)
-    private User user;
+    @ManyToOne(targetEntity = Person.class, optional = false)
+    private Person person;
 
     @ManyToOne(targetEntity = Certificate.class, optional = false)
     private Certificate certificate;
@@ -29,9 +29,41 @@ public class UserCertificate {
     public UserCertificate() {
     }
 
-    public UserCertificate(User user, Certificate certificate, Date dateIssued) {
-        this.user = user;
+    public UserCertificate(Person person, Certificate certificate, Date dateIssued) {
+        this.person = person;
         this.certificate = certificate;
+        this.dateIssued = dateIssued;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Person getPerson() {
+        return person;
+    }
+
+    public void setPerson(Person person) {
+        this.person = person;
+    }
+
+    public Certificate getCertificate() {
+        return certificate;
+    }
+
+    public void setCertificate(Certificate certificate) {
+        this.certificate = certificate;
+    }
+
+    public Date getDateIssued() {
+        return dateIssued;
+    }
+
+    public void setDateIssued(Date dateIssued) {
         this.dateIssued = dateIssued;
     }
 }
