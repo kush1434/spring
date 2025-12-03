@@ -18,8 +18,8 @@ public class Grade {
     @Column(nullable = false)
     private Double score;
 
-    @Column(nullable = false)
-    private String gradeLevel;
+    // @Column(nullable = false)
+    // private String gradeLevel;
 
     public Grade() {}
 
@@ -27,7 +27,7 @@ public class Grade {
         this.studentId = studentId;
         this.subject = subject;
         this.score = score;
-        this.gradeLevel = gradeLevel;
+        // this.gradeLevel = gradeLevel;
     }
 
     public Long getId() { return id; }
@@ -42,8 +42,8 @@ public class Grade {
     public Double getScore() { return score; }
     public void setScore(Double score) { this.score = score; }
 
-    public String getGradeLevel() { return gradeLevel; }
-    public void setGradeLevel(String gradeLevel) { this.gradeLevel = gradeLevel; }
+    // public String getGradeLevel() { return gradeLevel; }
+    // public void setGradeLevel(String gradeLevel) { this.gradeLevel = gradeLevel; }
 }
 
 
