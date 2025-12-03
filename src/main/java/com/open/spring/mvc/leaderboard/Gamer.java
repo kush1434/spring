@@ -1,7 +1,5 @@
 package com.open.spring.mvc.leaderboard;
 
-import java.util.ArrayList;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,40 +24,22 @@ public class Gamer {
     @Column(nullable = false)
     private String password;
 
-    private String role = "PLAYER";
-    private boolean enabled = true;
+    private String role;
+    private boolean enabled;
     
     @Column(nullable = false)
-    private int highScore = 0;
+    private int highScore;
 
-    public Gamer(String username, String password, String role, boolean enabled, int highScore) {
-        this.username = username;
-        this.password = password;
-        this.role = role;
-        this.enabled = enabled;
-        this.highScore = highScore;
-    }
-
-    public static Gamer createPlayer(String username, String password, String role, boolean enabled, int highScore) {
-        Gamer player = new Gamer();
-        player.setUsername(username);
-        player.setPassword(password);
-        player.setRole(role);
-        player.setEnabled(enabled);
-        player.setHighScore(highScore);
-        return player;
-    }
-
-    public static Gamer[] init() {
-        ArrayList<Gamer> players = new ArrayList<>();
-        
-        players.add(createPlayer("Avika", "pass123", "PLAYER", true, 15000));
-        players.add(createPlayer("Soni", "pass456", "PLAYER", true, 28500));
-        players.add(createPlayer("Nora", "pass789", "PLAYER", true, 42000));
-        players.add(createPlayer("Gurshawn", "pass321", "PLAYER", true, 8500));
-        players.add(createPlayer("Xavier", "pass654", "PLAYER", true, 55000));
-        players.add(createPlayer("Spencer", "pass765", "PLAYER", true, 54000));
-
-        return players.toArray(new Gamer[0]);
+    // Starting players for initialization
+    public static String[] init() {
+        final String[] playersArray = {
+            "Avika",
+            "Soni", 
+            "Nora",
+            "Gurshawn",
+            "Xavier",
+            "Spencer"
+        };
+        return playersArray;
     }
 }

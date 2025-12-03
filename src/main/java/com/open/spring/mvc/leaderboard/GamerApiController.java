@@ -8,87 +8,115 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Controller;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Controller
-@RequestMapping("/gamer")
+@RestController // Changed from @Controller to @RestController
+@RequestMapping("/api/gamer") // Changed to /api/gamer to follow REST conventions
 public class GamerApiController {
-    @Autowired
-    private PlayerService playerService;
 
-    @PostMapping("/register")
-    @ResponseBody
-    public String registerPlayer(@RequestBody PlayerRegistrationRequest request) {
-        if (playerService.registerPlayer(request.getUsername(), request.getPassword()) != null) {
-            return "Player registered successfully!";
-        }
-        return "Registration failed!";
+    @Autowired
+    private GamerJpaRepository repository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    /* GET List of All Players
+     * @GetMapping annotation is used for mapping HTTP GET requests onto specific handler methods.
+     */
+    @GetMapping("/")
+    public ResponseEntity<List<Gamer>> getPlayers() {
+        return new ResponseEntity<>(repository.findAll(), HttpStatus.OK);
     }
 
+    /* POST Register New Player
+     */
+    @PostMapping("/register")
+    public ResponseEntity<String> registerPlayer(@RequestBody PlayerRegistrationRequest request) {
+        // Check if username already exists
+        Optional<Gamer> existingPlayer = repository.findByUsername(request.getUsername());
+        if (existingPlayer.isPresent()) {
+            return new ResponseEntity<>("Username already exists!", HttpStatus.BAD_REQUEST);
+        }
+
+        // Create new player
+        Gamer player = new Gamer();
+        player.setUsername(request.getUsername());
+        player.setPassword(passwordEncoder.encode(request.getPassword()));
+        player.setRole("PLAYER");
+        player.setEnabled(true);
+        player.setHighScore(0);
+        
+        repository.save(player);
+        return new ResponseEntity<>("Player registered successfully!", HttpStatus.OK);
+    }
+
+    /* POST Login Player
+     */
     @PostMapping("/login")
-    @ResponseBody
     public ResponseEntity<String> loginPlayer(@RequestBody PlayerLoginRequest request) {
         if (request.getPassword() == null || request.getPassword().isEmpty()) {
-            return ResponseEntity.badRequest().body("Password cannot be empty!");
+            return new ResponseEntity<>("Password cannot be empty!", HttpStatus.BAD_REQUEST);
         }
     
-        Optional<Gamer> playerOptional = playerService.findByUsername(request.getUsername());
+        Optional<Gamer> playerOptional = repository.findByUsername(request.getUsername());
         if (playerOptional.isPresent()) {
             Gamer player = playerOptional.get();
-            if (playerService.checkPassword(request.getPassword(), player.getPassword())) {
-                return ResponseEntity.ok("Redirecting to game");
+            if (passwordEncoder.matches(request.getPassword(), player.getPassword())) {
+                return new ResponseEntity<>("Login successful!", HttpStatus.OK);
             }
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password!");
+        return new ResponseEntity<>("Invalid username or password!", HttpStatus.UNAUTHORIZED);
     }
 
-    @PostMapping("/updateScore")
-    @ResponseBody
-    public ResponseEntity<String> updateScore(@RequestBody ScoreUpdateRequest request) {
-        try {
-            playerService.updateHighScore(request.getUsername(), request.getScore());
-            return ResponseEntity.ok("Score updated successfully!");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body("An error occurred: " + e.getMessage());
+    /* POST Update Player Score
+     * @PathVariable annotation can be used if you want to pass username in URL
+     */
+    @PostMapping("/score")
+    public ResponseEntity<Gamer> updateScore(@RequestBody ScoreUpdateRequest request) {
+        Optional<Gamer> optional = repository.findByUsername(request.getUsername());
+        if (optional.isPresent()) {
+            Gamer player = optional.get();
+            // Only update if the new score is higher than the current high score
+            if (request.getScore() > player.getHighScore()) {
+                player.setHighScore(request.getScore());
+                repository.save(player);
+            }
+            return new ResponseEntity<>(player, HttpStatus.OK);
         }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @GetMapping("/getScore")
-    @ResponseBody
-    public ResponseEntity<Integer> getScore(@RequestParam String username) {
-        try {
-            int highScore = playerService.getHighScore(username);
-            return ResponseEntity.ok(highScore);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                .body(null);
+    /* GET Player Score by Username
+     */
+    @GetMapping("/score/{username}")
+    public ResponseEntity<Integer> getScore(@PathVariable String username) {
+        Optional<Gamer> optional = repository.findByUsername(username);
+        if (optional.isPresent()) {
+            return new ResponseEntity<>(optional.get().getHighScore(), HttpStatus.OK);
         }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
+    /* GET Leaderboard - Top 10 Players
+     */
     @GetMapping("/leaderboard")
-    @ResponseBody
-    public List<LeaderboardEntry> getLeaderboard() {
-        return playerService.getTopPlayersByScore();
+    public ResponseEntity<List<LeaderboardEntry>> getLeaderboard() {
+        List<LeaderboardEntry> leaderboard = repository.findAll().stream()
+                .sorted(Comparator.comparingInt(Gamer::getHighScore).reversed())
+                .limit(10)
+                .map(player -> new LeaderboardEntry(player.getUsername(), player.getHighScore()))
+                .collect(Collectors.toList());
+        
+        return new ResponseEntity<>(leaderboard, HttpStatus.OK);
     }
 }
 
+// Request/Response DTOs
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -119,70 +147,4 @@ class PlayerLoginRequest {
 class ScoreUpdateRequest {
     private String username;
     private int score;
-}
-
-@Service
-class PlayerService implements UserDetailsService {
-    @Autowired
-    private GamerJpaRepository playerRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Override
-    public org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String username) 
-            throws UsernameNotFoundException {
-        Gamer player = playerRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Player not found"));
-
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + player.getRole()));
-
-        return org.springframework.security.core.userdetails.User
-                .withUsername(player.getUsername())
-                .password(player.getPassword())
-                .authorities(authorities)
-                .accountLocked(!player.isEnabled())
-                .build();
-    }
-
-    public Gamer registerPlayer(String username, String password) {
-        Gamer player = new Gamer();
-        player.setUsername(username);
-        player.setPassword(passwordEncoder.encode(password));
-        player.setHighScore(0);
-        return playerRepository.save(player);
-    }
-
-    public Optional<Gamer> findByUsername(String username) {
-        return playerRepository.findByUsername(username);
-    }
-
-    public boolean checkPassword(String rawPassword, String encodedPassword) {
-        return passwordEncoder.matches(rawPassword, encodedPassword);
-    }
-
-    public void updateHighScore(String username, int score) {
-        Gamer player = playerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Player not found"));
-
-        // Only update if the new score is higher than the current high score
-        if (score > player.getHighScore()) {
-            player.setHighScore(score);
-            playerRepository.save(player);
-        }
-    }
-
-    public int getHighScore(String username) {
-        Gamer player = playerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Player not found"));
-        return player.getHighScore();
-    }
-
-    public List<LeaderboardEntry> getTopPlayersByScore() {
-        return playerRepository.findAll().stream()
-                .sorted(Comparator.comparingInt(Gamer::getHighScore).reversed())
-                .limit(10)
-                .map(player -> new LeaderboardEntry(player.getUsername(), player.getHighScore()))
-                .collect(Collectors.toList());
-    }
 }
