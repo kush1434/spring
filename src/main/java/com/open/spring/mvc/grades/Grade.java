@@ -13,7 +13,7 @@ public class Grade {
     private String studentId;
 
     @Column(nullable = false)
-    private String subject;
+    private String assignment;
 
     @Column(nullable = false)
     private Double score;
@@ -24,9 +24,9 @@ public class Grade {
     public Grade() {
     }
 
-    public Grade(String studentId, String subject, Double score, String gradeLevel) {
+    public Grade(String studentId, String assignment, Double score, String gradeLevel) {
         this.studentId = studentId;
-        this.subject = subject;
+        this.assignment = assignment;
         this.score = score;
         // this.gradeLevel = gradeLevel;
     }
@@ -47,12 +47,12 @@ public class Grade {
         this.studentId = studentId;
     }
 
-    public String getSubject() {
-        return subject;
+    public String getAssignment() {
+        return assignment;
     }
 
-    public void setSubject(String subject) {
-        this.subject = subject;
+    public void setAssignment(String assignment) {
+        this.assignment = assignment;
     }
 
     public Double getScore() {
