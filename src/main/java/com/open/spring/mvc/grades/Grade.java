@@ -10,7 +10,7 @@ public class Grade {
     private Long id;
 
     @Column(nullable = false)
-    private String studentId;
+    private String uid;
 
     @Column(nullable = false)
     private String assignment;
@@ -28,8 +28,8 @@ public class Grade {
     public Grade() {
     }
 
-    public Grade(String studentId, String assignment, Double score, String course) {
-        this.studentId = studentId;
+    public Grade(String uid, String assignment, Double score, String course) {
+        this.uid = uid;
         this.assignment = assignment;
         this.score = score;
         this.course = course;
@@ -44,12 +44,12 @@ public class Grade {
         this.id = id;
     }
 
-    public String getStudentId() {
-        return studentId;
+    public String getUid() {
+        return uid;
     }
 
-    public void setStudentId(String studentId) {
-        this.studentId = studentId;
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     public String getAssignment() {
@@ -80,27 +80,4 @@ public class Grade {
     // public void setGradeLevel(String gradeLevel) { this.gradeLevel = gradeLevel;
     // }
 
-    /**
-     * Alias for studentId to explicitly indicate this is the GitHub ID (uid) from
-     * the Flask app.
-     */
-    public String getGithubId() {
-        return studentId;
-    }
-
-    public void setGithubId(String githubId) {
-        this.studentId = githubId;
-    }
-
-    /**
-     * Alias for course to match Flask's "classes" terminology (e.g., CSSE, CSA,
-     * CSP).
-     */
-    public String getClasses() {
-        return course;
-    }
-
-    public void setClasses(String classes) {
-        this.course = classes;
-    }
 }

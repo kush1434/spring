@@ -25,9 +25,9 @@ public class GradeController {
         return grade.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/student/{studentId}")
-    public List<Grade> getGradesByStudent(@PathVariable String studentId) {
-        return gradeRepository.findByStudentId(studentId);
+    @GetMapping("/student/{uid}")
+    public List<Grade> getGradesByStudent(@PathVariable String uid) {
+        return gradeRepository.findByUid(uid);
     }
 
     @GetMapping("/assignment/{assignment}")
@@ -45,7 +45,7 @@ public class GradeController {
         Optional<Grade> optionalGrade = gradeRepository.findById(id);
         if (optionalGrade.isPresent()) {
             Grade grade = optionalGrade.get();
-            grade.setStudentId(gradeDetails.getStudentId());
+            grade.setUid(gradeDetails.getUid());
             grade.setAssignment(gradeDetails.getAssignment());
             grade.setScore(gradeDetails.getScore());
             grade.setCourse(gradeDetails.getCourse());

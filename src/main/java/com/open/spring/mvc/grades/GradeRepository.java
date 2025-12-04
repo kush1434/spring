@@ -6,7 +6,7 @@ import java.util.List;
 
 @Repository
 public interface GradeRepository extends JpaRepository<Grade, Long> {
-    List<Grade> findByStudentId(String studentId);
+    List<Grade> findByUid(String uid);
 
     List<Grade> findByAssignment(String assignment);
 }
