@@ -21,10 +21,11 @@ public class Certificate {
     private Date dateCreated;
 
     public Certificate() {
+        this.dateCreated = new Date();
     }
 
-    public Certificate(String title, Date dateCreated) {
-        this.dateCreated = dateCreated;
+    public Certificate(String title) {
+        this.dateCreated = new Date();
         this.title = title;
     }
 

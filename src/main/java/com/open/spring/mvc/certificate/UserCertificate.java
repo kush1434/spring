@@ -1,15 +1,15 @@
 package com.open.spring.mvc.certificate;
 
+import java.util.Date;
+
+import com.open.spring.mvc.person.Person;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Column;
-
-import com.open.spring.mvc.person.Person;
-
-import java.util.Date;
 
 @Entity
 public class UserCertificate {
@@ -27,12 +27,13 @@ public class UserCertificate {
     private Date dateIssued;
 
     public UserCertificate() {
+        this.dateIssued = new Date();
     }
 
     public UserCertificate(Person person, Certificate certificate, Date dateIssued) {
         this.person = person;
         this.certificate = certificate;
-        this.dateIssued = dateIssued;
+        this.dateIssued = new Date();
     }
 
     public Long getId() {
