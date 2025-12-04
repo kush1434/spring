@@ -91,4 +91,16 @@ public class Grade {
     public void setGithubId(String githubId) {
         this.studentId = githubId;
     }
+
+    /**
+     * Alias for course to match Flask's "classes" terminology (e.g., CSSE, CSA,
+     * CSP).
+     */
+    public String getClasses() {
+        return course;
+    }
+
+    public void setClasses(String classes) {
+        this.course = classes;
+    }
 }

@@ -26,5 +26,11 @@ public class GradeTest {
         String course = "CSA";
         grade.setCourse(course);
         assertEquals(course, grade.getCourse(), "getCourse should return set course");
+
+        // Test classes alias
+        String classes = "CSSE";
+        grade.setClasses(classes);
+        assertEquals(classes, grade.getCourse(), "setClasses should update course");
+        assertEquals(classes, grade.getClasses(), "getClasses should return course");
     }
 }
