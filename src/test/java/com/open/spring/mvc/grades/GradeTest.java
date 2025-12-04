@@ -21,5 +21,10 @@ public class GradeTest {
         String newId = "gh_67890";
         grade.setStudentId(newId);
         assertEquals(newId, grade.getGithubId(), "Setting studentId should update getGithubId");
+
+        // Test course field
+        String course = "CSA";
+        grade.setCourse(course);
+        assertEquals(course, grade.getCourse(), "getCourse should return set course");
     }
 }

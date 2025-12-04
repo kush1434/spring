@@ -48,6 +48,7 @@ public class GradeController {
             grade.setStudentId(gradeDetails.getStudentId());
             grade.setAssignment(gradeDetails.getAssignment());
             grade.setScore(gradeDetails.getScore());
+            grade.setCourse(gradeDetails.getCourse());
             // grade.setGradeLevel(gradeDetails.getGradeLevel());
             return ResponseEntity.ok(gradeRepository.save(grade));
         }
