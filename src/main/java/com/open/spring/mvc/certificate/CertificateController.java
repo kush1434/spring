@@ -1,6 +1,5 @@
 package com.open.spring.mvc.certificate;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,7 +41,7 @@ public class CertificateController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        Certificate newCertificate = new Certificate(requestBodyCertificate.getTitle(), new Date());
+        Certificate newCertificate = new Certificate(requestBodyCertificate.getTitle());
         repository.save(newCertificate);
         return new ResponseEntity<>(newCertificate, HttpStatus.CREATED);
     }
