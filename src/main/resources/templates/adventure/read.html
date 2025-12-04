@@ -30,14 +30,7 @@
                         <th>Question Title</th>
                         <th>Category</th>
                         <th>Points</th>
-                        <th>Choice ID</th>
-                        <th>Choice Text</th>
-                        <th>Choice Correct</th>
-                        <th>Answer Correct</th>
-                        <th>Answer Content</th>
-                        <th>Chat Score</th>
-                        <th>Rubric RUID</th>
-                        <th>Rubric Criteria</th>
+                        <th>Details</th>
                         <th>Balance</th>
                         <th>Created At</th>
                         <th>Action</th>
@@ -53,14 +46,7 @@
                         <td class="wrap-cell" th:text="${adv.questionTitle}">questionTitle</td>
                         <td class="small-cell" th:text="${adv.questionCategory}">category</td>
                         <td class="small-cell" th:text="${adv.questionPoints}">points</td>
-                        <td class="small-cell" th:text="${adv.choiceId}">choiceId</td>
-                        <td class="wrap-cell" th:text="${adv.choiceText}">choiceText</td>
-                        <td class="small-cell" th:text="${adv.choiceIsCorrect}">choiceCorrect</td>
-                        <td class="small-cell" th:text="${adv.answerIsCorrect}">answerCorrect</td>
-                        <td class="wrap-cell" th:text="${adv.answerContent}">answerContent</td>
-                        <td class="small-cell" th:text="${adv.chatScore}">chatScore</td>
-                        <td class="small-cell" th:text="${adv.rubricRuid}">ruid</td>
-                        <td class="wrap-cell" th:text="${adv.rubricCriteria}">criteria</td>
+                        <td class="wrap-cell details-cell" th:text="${adv.details}">details</td>
                         <td class="small-cell" th:text="${adv.balance}">balance</td>
                         <td class="small-cell" th:text="${adv.createdAt}">createdAt</td>
                         <td>
@@ -99,6 +85,23 @@
                 })
                 .catch(e => alert('Export failed: ' + e));
         }
+    </script>
+    <script>
+        // Optionally format JSON strings in the Details column for readability.
+        document.addEventListener('DOMContentLoaded', function () {
+            const cells = document.querySelectorAll('.details-cell');
+            cells.forEach(cell => {
+                const raw = (cell.textContent || '').trim();
+                if (!raw) return;
+                try {
+                    const obj = JSON.parse(raw);
+                    // compact single-line JSON (like Games view) - keep short
+                    cell.textContent = JSON.stringify(obj);
+                } catch (e) {
+                    // keep raw text if not valid JSON
+                }
+            });
+        });
     </script>
 </th:block>
 

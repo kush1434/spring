@@ -140,6 +140,44 @@ public class ModelInit {
                                 }
                                 System.out.println("Seeded default Adventure rows via Adventure.init()");
                             }
+                            // Ensure 'details' column exists and migrate existing columns into JSON 'details'
+                            try {
+                                try {
+                                    st.execute("ALTER TABLE adventure ADD COLUMN details TEXT;");
+                                    System.out.println("Added 'details' column to 'adventure' table");
+                                } catch (SQLException ignore) {
+                                    // column may already exist; ignore
+                                }
+                                try {
+                                    // Migrate existing Adventure rows into details JSON if empty
+                                    Iterable<Adventure> all = adventureJpaRepository.findAll();
+                                    for (Adventure adv : all) {
+                                        if (adv.getDetails() == null || adv.getDetails().trim().isEmpty()) {
+                                            String choiceText = adv.getChoiceText();
+                                            String answerContent = adv.getAnswerContent();
+                                            String rubricCriteria = adv.getRubricCriteria();
+                                            String rubricRuid = adv.getRubricRuid();
+                                            StringBuilder sb = new StringBuilder();
+                                            sb.append('{');
+                                            sb.append("\"choiceId\":").append(adv.getChoiceId() == null ? "null" : adv.getChoiceId()).append(',');
+                                            sb.append("\"choiceText\":").append(choiceText == null ? "null" : ("\"" + choiceText.replace("\\", "\\\\").replace("\"", "\\\"") + "\"" )).append(',');
+                                            sb.append("\"choiceIsCorrect\":").append(adv.getChoiceIsCorrect() == null ? "null" : adv.getChoiceIsCorrect()).append(',');
+                                            sb.append("\"answerIsCorrect\":").append(adv.getAnswerIsCorrect() == null ? "null" : adv.getAnswerIsCorrect()).append(',');
+                                            sb.append("\"answerContent\":").append(answerContent == null ? "null" : ("\"" + answerContent.replace("\\", "\\\\").replace("\"", "\\\"") + "\"" )).append(',');
+                                            sb.append("\"chatScore\":").append(adv.getChatScore() == null ? "null" : adv.getChatScore()).append(',');
+                                            sb.append("\"rubricRuid\":").append(rubricRuid == null ? "null" : ("\"" + rubricRuid.replace("\\", "\\\\").replace("\"", "\\\"") + "\"" )).append(',');
+                                            sb.append("\"rubricCriteria\":").append(rubricCriteria == null ? "null" : ("\"" + rubricCriteria.replace("\\", "\\\\").replace("\"", "\\\"") + "\"" ));
+                                            sb.append('}');
+                                            adv.setDetails(sb.toString());
+                                            try { adventureJpaRepository.save(adv); } catch (Exception ignored) {}
+                                        }
+                                    }
+                                    System.out.println("Migrated Adventure rows into 'details' JSON where missing");
+                                } catch (Exception ignore) {
+                                }
+                            } catch (Throwable t) {
+                                // ignore migration failures
+                            }
                         } catch (Throwable t) {
                             // don't fail startup for seeding issues
                         }
