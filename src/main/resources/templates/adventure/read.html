@@ -15,11 +15,12 @@
 <th:block layout:fragment="title" th:remove="tag">Adventure List</th:block>
 
 <th:block layout:fragment="body" th:remove="tag">
-    <div class="container">
+    <div sec:authorize="hasRole('ROLE_ADMIN')">
+        <div class="container">
 
-        <h3>Adventure Viewer</h3>
+            <h3>Adventure Viewer</h3>
 
-        <div class="row align-items-md-stretch table-responsive">
+            <div class="row align-items-md-stretch table-responsive">
             <table id="adventureTable" class="table table-sm table-striped">
                 <thead>
                     <tr>
@@ -65,6 +66,9 @@
             <a class="btn btn-primary" th:href="@{/adventure/new}">Create New Adventure</a>
         </div>
 
+</div>
+    <div sec:authorize="!hasRole('ROLE_ADMIN')" class="container">
+        <div class="alert alert-danger">Access denied: administrators only.</div>
     </div>
 </th:block>
 

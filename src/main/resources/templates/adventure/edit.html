@@ -15,10 +15,11 @@
 </th:block>
 
 <th:block layout:fragment="body" th:remove="tag">
-    <div class="container">
-        <h3 th:text="${adv.id} == null ? 'Create Adventure' : 'Edit Adventure #' + ${adv.id}"></h3>
+    <div sec:authorize="hasRole('ROLE_ADMIN')">
+        <div class="container">
+            <h3 th:text="${adv.id} == null ? 'Create Adventure' : 'Edit Adventure #' + ${adv.id}"></h3>
 
-        <form th:action="@{/adventure/save}" method="post" th:object="${adv}" id="advForm">
+            <form th:action="@{/adventure/save}" method="post" th:object="${adv}" id="advForm">
             <input type="hidden" th:field="*{id}" />
 
             <div class="form-group">
@@ -65,8 +66,12 @@
                 <button class="btn btn-primary" type="submit">Save</button>
                 <a class="btn btn-secondary" th:href="@{/mvc/adventure/read}">Cancel</a>
             </div>
-        </form>
-        <!-- No special assembly script needed: textarea binds directly to Adventure.details. -->
+            </form>
+            <!-- No special assembly script needed: textarea binds directly to Adventure.details. -->
+        </div>
+    </div>
+    <div sec:authorize="!hasRole('ROLE_ADMIN')" class="container">
+        <div class="alert alert-danger">Access denied: administrators only.</div>
     </div>
 </th:block>
 

@@ -5,9 +5,10 @@
 <th:block layout:fragment="title" th:remove="tag">Game Edit</th:block>
 
 <th:block layout:fragment="body" th:remove="tag">
-    <div class="container">
-        <h3 th:text="${g.id} == null ? 'Create Game' : 'Edit Game #' + ${g.id}"></h3>
-        <form th:action="@{/game/save}" method="post" th:object="${g}">
+    <div sec:authorize="hasRole('ROLE_ADMIN')">
+        <div class="container">
+            <h3 th:text="${g.id} == null ? 'Create Game' : 'Edit Game #' + ${g.id}"></h3>
+            <form th:action="@{/game/save}" method="post" th:object="${g}">
             <input type="hidden" th:field="*{id}" />
             <div class="form-row">
                 <div class="form-group col-md-4">
@@ -53,7 +54,11 @@
                 <button class="btn btn-primary" type="submit">Save</button>
                 <a class="btn btn-secondary" th:href="@{/mvc/games/read}">Cancel</a>
             </div>
-        </form>
+            </form>
+        </div>
+    </div>
+    <div sec:authorize="!hasRole('ROLE_ADMIN')" class="container">
+        <div class="alert alert-danger">Access denied: administrators only.</div>
     </div>
 </th:block>
 
