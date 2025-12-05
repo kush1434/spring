@@ -12,12 +12,22 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Table(name = "players")
 public class Player {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String username;
+    private String uid;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = true)
+    private String pfp;
 
     @Column(nullable = false)
     private String status; // "online" or "offline"
@@ -28,27 +38,16 @@ public class Player {
     @Column(name = "connected_at")
     private LocalDateTime connectedAt;
 
+    private double x;
+    private double y;
+    private int level;
+
     // Constructor for quick creation
-    public Player(String username, String status) {
-        this.username = username;
+    public Player(String uid, String name, String status) {
+        this.uid = uid;
+        this.name = name;
         this.status = status;
         this.lastActive = LocalDateTime.now();
         this.connectedAt = LocalDateTime.now();
     }
-    // In Player.java
-
-private double x;
-private double y;
-private int level;
-
-// getters and setters
-public double getX() { return x; }
-public void setX(double x) { this.x = x; }
-
-public double getY() { return y; }
-public void setY(double y) { this.y = y; }
-
-public int getLevel() { return level; }
-public void setLevel(int level) { this.level = level; }
-
 }
