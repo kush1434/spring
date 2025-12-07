@@ -90,6 +90,13 @@ public class GroupsApiController {
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getAllGroups(@AuthenticationPrincipal UserDetails userDetails) {
+        // FIX: Check if userDetails is null (meaning no authenticated user)
+        if (userDetails == null) {
+            throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED, "You must be authenticated to access this resource"
+            );
+        }
+
         String uid = userDetails.getUsername();
         Person student = personRepository.findByUid(uid);
         if (student == null) {
