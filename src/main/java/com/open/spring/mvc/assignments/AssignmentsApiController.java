@@ -27,10 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.open.spring.mvc.groups.GroupsJpaRepository;
-import com.open.spring.mvc.groups.Submitter;
 import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonJpaRepository;
-import com.open.spring.mvc.person.PersonApiController.PersonDto;
 
 import jakarta.transaction.Transactional;
 import lombok.Getter;
@@ -76,7 +74,22 @@ public class AssignmentsApiController {
         }
     }
 
-    
+    @Getter
+    @Setter
+    public static class GraderAssignmentCardDto {
+        public Long id;
+        public String name;
+        public String description;
+        public String type;
+        public Double points;
+        public String dueDate;
+
+        public long pendingSubmissions;
+        public long gradedSubmissions;
+        public boolean signedUp;
+    }
+
+
     @Getter
     @Setter
     public static class PersonSubmissionDto {
@@ -454,6 +467,62 @@ public class AssignmentsApiController {
         return ResponseEntity.ok("You have successfully signed up for the team teach assignment");        
     }
 
+        /**
+     * Logged-in user signs up as a grader for an assignment.
+     * Works for any assignment type (not just teamteach).
+     */
+    @PostMapping("/grader/signup/{id}")
+    @Transactional
+    public ResponseEntity<?> signupAsGrader(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id) {
+
+        if (userDetails == null) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("You must be a logged in user to do this");
+        }
+
+        String uid = userDetails.getUsername();
+        Person user = personRepo.findByUid(uid);
+        if (user == null) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("You must be a logged in user to do this");
+        }
+
+        Optional<Assignment> assignmentOptional = assignmentRepo.findById(id);
+        if (assignmentOptional.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Assignment not found");
+        }
+
+        Assignment assignment = assignmentOptional.get();
+
+        // Initialize list if null
+        if (assignment.getAssignedGraders() == null) {
+            assignment.setAssignedGraders(new ArrayList<>());
+        }
+
+        // Already signed up?
+        boolean alreadyAssigned = assignment.getAssignedGraders()
+                .stream()
+                .anyMatch(grader -> grader.getId().equals(user.getId()));
+
+        if (alreadyAssigned) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("You are already signed up to grade this assignment");
+        }
+
+        assignment.getAssignedGraders().add(user);
+        assignmentRepo.save(assignment);
+
+        return ResponseEntity.ok("Signed up as grader successfully");
+    }
+
+
     /**
      * A GET endpoint to retrieve the assigned graders for an assignment.
      * @param id The ID of the assignment.
@@ -669,4 +738,73 @@ public class AssignmentsApiController {
         AssignmentDto assignmentDto = new AssignmentDto(assignment);
         return new ResponseEntity<>(assignmentDto, HttpStatus.OK);
     }
+
+        @GetMapping("/grader/dashboard")
+    public ResponseEntity<?> getGraderDashboard(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("You must be a logged in user to do this");
+        }
+
+        String uid = userDetails.getUsername();
+        Person user = personRepo.findByUid(uid);
+        if (user == null) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("You must be a logged in user to do this");
+        }
+
+        // You can change this to assignmentRepo.findByAssignedGraders(user)
+        // if you ONLY want assignments they’re signed up for.
+        List<Assignment> allAssignments = assignmentRepo.findAll();
+        List<GraderAssignmentCardDto> cards = new ArrayList<>();
+
+        for (Assignment assignment : allAssignments) {
+
+            boolean signedUp = assignment.getAssignedGraders() != null
+                    && assignment.getAssignedGraders().contains(user);
+
+            // Only show cards the grader is signed up for
+            if (!signedUp) {
+                continue;
+            }
+
+            List<AssignmentSubmission> submissions =
+                    submissionRepo.findByAssignmentId(assignment.getId());
+
+            // Only submissions assigned to THIS grader
+            List<AssignmentSubmission> mySubs = submissions.stream()
+                    .filter(sub -> sub.getAssignedGraders() != null
+                            && sub.getAssignedGraders().contains(user))
+                    .collect(Collectors.toList());
+
+            long pending = mySubs.stream()
+                    .filter(sub -> sub.getGrade() == null)
+                    .count();
+
+            long graded = mySubs.stream()
+                    .filter(sub -> sub.getGrade() != null)
+                    .count();
+
+            GraderAssignmentCardDto dto = new GraderAssignmentCardDto();
+            dto.id = assignment.getId();
+            dto.name = assignment.getName();
+            dto.description = assignment.getDescription();
+            dto.type = assignment.getType();
+            dto.points = assignment.getPoints();
+            dto.dueDate = assignment.getDueDate();
+            dto.pendingSubmissions = pending;
+            dto.gradedSubmissions = graded;
+            dto.signedUp = signedUp;
+
+            cards.add(dto);
+        }
+
+        return ResponseEntity.ok(cards);
+    }
+
 }
+
