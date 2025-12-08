@@ -18,16 +18,7 @@ public class Player {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String uid;
-
-    @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false)
-    private String email;
-
-    @Column(nullable = true)
-    private String pfp;
+    private String uid;  // username
 
     @Column(nullable = false)
     private String status; // "online" or "offline"
@@ -42,12 +33,12 @@ public class Player {
     private double y;
     private int level;
 
-    // Constructor for quick creation
-    public Player(String uid, String name, String status) {
+    // Constructor
+    public Player(String uid, String status) {
         this.uid = uid;
-        this.name = name;
         this.status = status;
         this.lastActive = LocalDateTime.now();
         this.connectedAt = LocalDateTime.now();
     }
 }
+

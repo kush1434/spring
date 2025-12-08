@@ -35,11 +35,8 @@ public class PlayerController {
         Player player = playerRepository.findByUid(person.getUid())
             .orElse(new Player());
         
-        // Update or create player with person data
+        // Update or create player with just username
         player.setUid(person.getUid());
-        player.setName(person.getName());
-        player.setEmail(person.getEmail());
-        player.setPfp(person.getPfp());
         player.setStatus("online");
         player.setLastActive(LocalDateTime.now());
         if (player.getConnectedAt() == null) {
@@ -55,16 +52,13 @@ public class PlayerController {
         
         Person person = personRepository.findByUid(uid);
         if (person == null) {
-            throw new RuntimeException("User not found in PersonJpaRepository");
+            throw new RuntimeException("User not found");
         }
         
         Player player = playerRepository.findByUid(uid)
             .orElse(new Player());
         
         player.setUid(uid);
-        player.setName(person.getName());
-        player.setEmail(person.getEmail());
-        player.setPfp(person.getPfp());
         player.setStatus("online");
         player.setLastActive(LocalDateTime.now());
         if (player.getConnectedAt() == null) {
@@ -141,11 +135,11 @@ public class PlayerController {
 
         return Map.of("players", players.stream().map(p -> Map.of(
                 "uid", p.getUid(),
-                "name", p.getName(),
                 "x", p.getX(),
                 "y", p.getY(),
                 "level", p.getLevel()
         )).toList());
     }
 }
+
 
