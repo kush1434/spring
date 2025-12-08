@@ -1,5 +1,7 @@
 package com.open.spring.mvc.academicProgress;
 
+import java.io.File;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +17,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -55,6 +60,8 @@ public class AcademicProgressController {
         private Integer attendance;
     }
 
+    private ObjectMapper objectMapper = new ObjectMapper();
+
     @GetMapping("/train")
     public ResponseEntity<?> train() {
         try {
@@ -72,25 +79,48 @@ public class AcademicProgressController {
             jdbcTemplate.execute(sql);
 
             String csvPath = "src/main/java/com/open/spring/mvc/academicProgress/fake-records-new.csv";
+            String jsonPath = "src/main/java/com/open/spring/mvc/academicProgress/fake-records-new.json";
+            File jsonFile = new File(jsonPath);
+            JsonNode rootNodeFromFile = objectMapper.readTree(jsonFile);
+
+            PrintStream fileStream = new PrintStream("output.txt");
+            System.setOut(fileStream);
+            System.out.println("JSON Data Sample: " + rootNodeFromFile.toString());
+            
             
             DataFrame data = Read.csv(csvPath, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
             if (repository.count() == 0) {
                 List<AcademicProgress> records = new ArrayList<>();
-                for (int i = 0; i < data.nrows(); i++) {
-                    Tuple row = data.get(i);
+
+                for (int i = 0; i < rootNodeFromFile.size(); i++) {
+                    JsonNode node = rootNodeFromFile.get(i);
                     AcademicProgress ap = new AcademicProgress();
-                    ap.setStudentId(getSafeLong(row, "student_id"));
-                    ap.setAssignmentCompletionRate(getSafeDouble(row, "assignment_completion_rate"));
-                    ap.setAverageAssignmentScore(getSafeDouble(row, "average_assignment_score"));
-                    ap.setCollegeboardQuizAverage(getSafeDouble(row, "collegeboard_quiz_average"));
-                    ap.setOfficeHoursVisits(getSafeInt(row, "office_hours_visits"));
-                    ap.setConduct(getSafeInt(row, "conduct"));
-                    ap.setWorkHabit(getSafeInt(row, "work_habit"));
-                    ap.setGithubContributions(getSafeInt(row, "github_contributions"));
-                    ap.setFinalGrade(getSafeInt(row, "final_grade"));
+                    ap.setStudentId(node.get("student_id").asLong());
+                    ap.setAssignmentCompletionRate(node.get("assignment_completion_rate").asDouble());
+                    ap.setAverageAssignmentScore(node.get("average_assignment_score").asDouble());
+                    ap.setCollegeboardQuizAverage(node.get("collegeboard_quiz_average").asDouble());
+                    ap.setOfficeHoursVisits(node.get("office_hours_visits").asInt());
+                    ap.setConduct(node.get("conduct").asInt());
+                    ap.setWorkHabit(node.get("work_habit").asInt());
+                    ap.setGithubContributions(node.get("github_contributions").asInt());
+                    ap.setFinalGrade(node.get("final_grade").asInt());
                     records.add(ap);
                 }
+                // for (int i = 0; i < data.nrows(); i++) {
+                //     Tuple row = data.get(i);
+                //     AcademicProgress ap = new AcademicProgress();
+                //     ap.setStudentId(getSafeLong(row, "student_id"));
+                //     ap.setAssignmentCompletionRate(getSafeDouble(row, "assignment_completion_rate"));
+                //     ap.setAverageAssignmentScore(getSafeDouble(row, "average_assignment_score"));
+                //     ap.setCollegeboardQuizAverage(getSafeDouble(row, "collegeboard_quiz_average"));
+                //     ap.setOfficeHoursVisits(getSafeInt(row, "office_hours_visits"));
+                //     ap.setConduct(getSafeInt(row, "conduct"));
+                //     ap.setWorkHabit(getSafeInt(row, "work_habit"));
+                //     ap.setGithubContributions(getSafeInt(row, "github_contributions"));
+                //     ap.setFinalGrade(getSafeInt(row, "final_grade"));
+                //     records.add(ap);
+                // }
                 repository.saveAll(records);
             }
 
