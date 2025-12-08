@@ -57,7 +57,7 @@ import lombok.NonNull;
  * --- @Entity annotation is used to mark the class as a persistent Java class.
  */
 @Data
-@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -488,11 +488,5 @@ public class Person extends Submitter implements Comparable<Person> {
             all.addAll(group.getSubmissions());
         }
         return all;
-    }
-
-    @Override
-    @EqualsAndHashCode.Include
-    public Long getId() {
-        return super.getId();
     }
 }

@@ -89,10 +89,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/plant/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/plant/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/groups/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/groups/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/groups/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/groups/**").permitAll()
-
 
                         .requestMatchers(HttpMethod.GET, "/api/academic-progress/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/academic-progress/**").permitAll()

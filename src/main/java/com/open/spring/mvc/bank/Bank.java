@@ -17,8 +17,6 @@ import org.hibernate.type.SqlTypes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.open.spring.mvc.person.Person;
 
-import lombok.EqualsAndHashCode;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -37,12 +35,10 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Bank {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @EqualsAndHashCode.Include
     private Long id;
 
     private String uid;
