@@ -118,7 +118,13 @@ public class GroupsApiController {
             // Extract basic info from each person to avoid serialization issues
             List<Map<String, Object>> membersList = new ArrayList<>();
             for (Person person : group.getGroupMembers()) {
-                membersList.add(getPersonBasicInfo(person));
+                if (person != null) {
+                    try {
+                        membersList.add(getPersonBasicInfo(person));
+                    } catch (Exception e) {
+                        System.err.println("Warning: Could not get basic info for person in group " + group.getId() + ": " + e.getMessage());
+                    }
+                }
             }
            
             groupMap.put("members", membersList);
@@ -135,19 +141,24 @@ public class GroupsApiController {
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> getGroupById(@PathVariable Long id) {
-        Optional<Groups> optionalGroup = groupsRepository.findById(id);
-        if (optionalGroup.isPresent()) {
-            Groups group = optionalGroup.get();
-           
-            Map<String, Object> groupMap = new HashMap<>();
-            groupMap.put("id", group.getId());
-           
-            // Extract basic info from each person to avoid serialization issues
-            List<Map<String, Object>> membersList = new ArrayList<>();
-            for (Person person : group.getGroupMembers()) {
-                membersList.add(getPersonBasicInfo(person));
-            }
-           
+                    Optional<Groups> optionalGroup = groupsRepository.findById(id);
+                    if (optionalGroup.isPresent()) {
+                        Groups group = optionalGroup.get();
+                       
+                        Map<String, Object> groupMap = new HashMap<>();
+                        groupMap.put("id", group.getId());
+                       
+                        // Extract basic info from each person to avoid serialization issues
+                        List<Map<String, Object>> membersList = new ArrayList<>();
+                        for (Person person : group.getGroupMembers()) {
+                            if (person != null) {
+                                try {
+                                    membersList.add(getPersonBasicInfo(person));
+                                } catch (Exception e) {
+                                    System.err.println("Warning: Could not get basic info for person in group " + group.getId() + ": " + e.getMessage());
+                                }
+                            }
+                        }           
             groupMap.put("members", membersList);
            
             return new ResponseEntity<>(groupMap, HttpStatus.OK);
@@ -197,7 +208,13 @@ public ResponseEntity<Object> createGroup(@RequestBody GroupDto groupDto) {
 
         List<Map<String, Object>> membersList = new ArrayList<>();
         for (Person person : finalGroup.getGroupMembers()) {
-            membersList.add(getPersonBasicInfo(person));
+            if (person != null) {
+                try {
+                    membersList.add(getPersonBasicInfo(person));
+                } catch (Exception e) {
+                    System.err.println("Warning: Could not get basic info for person in group " + finalGroup.getId() + ": " + e.getMessage());
+                }
+            }
         }
         response.put("members", membersList);
 
@@ -306,7 +323,13 @@ public ResponseEntity<Object> bulkCreateGroups(@RequestBody List<GroupDto> group
             // Extract basic info for each member
             List<Map<String, Object>> membersList = new ArrayList<>();
             for (Person person : group.getGroupMembers()) {
-                membersList.add(getPersonBasicInfo(person));
+                if (person != null) {
+                    try {
+                        membersList.add(getPersonBasicInfo(person));
+                    } catch (Exception e) {
+                        System.err.println("Warning: Could not get basic info for person in group " + group.getId() + ": " + e.getMessage());
+                    }
+                }
             }
             groupMap.put("members", membersList);
            
@@ -349,7 +372,13 @@ public ResponseEntity<Object> bulkCreateGroups(@RequestBody List<GroupDto> group
            
             List<Map<String, Object>> membersList = new ArrayList<>();
             for (Person person : updatedGroup.getGroupMembers()) {
-                membersList.add(getPersonBasicInfo(person));
+                if (person != null) {
+                    try {
+                        membersList.add(getPersonBasicInfo(person));
+                    } catch (Exception e) {
+                        System.err.println("Warning: Could not get basic info for person in group " + updatedGroup.getId() + ": " + e.getMessage());
+                    }
+                }
             }
            
             response.put("members", membersList);
@@ -403,7 +432,13 @@ public ResponseEntity<Object> bulkCreateGroups(@RequestBody List<GroupDto> group
                
                 List<Map<String, Object>> membersList = new ArrayList<>();
                 for (Person person : savedGroup.getGroupMembers()) {
-                    membersList.add(getPersonBasicInfo(person));
+                    if (person != null) {
+                        try {
+                            membersList.add(getPersonBasicInfo(person));
+                        } catch (Exception e) {
+                            System.err.println("Warning: Could not get basic info for person in group " + savedGroup.getId() + ": " + e.getMessage());
+                        }
+                    }
                 }
                
                 response.put("members", membersList);
@@ -415,7 +450,13 @@ public ResponseEntity<Object> bulkCreateGroups(@RequestBody List<GroupDto> group
                
                 List<Map<String, Object>> membersList = new ArrayList<>();
                 for (Person person : group.getGroupMembers()) {
-                    membersList.add(getPersonBasicInfo(person));
+                    if (person != null) {
+                        try {
+                            membersList.add(getPersonBasicInfo(person));
+                        } catch (Exception e) {
+                            System.err.println("Warning: Could not get basic info for person in group " + group.getId() + ": " + e.getMessage());
+                        }
+                    }
                 }
                
                 response.put("members", membersList);
@@ -484,7 +525,13 @@ public ResponseEntity<Object> bulkCreateGroups(@RequestBody List<GroupDto> group
            
             List<Map<String, Object>> membersList = new ArrayList<>();
             for (Person person : updatedGroup.getGroupMembers()) {
-                membersList.add(getPersonBasicInfo(person));
+                if (person != null) {
+                    try {
+                        membersList.add(getPersonBasicInfo(person));
+                    } catch (Exception e) {
+                        System.err.println("Warning: Could not get basic info for person in group " + updatedGroup.getId() + ": " + e.getMessage());
+                    }
+                }
             }
             response.put("members", membersList);
            
@@ -510,7 +557,13 @@ public ResponseEntity<Object> bulkCreateGroups(@RequestBody List<GroupDto> group
             // Extract basic info from each person to avoid serialization issues
             List<Map<String, Object>> membersList = new ArrayList<>();
             for (Person person : group.getGroupMembers()) {
-                membersList.add(getPersonBasicInfo(person));
+                if (person != null) {
+                    try {
+                        membersList.add(getPersonBasicInfo(person));
+                    } catch (Exception e) {
+                        System.err.println("Warning: Could not get basic info for person in group " + group.getId() + ": " + e.getMessage());
+                    }
+                }
             }
            
             groupMap.put("members", membersList);

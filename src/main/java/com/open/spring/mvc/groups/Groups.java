@@ -24,6 +24,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
 @Entity
 @EqualsAndHashCode(callSuper = true)
 @Table(name = "groups")
@@ -36,6 +39,7 @@ public class Groups extends Submitter {
         joinColumns = @JoinColumn(name = "group_id"), 
         inverseJoinColumns = @JoinColumn(name = "person_id")
     )
+    @NotFound(action = NotFoundAction.IGNORE)
     @JsonManagedReference
     @JsonIgnore
     private List<Person> groupMembers = new ArrayList<>();
