@@ -1,14 +1,15 @@
 package com.open.spring.mvc.academicProgress;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.csv.CSVFormat;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -29,7 +30,7 @@ import smile.data.Tuple;
 import smile.data.formula.Formula;
 import smile.data.vector.BaseVector;
 import smile.data.vector.DoubleVector;
-import smile.io.Read;
+import smile.data.vector.IntVector;
 import smile.regression.RandomForest;
 
 @RestController
@@ -46,8 +47,7 @@ public class AcademicProgressController {
     private JdbcTemplate jdbcTemplate;
 
     private RandomForest model;
-    private Map<String, Map<String, Integer>> encoders;
-
+    private HashMap<Object, Object> encoders;
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -78,55 +78,74 @@ public class AcademicProgressController {
                          "final_grade INTEGER)";
             jdbcTemplate.execute(sql);
 
-            String csvPath = "src/main/java/com/open/spring/mvc/academicProgress/fake-records-new.csv";
             String jsonPath = "src/main/java/com/open/spring/mvc/academicProgress/fake-records-new.json";
             File jsonFile = new File(jsonPath);
             JsonNode rootNodeFromFile = objectMapper.readTree(jsonFile);
-
-            PrintStream fileStream = new PrintStream("output.txt");
-            System.setOut(fileStream);
-            System.out.println("JSON Data Sample: " + rootNodeFromFile.toString());
             
-            
-            DataFrame data = Read.csv(csvPath, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+            int n = rootNodeFromFile.size();
+            double[] assignmentCompletionRate = new double[n];
+            double[] averageAssignmentScore = new double[n];
+            double[] collegeboardQuizAverage = new double[n];
+            int[] officeHoursVisits = new int[n];
+            int[] conduct = new int[n];
+            int[] workHabit = new int[n];
+            int[] githubContributions = new int[n];
+            int[] finalGrade = new int[n];
 
-            if (repository.count() == 0) {
-                List<AcademicProgress> records = new ArrayList<>();
+            List<AcademicProgress> records = new ArrayList<>();
+            boolean saveToDb = repository.count() == 0;
 
-                for (int i = 0; i < rootNodeFromFile.size(); i++) {
-                    JsonNode node = rootNodeFromFile.get(i);
+            for (int i = 0; i < n; i++) {
+                JsonNode node = rootNodeFromFile.get(i);
+                
+                assignmentCompletionRate[i] = node.path("assignment_completion_rate").asDouble();
+                averageAssignmentScore[i] = node.path("average_assignment_score").asDouble();
+                collegeboardQuizAverage[i] = node.path("collegeboard_quiz_average").asDouble();
+                officeHoursVisits[i] = node.path("office_hours_visits").asInt();
+                conduct[i] = node.path("conduct").asInt();
+                workHabit[i] = node.path("work_habit").asInt();
+                githubContributions[i] = node.path("github_contributions").asInt();
+                finalGrade[i] = node.path("final_grade").asInt();
+
+                if (saveToDb) {
                     AcademicProgress ap = new AcademicProgress();
-                    ap.setStudentId(node.get("student_id").asLong());
-                    ap.setAssignmentCompletionRate(node.get("assignment_completion_rate").asDouble());
-                    ap.setAverageAssignmentScore(node.get("average_assignment_score").asDouble());
-                    ap.setCollegeboardQuizAverage(node.get("collegeboard_quiz_average").asDouble());
-                    ap.setOfficeHoursVisits(node.get("office_hours_visits").asInt());
-                    ap.setConduct(node.get("conduct").asInt());
-                    ap.setWorkHabit(node.get("work_habit").asInt());
-                    ap.setGithubContributions(node.get("github_contributions").asInt());
-                    ap.setFinalGrade(node.get("final_grade").asInt());
+                    ap.setStudentId(node.path("student_id").asLong());
+                    ap.setAssignmentCompletionRate(assignmentCompletionRate[i]);
+                    ap.setAverageAssignmentScore(averageAssignmentScore[i]);
+                    ap.setCollegeboardQuizAverage(collegeboardQuizAverage[i]);
+                    ap.setOfficeHoursVisits(officeHoursVisits[i]);
+                    ap.setConduct(conduct[i]);
+                    ap.setWorkHabit(workHabit[i]);
+                    ap.setGithubContributions(githubContributions[i]);
+                    ap.setFinalGrade(finalGrade[i]);
                     records.add(ap);
                 }
-                // for (int i = 0; i < data.nrows(); i++) {
-                //     Tuple row = data.get(i);
-                //     AcademicProgress ap = new AcademicProgress();
-                //     ap.setStudentId(getSafeLong(row, "student_id"));
-                //     ap.setAssignmentCompletionRate(getSafeDouble(row, "assignment_completion_rate"));
-                //     ap.setAverageAssignmentScore(getSafeDouble(row, "average_assignment_score"));
-                //     ap.setCollegeboardQuizAverage(getSafeDouble(row, "collegeboard_quiz_average"));
-                //     ap.setOfficeHoursVisits(getSafeInt(row, "office_hours_visits"));
-                //     ap.setConduct(getSafeInt(row, "conduct"));
-                //     ap.setWorkHabit(getSafeInt(row, "work_habit"));
-                //     ap.setGithubContributions(getSafeInt(row, "github_contributions"));
-                //     ap.setFinalGrade(getSafeInt(row, "final_grade"));
-                //     records.add(ap);
-                // }
+            }
+            
+            if (saveToDb) {
                 repository.saveAll(records);
             }
 
+            DataFrame data = DataFrame.of(
+                DoubleVector.of("assignment_completion_rate", assignmentCompletionRate),
+                DoubleVector.of("average_assignment_score", averageAssignmentScore),
+                DoubleVector.of("collegeboard_quiz_average", collegeboardQuizAverage),
+                IntVector.of("office_hours_visits", officeHoursVisits),
+                IntVector.of("conduct", conduct),
+                IntVector.of("work_habit", workHabit),
+                IntVector.of("github_contributions", githubContributions),
+                IntVector.of("final_grade", finalGrade)
+            );
+
+            System.out.println("DataFrame BEFORE:");
+            System.out.println(data.toString());
             data = data.select("final_grade", "assignment_completion_rate", "average_assignment_score", 
                              "collegeboard_quiz_average", "office_hours_visits", "conduct", 
                              "work_habit", "github_contributions");
+
+
+            System.out.println("DataFrame AFTER:");
+            System.out.println(data.toString());
 
             this.encoders = new HashMap<>();
 
@@ -141,35 +160,10 @@ public class AcademicProgressController {
                 "model_type", "RandomForest Regression"
             ));
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException | DataAccessException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Training failed: " + e.getMessage()));
         }
-    }
-
-    private Integer getSafeInt(Tuple row, String field) {
-        Object val = row.getAs(field);
-        if (val instanceof Number) {
-            return ((Number) val).intValue();
-        }
-        return 0;
-    }
-
-    private Double getSafeDouble(Tuple row, String field) {
-        Object val = row.getAs(field);
-        if (val instanceof Number) {
-            return ((Number) val).doubleValue();
-        }
-        return 0.0;
-    }
-
-    private Long getSafeLong(Tuple row, String field) {
-        Object val = row.getAs(field);
-        if (val instanceof Number) {
-            return ((Number) val).longValue();
-        }
-        return 0L;
     }
 
     @PostMapping("/predict")
@@ -207,7 +201,7 @@ public class AcademicProgressController {
                 vectors.add(DoubleVector.of(col, new double[]{ val.doubleValue() }));
             }
 
-            DataFrame singleRow = DataFrame.of(vectors.toArray(new BaseVector[0]));
+            DataFrame singleRow = DataFrame.of(vectors.toArray(BaseVector[]::new));
             Tuple instance = singleRow.stream().findFirst().orElseThrow();
 
             double prediction = model.predict(instance);
@@ -230,8 +224,7 @@ public class AcademicProgressController {
                 "prediction_id", record.getId()
             ));
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (DataAccessException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Prediction failed: " + e.getMessage()));
         }

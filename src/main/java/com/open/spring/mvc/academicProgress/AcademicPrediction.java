@@ -1,5 +1,7 @@
 package com.open.spring.mvc.academicProgress;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,18 +14,26 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AcademicPrediction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonProperty("assignment_completion_rate")
     private Double assignmentCompletionRate;
+    @JsonProperty("average_assignment_score")
     private Double averageAssignmentScore;
+    @JsonProperty("collegeboard_quiz_average")
     private Double collegeboardQuizAverage;
+    @JsonProperty("office_hours_visits")
     private Integer officeHoursVisits;
     private Integer conduct;
+    @JsonProperty("work_habit")
     private Integer workHabit;
+    @JsonProperty("github_contributions")
     private Integer githubContributions;
+    @JsonProperty("final_grade")
     private Double predictedScore;
     private Long createdAt;
 
