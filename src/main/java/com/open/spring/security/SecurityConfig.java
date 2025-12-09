@@ -9,10 +9,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
-/*
-* To enable HTTP Security in Spring
-*/
-
 
 /*
  * THIS FILE IS IMPORTANT
@@ -92,6 +88,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/plant/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/plant/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/plant/**").permitAll()
+                        
+                        .requestMatchers(HttpMethod.GET, "/api/groups/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/groups/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/groups/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/groups/**").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/academic-progress/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/academic-progress/**").permitAll()
                        
                         .requestMatchers("/api/grades/**").permitAll()
                         .requestMatchers("/api/progress/**").permitAll()
@@ -99,9 +103,8 @@ public class SecurityConfig {
                        
                         .requestMatchers(HttpMethod.POST, "/api/synergy/grades/requests").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/synergy/**").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
-                       
-                       
                         .requestMatchers(HttpMethod.DELETE, "/api/synergy/saigai/").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
+                       
                         .requestMatchers(HttpMethod.POST, "/api/calendar/add").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/calendar/add_event").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/calendar/edit/{id}").permitAll()
