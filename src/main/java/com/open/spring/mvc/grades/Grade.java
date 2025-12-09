@@ -27,8 +27,13 @@ public class Grade {
     @com.fasterxml.jackson.annotation.JsonProperty("class")
     private String course;
 
-    // @Column(nullable = false)
-    // private String gradeLevel;
+    @Column(nullable = false)
+    private String gradeLevel;
+
+
+    @Column(nullable = true)
+    private String submission;
+
 
     public Grade() {
     }
@@ -81,8 +86,17 @@ public class Grade {
         this.course = course;
     }
 
-    // public String getGradeLevel() { return gradeLevel; }
-    // public void setGradeLevel(String gradeLevel) { this.gradeLevel = gradeLevel;
-    // }
+    public String getGradeLevel() { return gradeLevel; }
+    public void setGradeLevel(String gradeLevel) { this.gradeLevel = gradeLevel;
+    }
+
+    public String getSubmission() {
+        return submission;
+    }
+
+    public void setSubmission(String submission) {
+        this.submission = submission;
+    }
+
 
 }
