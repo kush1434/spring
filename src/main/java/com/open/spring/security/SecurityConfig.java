@@ -93,6 +93,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/plant/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/plant/**").permitAll()
                        
+                        .requestMatchers("/api/grades/**").permitAll()
+                        .requestMatchers("/api/progress/**").permitAll()
+                        .requestMatchers("/api/assignments/**").permitAll()
+                       
                         .requestMatchers(HttpMethod.POST, "/api/synergy/grades/requests").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/synergy/**").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
                        
@@ -115,7 +119,7 @@ public class SecurityConfig {
                                 "Authorization", "x-csrf-token"))
                         .addHeaderWriter(new StaticHeadersWriter("Access-Control-Allow-MaxAge", "600"))
                         .addHeaderWriter(new StaticHeadersWriter("Access-Control-Allow-Methods", "POST", "GET",
-                                "DELETE", "OPTIONS", "HEAD")))
+                                "PUT", "DELETE", "OPTIONS", "HEAD")))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint))
 

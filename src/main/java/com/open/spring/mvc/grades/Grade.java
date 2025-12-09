@@ -34,11 +34,12 @@ public class Grade {
     public Grade() {
     }
 
-    public Grade(String uid, String assignment, Double score, String course) {
+    public Grade(String uid, String assignment, Double score, String course, String submission) {
         this.uid = uid;
         this.assignment = assignment;
         this.score = score;
         this.course = course;
+        this.submission = submission;
         // this.gradeLevel = gradeLevel;
     }
 

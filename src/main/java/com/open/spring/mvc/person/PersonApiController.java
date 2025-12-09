@@ -374,7 +374,7 @@ public class PersonApiController {
 
 
     @CrossOrigin(origins = {"*"})
-    @GetMapping("/{sid}")
+    @GetMapping("/person/sid/{sid}")
     public ResponseEntity<String> getNameById(@PathVariable String sid)
     {
         Person person = repository.findBySid(sid);
