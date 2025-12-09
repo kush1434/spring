@@ -188,52 +188,7 @@ public class GroupsApiController {
         }
     }
 
-    /**
-     * POST /api/groups/{id}/members/{personId} - Add a single person to a group
-     */
-    @PostMapping("/{id}/members/{personId}")
-    @Transactional
-    public ResponseEntity<Map<String, Object>> addPersonToGroup(
-            @PathVariable Long id,
-            @PathVariable Long personId) {
-        try {
-            Optional<Groups> groupOpt = groupsRepository.findById(id);
-            if (groupOpt.isEmpty()) {
-                return new ResponseEntity<>(
-                    Map.of("error", "Group not found"),
-                    HttpStatus.NOT_FOUND
-                );
-            }
-
-            Optional<Person> personOpt = personRepository.findById(personId);
-            if (personOpt.isEmpty()) {
-                return new ResponseEntity<>(
-                    Map.of("error", "Person not found"),
-                    HttpStatus.NOT_FOUND
-                );
-            }
-
-            Groups group = groupOpt.get();
-            Person person = personOpt.get();
-
-            if (group.getGroupMembers().contains(person)) {
-                return new ResponseEntity<>(
-                    Map.of("error", "Person already in group"),
-                    HttpStatus.CONFLICT
-                );
-            }
-
-            group.addPerson(person);
-            groupsRepository.save(group);
-
-            return new ResponseEntity<>(buildGroupResponse(group), HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(
-                Map.of("error", e.getMessage()),
-                HttpStatus.BAD_REQUEST
-            );
-        }
-    }
+    // ...existing code...
 
     /**
      * POST /api/groups/bulk - Bulk create multiple groups
@@ -403,6 +358,53 @@ public class GroupsApiController {
             }
 
             group.removePerson(person);
+            groupsRepository.save(group);
+
+            return new ResponseEntity<>(buildGroupResponse(group), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                Map.of("error", e.getMessage()),
+                HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    /**
+     * POST /api/groups/{id}/members/{personId} - Add a single person to a group
+     */
+    @PostMapping("/{id}/members/{personId}")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> addPersonToGroup(
+            @PathVariable Long id,
+            @PathVariable Long personId) {
+        try {
+            Optional<Groups> groupOpt = groupsRepository.findById(id);
+            if (groupOpt.isEmpty()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Group not found"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
+
+            Optional<Person> personOpt = personRepository.findById(personId);
+            if (personOpt.isEmpty()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Person not found"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
+
+            Groups group = groupOpt.get();
+            Person person = personOpt.get();
+
+            if (group.getGroupMembers().contains(person)) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Person already in group"),
+                    HttpStatus.CONFLICT
+                );
+            }
+
+            group.addPerson(person);
             groupsRepository.save(group);
 
             return new ResponseEntity<>(buildGroupResponse(group), HttpStatus.OK);
