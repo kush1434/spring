@@ -2,7 +2,6 @@ package com.open.spring.mvc.gradePrediction;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -137,15 +136,9 @@ public class GradeTrainingController {
                 IntVector.of("final_grade", finalGrade)
             );
 
-            System.out.println("DataFrame BEFORE:");
-            System.out.println(data.toString());
             data = data.select("final_grade", "assignment_completion_rate", "average_assignment_score", 
                              "collegeboard_quiz_average", "office_hours_visits", "conduct", 
                              "work_habit", "github_contributions");
-
-
-            System.out.println("DataFrame AFTER:");
-            System.out.println(data.toString());
 
             this.encoders = new HashMap<>();
 
