@@ -188,7 +188,6 @@ public class GroupsApiController {
         }
     }
 
-    // ...existing code...
 
     /**
      * POST /api/groups/bulk - Bulk create multiple groups
@@ -285,12 +284,11 @@ public class GroupsApiController {
 
     // ===== DELETE Operations =====
 
-    /**
-     * DELETE /api/groups/{id} - Delete an entire group
-     */
+    // TODO: Create a way to delete an entire group. Please do not vibe code this!
+
+    
     @DeleteMapping("/{id}")
-    @Transactional
-    public ResponseEntity<Map<String, Object>> deleteGroup(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> deleteGroup (@PathVariable Long id) {
         try {
             Optional<Groups> groupOpt = groupsRepository.findById(id);
             if (groupOpt.isEmpty()) {
@@ -300,18 +298,9 @@ public class GroupsApiController {
                 );
             }
 
-            Groups group = groupOpt.get();
-
-            // Remove all members from the group
-            List<Person> members = new ArrayList<>(group.getGroupMembers());
-            for (Person person : members) {
-                group.removePerson(person);
-            }
-
-            groupsRepository.delete(group);
-
+            groupsRepository.deleteById(id);
             return new ResponseEntity<>(
-                Map.of("success", "Group deleted successfully", "id", id),
+                Map.of("message", "Group deleted successfully"),
                 HttpStatus.OK
             );
         } catch (Exception e) {
@@ -321,6 +310,8 @@ public class GroupsApiController {
             );
         }
     }
+
+
 
     /**
      * DELETE /api/groups/{id}/members/{personId} - Remove a single person from a group
