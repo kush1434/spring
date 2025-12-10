@@ -1,6 +1,11 @@
 package com.open.spring.mvc.grades;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "grades")
@@ -10,40 +15,81 @@ public class Grade {
     private Long id;
 
     @Column(nullable = false)
-    private String studentId;
+    private String uid;
 
     @Column(nullable = false)
-    private String subject;
+    private String assignment;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Double score;
 
-    @Column(nullable = false)
-    private String gradeLevel;
+    @Column(name = "class")
+    @com.fasterxml.jackson.annotation.JsonProperty("class")
+    private String course;
 
-    public Grade() {}
+    @Column(nullable = true)
+    private String submission;
 
-    public Grade(String studentId, String subject, Double score, String gradeLevel) {
-        this.studentId = studentId;
-        this.subject = subject;
-        this.score = score;
-        this.gradeLevel = gradeLevel;
+
+    public Grade() {
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Grade(String uid, String assignment, Double score, String course, String submission) {
+        this.uid = uid;
+        this.assignment = assignment;
+        this.score = score;
+        this.course = course;
+        this.submission = submission;
+        // this.gradeLevel = gradeLevel;
+    }
 
-    public String getStudentId() { return studentId; }
-    public void setStudentId(String studentId) { this.studentId = studentId; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getSubject() { return subject; }
-    public void setSubject(String subject) { this.subject = subject; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public Double getScore() { return score; }
-    public void setScore(Double score) { this.score = score; }
+    public String getUid() {
+        return uid;
+    }
 
-    public String getGradeLevel() { return gradeLevel; }
-    public void setGradeLevel(String gradeLevel) { this.gradeLevel = gradeLevel; }
+    public void setUid(String uid) {
+        this.uid = uid;
+    }
+
+    public String getAssignment() {
+        return assignment;
+    }
+
+    public void setAssignment(String assignment) {
+        this.assignment = assignment;
+    }
+
+    public Double getScore() {
+        return score;
+    }
+
+    public void setScore(Double score) {
+        this.score = score;
+    }
+
+    public String getCourse() {
+        return course;
+    }
+
+    public void setCourse(String course) {
+        this.course = course;
+    }
+
+    public String getSubmission() {
+        return submission;
+    }
+
+    public void setSubmission(String submission) {
+        this.submission = submission;
+    }
+
+
 }
-
-
