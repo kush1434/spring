@@ -84,6 +84,7 @@ public class SecurityConfig {
                         // Intentionally public - used for polling and public features
                         .requestMatchers("/api/jokes/**").permitAll()
                         // ==========================================
+                        .requestMatchers("/api/exports/**").permitAll()
 
                         // ========== SYNERGY (ROLE-BASED ACCESS, Legacy system) ==========
                         // Specific endpoint with student/teacher/admin access
