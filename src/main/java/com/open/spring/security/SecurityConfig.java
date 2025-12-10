@@ -99,7 +99,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/analytics/**").permitAll()
                         .requestMatchers("/api/plant/**").permitAll()
                         .requestMatchers("/api/groups/**").permitAll()
-                        .requestMatchers("/api/academic-progress/**").permitAll()
+                        .requestMatchers("/api/grade-prediction/**").permitAll()
                         .requestMatchers("/api/grades/**").permitAll()
                         .requestMatchers("/api/progress/**").permitAll()
                         .requestMatchers("/api/calendar/**").permitAll()

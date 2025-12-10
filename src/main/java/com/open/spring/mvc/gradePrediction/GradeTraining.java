@@ -1,4 +1,4 @@
-package com.open.spring.mvc.academicProgress;
+package com.open.spring.mvc.gradePrediction;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class AcademicProgress {
+public class GradeTraining {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

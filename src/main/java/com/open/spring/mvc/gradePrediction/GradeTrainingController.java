@@ -1,4 +1,4 @@
-package com.open.spring.mvc.academicProgress;
+package com.open.spring.mvc.gradePrediction;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,14 +34,14 @@ import smile.data.vector.IntVector;
 import smile.regression.RandomForest;
 
 @RestController
-@RequestMapping("/api/academic-progress")
-public class AcademicProgressController {
+@RequestMapping("/api/grade-prediction")
+public class GradeTrainingController {
 
     @Autowired
-    private AcademicProgressRepository repository;
+    private GradeTrainingRepository repository;
 
     @Autowired
-    private AcademicPredictionRepository predictionRepository;
+    private GradePredictionRepository predictionRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -65,7 +65,7 @@ public class AcademicProgressController {
     @GetMapping("/train")
     public ResponseEntity<?> train() {
         try {
-            String sql = "CREATE TABLE IF NOT EXISTS academic_progress (" +
+            String sql = "CREATE TABLE IF NOT EXISTS grade_training (" +
                          "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                          "student_id INTEGER, " +
                          "assignment_completion_rate REAL, " +
@@ -78,7 +78,7 @@ public class AcademicProgressController {
                          "final_grade INTEGER)";
             jdbcTemplate.execute(sql);
 
-            String jsonPath = "src/main/java/com/open/spring/mvc/academicProgress/fake-records-new.json";
+            String jsonPath = "src/main/java/com/open/spring/mvc/gradePrediction/fake-records-new.json";
             File jsonFile = new File(jsonPath);
             JsonNode rootNodeFromFile = objectMapper.readTree(jsonFile);
             
@@ -92,7 +92,7 @@ public class AcademicProgressController {
             int[] githubContributions = new int[n];
             int[] finalGrade = new int[n];
 
-            List<AcademicProgress> records = new ArrayList<>();
+            List<GradeTraining> records = new ArrayList<>();
             boolean saveToDb = repository.count() == 0;
 
             for (int i = 0; i < n; i++) {
@@ -108,7 +108,7 @@ public class AcademicProgressController {
                 finalGrade[i] = node.path("final_grade").asInt();
 
                 if (saveToDb) {
-                    AcademicProgress ap = new AcademicProgress();
+                    GradeTraining ap = new GradeTraining();
                     ap.setStudentId(node.path("student_id").asLong());
                     ap.setAssignmentCompletionRate(assignmentCompletionRate[i]);
                     ap.setAverageAssignmentScore(averageAssignmentScore[i]);
@@ -174,7 +174,7 @@ public class AcademicProgressController {
         }
 
         try {
-            String sql = "CREATE TABLE IF NOT EXISTS academic_prediction (" +
+            String sql = "CREATE TABLE IF NOT EXISTS grade_prediction (" +
                          "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                          "assignment_completion_rate REAL, " +
                          "average_assignment_score REAL, " +
@@ -206,7 +206,7 @@ public class AcademicProgressController {
 
             double prediction = model.predict(instance);
 
-            AcademicPrediction record = new AcademicPrediction(
+            GradePrediction record = new GradePrediction(
                 ((Number) features.get("assignment_completion_rate")).doubleValue(),
                 ((Number) features.get("average_assignment_score")).doubleValue(),
                 ((Number) features.get("collegeboard_quiz_average")).doubleValue(),
@@ -231,7 +231,7 @@ public class AcademicProgressController {
     }
 
     @GetMapping("/records")
-    public ResponseEntity<List<AcademicProgress>> getRecords() {
+    public ResponseEntity<List<GradeTraining>> getRecords() {
         return ResponseEntity.ok(repository.findAll());
     }
 }
