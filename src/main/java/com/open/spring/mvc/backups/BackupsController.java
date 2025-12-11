@@ -40,6 +40,12 @@ import com.open.spring.mvc.slack.CalendarEvent;
 import com.open.spring.mvc.slack.CalendarEventService;
 import com.open.spring.mvc.bathroom.Tinkle;
 import com.open.spring.mvc.bathroom.TinkleJPARepository;
+import com.open.spring.mvc.person.Person;
+import com.open.spring.mvc.person.PersonJpaRepository;
+import com.open.spring.mvc.groups.Groups;
+import com.open.spring.mvc.groups.GroupsJpaRepository;
+import com.open.spring.mvc.bank.Bank;
+import com.open.spring.mvc.bank.BankJpaRepository;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -79,6 +85,15 @@ public class BackupsController {
 
     @Autowired
     private TinkleJPARepository tinkleRepository;
+
+    @Autowired
+    private PersonJpaRepository personRepository;
+
+    @Autowired
+    private GroupsJpaRepository groupsRepository;
+
+    @Autowired
+    private BankJpaRepository bankRepository;
 
     // Configuration for API endpoints and their corresponding directories
     private final List<BackupEndpoint> endpoints = Arrays.asList(
@@ -303,22 +318,20 @@ public class BackupsController {
 
     /**
      * Backup a specific endpoint to a JSON file
+     * All endpoints are backed up directly via repositories/services to avoid authentication issues
      */
     private void backupEndpoint(BackupEndpoint endpoint) throws IOException {
         String jsonResponse;
         
         try {
-            // Special handling for calendar events - call service directly to avoid authentication issues
+            System.out.println("Backing up " + endpoint.getPath() + " via direct repository/service access...");
+            
+            // Handle each endpoint type directly via repositories/services
             if ("/api/calendar/events".equals(endpoint.getPath())) {
-                System.out.println("Backing up calendar events via service...");
                 List<CalendarEvent> events = calendarEventService.getAllEvents();
                 jsonResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(events);
             } else if ("/api/tinkle/bulk/extract".equals(endpoint.getPath())) {
-                // Special handling for tinkle - call repository directly to avoid authentication issues
-                System.out.println("Backing up tinkle data via repository...");
                 List<Tinkle> tinkleList = tinkleRepository.findAll();
-                
-                // Convert to DTO format matching the API endpoint
                 List<Map<String, String>> tinkleDtos = new ArrayList<>();
                 for (Tinkle tinkle : tinkleList) {
                     Map<String, String> dto = new HashMap<>();
@@ -327,11 +340,64 @@ public class BackupsController {
                     tinkleDtos.add(dto);
                 }
                 jsonResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(tinkleDtos);
+            } else if ("/api/people/bulk/extract".equals(endpoint.getPath())) {
+                List<Person> people = personRepository.findAllByOrderByNameAsc();
+                List<Map<String, Object>> personDtos = new ArrayList<>();
+                for (Person person : people) {
+                    Map<String, Object> dto = new HashMap<>();
+                    dto.put("email", person.getEmail());
+                    dto.put("uid", person.getUid());
+                    dto.put("sid", person.getSid());
+                    dto.put("password", person.getPassword());
+                    dto.put("name", person.getName());
+                    dto.put("pfp", person.getPfp());
+                    dto.put("kasmServerNeeded", person.getKasmServerNeeded());
+                    personDtos.add(dto);
+                }
+                jsonResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(personDtos);
+            } else if ("/api/groups/bulk/extract".equals(endpoint.getPath())) {
+                List<Groups> groups = groupsRepository.findAll();
+                List<Map<String, Object>> groupsList = new ArrayList<>();
+                for (Groups group : groups) {
+                    Map<String, Object> groupMap = new HashMap<>();
+                    groupMap.put("id", group.getId());
+                    groupMap.put("name", group.getName());
+                    groupMap.put("period", group.getPeriod());
+                    
+                    // Extract basic info for each member
+                    List<Map<String, Object>> membersList = new ArrayList<>();
+                    for (Person person : group.getGroupMembers()) {
+                        Map<String, Object> personInfo = new HashMap<>();
+                        personInfo.put("id", person.getId());
+                        personInfo.put("uid", person.getUid());
+                        personInfo.put("name", person.getName());
+                        personInfo.put("email", person.getEmail());
+                        membersList.add(personInfo);
+                    }
+                    groupMap.put("members", membersList);
+                    groupsList.add(groupMap);
+                }
+                jsonResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(groupsList);
+            } else if ("/bank/bulk/extract".equals(endpoint.getPath())) {
+                List<Bank> bankList = bankRepository.findAll();
+                List<Map<String, Object>> bankDtos = new ArrayList<>();
+                for (Bank bank : bankList) {
+                    Map<String, Object> dto = new HashMap<>();
+                    dto.put("id", bank.getId());
+                    dto.put("username", bank.getUsername());
+                    dto.put("uid", bank.getUid());
+                    dto.put("balance", bank.getBalance());
+                    dto.put("loanAmount", bank.getLoanAmount());
+                    dto.put("dailyInterestRate", bank.getDailyInterestRate());
+                    dto.put("riskCategory", bank.getRiskCategory());
+                    if (bank.getPerson() != null) {
+                        dto.put("personId", bank.getPerson().getId());
+                    }
+                    bankDtos.add(dto);
+                }
+                jsonResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(bankDtos);
             } else {
-                // For other endpoints, use HTTP call
-                String url = "http://localhost:" + serverPort + endpoint.getPath();
-                System.out.println("Calling API: " + url);
-                jsonResponse = restTemplate.getForObject(url, String.class);
+                throw new RuntimeException("Unknown endpoint: " + endpoint.getPath());
             }
             
             if (jsonResponse == null || jsonResponse.trim().isEmpty()) {
