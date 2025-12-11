@@ -150,7 +150,9 @@ public class BackupsController {
     private List<Map<String, Object>> getTableData(Statement statement, String tableName) throws SQLException {
         List<Map<String, Object>> tableData = new ArrayList<>();
 
-        try (ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName)) {
+        String safeTable = sanitizeTableName(tableName);
+
+        try (ResultSet resultSet = statement.executeQuery("SELECT * FROM " + safeTable)) {
             ResultSetMetaData metaData = resultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
 
@@ -179,6 +181,14 @@ public class BackupsController {
         }
 
         return tableData;
+    }
+
+    private String sanitizeTableName(String tableName) throws SQLException {
+        if (tableName == null) throw new SQLException("Table name is null");
+        if (!tableName.matches("^[A-Za-z0-9_]+$")) {
+            throw new SQLException("Invalid table name: " + tableName);
+        }
+        return tableName;
     }
 
     // ========== SHUTDOWN BACKUP OPERATIONS ==========

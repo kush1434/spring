@@ -271,8 +271,8 @@ public class DatabaseInitializer {
                 String tableName = tables.getString("TABLE_NAME");
                 // Skip SQLite internal tables
                 if (!tableName.startsWith("sqlite_")) {
-                    stmt.execute("DROP TABLE IF EXISTS \"" + tableName + "\"");
-                    System.out.println("Dropped table: " + tableName);
+                        stmt.execute("DROP TABLE IF EXISTS \"" + tableName + "\"");
+                        System.out.println("Dropped table: " + tableName);
                     tableCount++;
                 }
             }
