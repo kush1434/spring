@@ -175,8 +175,19 @@ def adapt_mysql_to_sqlite_schema(mysql_schema):
     sqlite_schema = re.sub(r'COLLATE=\w+', '', sqlite_schema, flags=re.IGNORECASE)
     sqlite_schema = re.sub(r'AUTO_INCREMENT=\d+', '', sqlite_schema, flags=re.IGNORECASE)
     
+    # Remove collation sequences from column definitions (e.g., COLLATE utf8mb4_unicode_ci)
+    # Collation names can contain underscores, so use [\w_]+ to match them
+    sqlite_schema = re.sub(r'\s+COLLATE\s+[\w_]+', '', sqlite_schema, flags=re.IGNORECASE)
+    
+    # Remove character set specifications from column definitions (e.g., CHARACTER SET utf8mb4)
+    sqlite_schema = re.sub(r'\s+CHARACTER\s+SET\s+[\w_]+', '', sqlite_schema, flags=re.IGNORECASE)
+    sqlite_schema = re.sub(r'\s+CHARSET\s+[\w_]+', '', sqlite_schema, flags=re.IGNORECASE)
+    
     # Remove trailing commas before closing parenthesis
     sqlite_schema = re.sub(r',\s*\)', ')', sqlite_schema)
+    
+    # Clean up multiple spaces
+    sqlite_schema = re.sub(r'\s+', ' ', sqlite_schema)
     
     return sqlite_schema
 
