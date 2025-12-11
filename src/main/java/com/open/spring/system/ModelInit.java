@@ -105,7 +105,10 @@ public class ModelInit {
             try {
                 if (dataSource != null) {
                     try (Connection conn = dataSource.getConnection(); Statement st = conn.createStatement()) {
-                        // ========== DATABASE CLEANUP - START ==========
+                        // ========== DATABASE CLEANUP - DISABLED ==========
+                        // Database cleanup has been disabled to prevent tables from being dropped on startup
+                        // Uncomment the section below if you need to manually clean up specific tables
+                        /*
                         System.out.println("Starting database cleanup...");
                         
                         // 1. Drop User tables (0 rows, 0 code references)
@@ -175,6 +178,7 @@ public class ModelInit {
                         System.out.println("Dropped " + droppedAuditTables + " orphaned audit tables");
                         
                         System.out.println("Conservative database cleanup complete!");
+                        */
                         // ========== DATABASE CLEANUP - END ==========
 
 
