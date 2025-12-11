@@ -36,6 +36,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.context.annotation.Bean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.open.spring.mvc.slack.CalendarEvent;
+import com.open.spring.mvc.slack.CalendarEventService;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -69,6 +71,9 @@ public class BackupsController {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private CalendarEventService calendarEventService;
 
     // Configuration for API endpoints and their corresponding directories
     private final List<BackupEndpoint> endpoints = Arrays.asList(
@@ -295,15 +300,23 @@ public class BackupsController {
      * Backup a specific endpoint to a JSON file
      */
     private void backupEndpoint(BackupEndpoint endpoint) throws IOException {
-        String url = "http://localhost:" + serverPort + endpoint.getPath();
+        String jsonResponse;
         
         try {
-            // Make API call
-            System.out.println("Calling API: " + url);
-            String jsonResponse = restTemplate.getForObject(url, String.class);
+            // Special handling for calendar events - call service directly to avoid authentication issues
+            if ("/api/calendar/events".equals(endpoint.getPath())) {
+                System.out.println("Backing up calendar events via service...");
+                List<CalendarEvent> events = calendarEventService.getAllEvents();
+                jsonResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(events);
+            } else {
+                // For other endpoints, use HTTP call
+                String url = "http://localhost:" + serverPort + endpoint.getPath();
+                System.out.println("Calling API: " + url);
+                jsonResponse = restTemplate.getForObject(url, String.class);
+            }
             
             if (jsonResponse == null || jsonResponse.trim().isEmpty()) {
-                System.out.println("Empty response from " + url + ", skipping backup");
+                System.out.println("Empty response from " + endpoint.getPath() + ", skipping backup");
                 return;
             }
 
