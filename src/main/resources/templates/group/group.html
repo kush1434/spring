@@ -74,6 +74,7 @@
                                     <th>UID</th>
                                     <th>Name</th>
                                     <th>Email</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -81,6 +82,13 @@
                                     <td th:text="${member.uid}"></td>
                                     <td th:text="${member.name}"></td>
                                     <td><a th:href="'mailto:' + ${member.email}" th:text="${member.email}"></a></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger remove-user-from-group"
+                                                th:data-groupid="${group.id}"
+                                                th:data-personid="${member.id}">
+                                            Remove from Group
+                                        </button>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -363,6 +371,7 @@
                 })
                 .then(users => {
                     const userList = document.getElementById("createUserList");
+                    if (!userList) return; // Guard when create list is absent on page
                     userList.innerHTML = "";
 
                     users.forEach(user => {
@@ -544,16 +553,19 @@
             });
         });
 
-        document.getElementById("userSearchCreate").addEventListener("input", function () {
-            const searchTerm = this.value.toLowerCase();
-            const checkboxes = document.querySelectorAll("#createUserList .form-check-label");
+        const userSearchCreate = document.getElementById("userSearchCreate");
+        if (userSearchCreate) {
+            userSearchCreate.addEventListener("input", function () {
+                const searchTerm = this.value.toLowerCase();
+                const checkboxes = document.querySelectorAll("#createUserList .form-check-label");
 
-            checkboxes.forEach(label => {
-                const userText = label.textContent.toLowerCase();
-                const container = label.closest(".col-md-6");
-                container.style.display = userText.includes(searchTerm) ? "" : "none";
+                checkboxes.forEach(label => {
+                    const userText = label.textContent.toLowerCase();
+                    const container = label.closest(".col-md-6");
+                    container.style.display = userText.includes(searchTerm) ? "" : "none";
+                });
             });
-        });
+        }
 
         // Delete group handler
         $(document).on("click", ".delete-group", function () {
@@ -574,6 +586,29 @@
             .catch(error => {
                 console.error("Error deleting group:", error);
                 alert("Failed to delete group. See console.");
+            });
+        });
+
+        // Remove member handler
+        $(document).on("click", ".remove-user-from-group", function () {
+            const groupId = $(this).data("groupid");
+            const personId = $(this).data("personid");
+
+            fetch(`${javaURL}/${groupId}/members/${personId}`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to remove member from group");
+                return response;
+            })
+            .then(() => {
+                alert("Member removed from group.");
+                location.reload();
+            })
+            .catch(error => {
+                console.error("Error removing member:", error);
+                alert("Failed to remove member. See console.");
             });
         });
     </script>
