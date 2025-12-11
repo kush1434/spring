@@ -38,6 +38,8 @@ import org.springframework.context.annotation.Bean;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.open.spring.mvc.slack.CalendarEvent;
 import com.open.spring.mvc.slack.CalendarEventService;
+import com.open.spring.mvc.bathroom.Tinkle;
+import com.open.spring.mvc.bathroom.TinkleJPARepository;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -74,6 +76,9 @@ public class BackupsController {
 
     @Autowired
     private CalendarEventService calendarEventService;
+
+    @Autowired
+    private TinkleJPARepository tinkleRepository;
 
     // Configuration for API endpoints and their corresponding directories
     private final List<BackupEndpoint> endpoints = Arrays.asList(
@@ -308,6 +313,20 @@ public class BackupsController {
                 System.out.println("Backing up calendar events via service...");
                 List<CalendarEvent> events = calendarEventService.getAllEvents();
                 jsonResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(events);
+            } else if ("/api/tinkle/bulk/extract".equals(endpoint.getPath())) {
+                // Special handling for tinkle - call repository directly to avoid authentication issues
+                System.out.println("Backing up tinkle data via repository...");
+                List<Tinkle> tinkleList = tinkleRepository.findAll();
+                
+                // Convert to DTO format matching the API endpoint
+                List<Map<String, String>> tinkleDtos = new ArrayList<>();
+                for (Tinkle tinkle : tinkleList) {
+                    Map<String, String> dto = new HashMap<>();
+                    dto.put("sid", tinkle.getSid());
+                    dto.put("timeIn", tinkle.getTimeIn());
+                    tinkleDtos.add(dto);
+                }
+                jsonResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(tinkleDtos);
             } else {
                 // For other endpoints, use HTTP call
                 String url = "http://localhost:" + serverPort + endpoint.getPath();
