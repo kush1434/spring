@@ -85,7 +85,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/jokes/**").permitAll()
                         // ==========================================
                         .requestMatchers("/api/exports/**").permitAll()
-
+                        .requestMatchers("/api/imports/**").permitAll()
                         // ========== SYNERGY (ROLE-BASED ACCESS, Legacy system) ==========
                         // Specific endpoint with student/teacher/admin access
                         .requestMatchers(HttpMethod.POST, "/api/synergy/grades/requests").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
