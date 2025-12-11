@@ -173,6 +173,9 @@ def adapt_sqlite_to_mysql_schema(sqlite_schema, table_name):
     # Basic type conversions
     import re
     
+    # Convert JSONB (PostgreSQL/SQLite) to MySQL JSON type
+    mysql_schema = re.sub(r'\bJSONB\b', 'JSON', mysql_schema, flags=re.IGNORECASE)
+    
     # Convert INTEGER to appropriate MySQL type (keep as INT for now)
     # Convert TEXT to appropriate MySQL type
     mysql_schema = re.sub(r'\bINTEGER\b', 'BIGINT', mysql_schema, flags=re.IGNORECASE)
