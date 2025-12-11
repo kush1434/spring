@@ -176,18 +176,26 @@ def adapt_mysql_to_sqlite_schema(mysql_schema):
     sqlite_schema = re.sub(r'AUTO_INCREMENT=\d+', '', sqlite_schema, flags=re.IGNORECASE)
     
     # Remove collation sequences from column definitions (e.g., COLLATE utf8mb4_unicode_ci)
-    # Collation names can contain underscores, so use [\w_]+ to match them
-    sqlite_schema = re.sub(r'\s+COLLATE\s+[\w_]+', '', sqlite_schema, flags=re.IGNORECASE)
+    # Use a more comprehensive pattern that matches collation names with any characters
+    # Collation names can contain: letters, numbers, underscores, hyphens, and dots
+    # Match: COLLATE followed by optional quotes/backticks, then identifier, then optional quotes/backticks
+    sqlite_schema = re.sub(r'\s+COLLATE\s+[`\'"]?[a-zA-Z0-9_\-\.]+[`\'"]?', '', sqlite_schema, flags=re.IGNORECASE)
     
     # Remove character set specifications from column definitions (e.g., CHARACTER SET utf8mb4)
-    sqlite_schema = re.sub(r'\s+CHARACTER\s+SET\s+[\w_]+', '', sqlite_schema, flags=re.IGNORECASE)
-    sqlite_schema = re.sub(r'\s+CHARSET\s+[\w_]+', '', sqlite_schema, flags=re.IGNORECASE)
+    sqlite_schema = re.sub(r'\s+CHARACTER\s+SET\s+[`\'"]?[a-zA-Z0-9_\-\.]+[`\'"]?', '', sqlite_schema, flags=re.IGNORECASE)
+    sqlite_schema = re.sub(r'\s+CHARSET\s+[`\'"]?[a-zA-Z0-9_\-\.]+[`\'"]?', '', sqlite_schema, flags=re.IGNORECASE)
+    
+    # Multiple passes to catch any remaining collation references in different positions
+    # Some schemas might have collation before or after other keywords
+    for _ in range(3):  # Multiple passes to catch nested or complex cases
+        sqlite_schema = re.sub(r'\s+COLLATE\s+[a-zA-Z0-9_\-\.]+', '', sqlite_schema, flags=re.IGNORECASE)
     
     # Remove trailing commas before closing parenthesis
     sqlite_schema = re.sub(r',\s*\)', ')', sqlite_schema)
     
-    # Clean up multiple spaces
+    # Clean up multiple spaces and normalize whitespace
     sqlite_schema = re.sub(r'\s+', ' ', sqlite_schema)
+    sqlite_schema = sqlite_schema.strip()
     
     return sqlite_schema
 
@@ -272,6 +280,14 @@ def backup_mysql_to_sqlite(host, port, user, password, database, backup_file):
                 sqlite_cursor.close()
             except Exception as e:
                 print(f"  Error creating table '{table_name}' in SQLite: {e}")
+                # Check if collation is still in the schema
+                if 'collate' in sqlite_schema.lower():
+                    print(f"  WARNING: Collation sequence still found in schema!")
+                    # Show a snippet of the problematic schema
+                    collate_pos = sqlite_schema.lower().find('collate')
+                    start = max(0, collate_pos - 50)
+                    end = min(len(sqlite_schema), collate_pos + 100)
+                    print(f"  Schema snippet around collation: ...{sqlite_schema[start:end]}...")
                 continue
             
             # Copy data
