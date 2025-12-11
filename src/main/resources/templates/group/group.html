@@ -19,10 +19,11 @@
 
         <!-- Admin Import/Export Buttons -->
         <div class="mb-3" sec:authorize="hasAuthority('ROLE_ADMIN')">
-            <button id="export-all-groups" class="btn btn-secondary btn-sm">export groups</button>
-            <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#importModal">
+            <button id="export-all-groups" class="btn btn-secondary btn-sm">Export Groups</button>
+            <!-- TODO: Re-enable Import Functionality -->
+            <!-- <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#importModal">
                 Import Groups
-            </button>
+            </button> -->
         </div>
         <!-- Search bar -->
         <input type="text" id="searchInput" class="form-control mb-3"
@@ -50,18 +51,18 @@
                                 th:data-bs-target="'#members-' + ${group.id}">
                             View Members
                         </button>
-                        <button class="btn btn-sm btn-warning edit-group"
+                        <!-- TODO: Re-enable Edit Functionality -->
+                        <!-- <button class="btn btn-sm btn-warning edit-group"
                                 th:data-groupid="${group.id}"
                                 th:data-name="${group.name}"
                                 th:data-period="${group.period}">
                             Edit
+                        </button> -->
+                        <button class="btn btn-sm btn-danger delete-group"
+                                th:data-groupid="${group.id}"
+                                onclick="return confirm('Are you sure you want to delete this group?')">
+                            Delete
                         </button>
-                        <form th:action="@{'/api/groups/delete/' + ${group.id}}" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Are you sure you want to delete this group?')">
-                                Delete
-                            </button>
-                        </form>
                     </td>
                 </tr>
 
@@ -326,43 +327,31 @@
 
         // Create group handler
         document.getElementById("createGroupBtn").addEventListener("click", function () {
-            const selectedUserIds = Array.from(document.querySelectorAll('.user-checkbox:checked'))
-                .map(cb => parseInt(cb.value));
+            const groupName = document.getElementById("groupNameInput").value;
+            const groupPeriod = document.getElementById("groupPeriodInput").value;
 
-            if (selectedUserIds.length === 0) {
-                alert("Please select at least one user.");
+            if (!groupName || groupName.trim() === "") {
+                alert("Please enter a group name.");
                 return;
             }
 
-            // Step 1: Create group with empty personUids, name and period
+            // Create group with name and period only
             fetch(javaURL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    personUids: [],
-                    name: document.getElementById("groupNameInput").value,
-                    period: document.getElementById("groupPeriodInput").value
+                    name: groupName,
+                    period: groupPeriod
                 })
             })
             .then(response => {
                 if (!response.ok) throw new Error("Failed to create group");
                 return response.json();
             })
-            .then(newGroup => {
-                const groupId = newGroup.id;
-
-                // Step 2: Add people to group
-                return fetch(`${javaURL}/${groupId}/addPeople`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(selectedUserIds)
-                })
-                .then(addPeopleResp => {
-                    if (!addPeopleResp.ok) throw new Error("Failed to add people to group");
-                    alert("Group created successfully!");
-                    $('#createGroupModal').modal('hide');
-                    location.reload();
-                });
+            .then(() => {
+                alert("Group created successfully!");
+                $('#createGroupModal').modal('hide');
+                location.reload();
             })
             .catch(error => {
                 console.error("Error creating group:", error);
@@ -499,6 +488,28 @@
                 const userText = label.textContent.toLowerCase();
                 const container = label.closest(".col-md-6");
                 container.style.display = userText.includes(searchTerm) ? "" : "none";
+            });
+        });
+
+        // Delete group handler
+        $(document).on("click", ".delete-group", function () {
+            const groupId = $(this).data("groupid");
+            
+            fetch(`${javaURL}/${groupId}`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to delete group");
+                return response.json();
+            })
+            .then(() => {
+                alert("Group deleted successfully!");
+                location.reload();
+            })
+            .catch(error => {
+                console.error("Error deleting group:", error);
+                alert("Failed to delete group. See console.");
             });
         });
     </script>

@@ -284,7 +284,6 @@ public class GroupsApiController {
 
     // ===== DELETE Operations =====
 
-    // TODO: Create a way to delete an entire group. Please do not vibe code this!
 
     
     @DeleteMapping("/{id}")
