@@ -123,10 +123,24 @@ def get_mysql_connection(host, port, user, password, database):
 
 
 def get_table_names(mysql_conn):
-    """Get all table names from MySQL database"""
+    """Get all table names from MySQL database and ensure they are decoded strings. (FIXED)"""
     cursor = mysql_conn.cursor()
     cursor.execute("SHOW TABLES")
-    tables = [table[0] for table in cursor.fetchall()]
+    
+    tables = []
+    for row in cursor.fetchall():
+        table_name = row[0]
+        
+        # FIX: Decode bytes/bytearray table names into standard strings
+        if isinstance(table_name, (bytes, bytearray)):
+            try:
+                table_name = table_name.decode('utf-8')
+            except UnicodeDecodeError as e:
+                print(f"Warning: Could not decode table name {row[0]}: {e}. Skipping table.")
+                continue 
+        
+        tables.append(table_name)
+    
     cursor.close()
     return tables
 
@@ -143,7 +157,7 @@ def get_table_schema(mysql_conn, table_name):
 
 
 def adapt_mysql_to_sqlite_schema(mysql_schema):
-    """Adapt MySQL CREATE TABLE statement to SQLite-compatible format"""
+    """Adapt MySQL CREATE TABLE statement to SQLite-compatible format (FINAL FIX)"""
     # Basic adaptations
     sqlite_schema = mysql_schema
     
@@ -158,11 +172,18 @@ def adapt_mysql_to_sqlite_schema(mysql_schema):
         (r'\bMEDIUMTEXT\b', 'TEXT'),
         (r'\bLONGTEXT\b', 'TEXT'),
         (r'\bDATETIME\b', 'TEXT'),
-        (r'\bTIMESTAMP\b', 'TEXT'),
+        # --- CRITICAL FIX: Removed the generic (r'\bTIMESTAMP\b', 'TEXT') replacement
+        # --- as it was causing the column name 'timestamp' to be replaced with 'TEXT'.
         (r'\bJSON\b', 'TEXT'),
         (r'\bJSONB\b', 'TEXT'),
         (r'\bBLOB\b', 'BLOB'),
         (r'\bLONGBLOB\b', 'BLOB'),
+
+        # FIX: Robust conversion for ENUM, SET, VARCHAR/CHAR to handle length specifiers
+        (r'\b(ENUM|SET)\s*\(.*?\)', 'TEXT'),  # Converts ENUM/SET and its options to TEXT
+        (r'\bVARCHAR\s*\(\s*\d+\s*\)', 'TEXT'), # Converts VARCHAR(N) to TEXT
+        (r'\bCHAR\s*\(\s*\d+\s*\)', 'TEXT'),    # Converts CHAR(N) to TEXT
+        (r'\bTINYBLOB\b', 'BLOB'),
     ]
     
     import re
@@ -176,18 +197,14 @@ def adapt_mysql_to_sqlite_schema(mysql_schema):
     sqlite_schema = re.sub(r'AUTO_INCREMENT=\d+', '', sqlite_schema, flags=re.IGNORECASE)
     
     # Remove collation sequences from column definitions (e.g., COLLATE utf8mb4_unicode_ci)
-    # Use a more comprehensive pattern that matches collation names with any characters
-    # Collation names can contain: letters, numbers, underscores, hyphens, and dots
-    # Match: COLLATE followed by optional quotes/backticks, then identifier, then optional quotes/backticks
     sqlite_schema = re.sub(r'\s+COLLATE\s+[`\'"]?[a-zA-Z0-9_\-\.]+[`\'"]?', '', sqlite_schema, flags=re.IGNORECASE)
     
     # Remove character set specifications from column definitions (e.g., CHARACTER SET utf8mb4)
     sqlite_schema = re.sub(r'\s+CHARACTER\s+SET\s+[`\'"]?[a-zA-Z0-9_\-\.]+[`\'"]?', '', sqlite_schema, flags=re.IGNORECASE)
     sqlite_schema = re.sub(r'\s+CHARSET\s+[`\'"]?[a-zA-Z0-9_\-\.]+[`\'"]?', '', sqlite_schema, flags=re.IGNORECASE)
     
-    # Multiple passes to catch any remaining collation references in different positions
-    # Some schemas might have collation before or after other keywords
-    for _ in range(3):  # Multiple passes to catch nested or complex cases
+    # Multiple passes for cleanup
+    for _ in range(3):
         sqlite_schema = re.sub(r'\s+COLLATE\s+[a-zA-Z0-9_\-\.]+', '', sqlite_schema, flags=re.IGNORECASE)
     
     # Remove trailing commas before closing parenthesis
@@ -280,10 +297,9 @@ def backup_mysql_to_sqlite(host, port, user, password, database, backup_file):
                 sqlite_cursor.close()
             except Exception as e:
                 print(f"  Error creating table '{table_name}' in SQLite: {e}")
-                # Check if collation is still in the schema
+                # Provide debug info if a potential schema issue remains
                 if 'collate' in sqlite_schema.lower():
                     print(f"  WARNING: Collation sequence still found in schema!")
-                    # Show a snippet of the problematic schema
                     collate_pos = sqlite_schema.lower().find('collate')
                     start = max(0, collate_pos - 50)
                     end = min(len(sqlite_schema), collate_pos + 100)
