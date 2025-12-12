@@ -155,9 +155,16 @@
                     <p class="mb-2">Add a user to <strong id="addMemberGroupName"></strong>.</p>
                     <input type="hidden" id="addMemberGroupId">
                     <div class="mb-3">
-                        <label for="addMemberUserId" class="form-label">User ID</label>
-                        <input type="number" min="0" class="form-control" id="addMemberUserId" placeholder="Enter user ID">
+                        <label for="userSearchInput" class="form-label">Search User</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="userSearchInput" placeholder="Enter name or email">
+                            <button class="btn btn-outline-secondary" type="button" id="userSearchBtn">Search</button>
+                        </div>
                     </div>
+                    <div id="userSearchResults" class="list-group" style="max-height: 200px; overflow-y: auto;">
+                        <!-- Search results will be populated here -->
+                    </div>
+                    <input type="hidden" id="selectedUserId">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
@@ -249,7 +256,46 @@
         const addMemberModal = new bootstrap.Modal(document.getElementById("addMemberModal"));
         const addMemberGroupName = document.getElementById("addMemberGroupName");
         const addMemberGroupId = document.getElementById("addMemberGroupId");
-        const addMemberUserId = document.getElementById("addMemberUserId");
+        const selectedUserId = document.getElementById("selectedUserId");
+
+        // Search for users to add to a group
+        document.getElementById("userSearchBtn").addEventListener("click", function() {
+            const searchTerm = document.getElementById("userSearchInput").value;
+            if (!searchTerm) {
+                return;
+            }
+
+            fetch(`${personURL}/search?query=${encodeURIComponent(searchTerm)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("User search failed");
+                    }
+                    return response.json();
+                })
+                .then(users => {
+                    const searchResults = document.getElementById("userSearchResults");
+                    searchResults.innerHTML = ""; // Clear previous results
+                    users.forEach(user => {
+                        const userElement = document.createElement("a");
+                        userElement.href = "#";
+                        userElement.classList.add("list-group-item", "list-group-item-action");
+                        userElement.textContent = `${user.name} (${user.email})`;
+                        userElement.dataset.userId = user.id;
+                        userElement.addEventListener("click", function(e) {
+                            e.preventDefault();
+                            selectedUserId.value = this.dataset.userId;
+                            // Highlight selection
+                            Array.from(searchResults.children).forEach(child => child.classList.remove("active"));
+                            this.classList.add("active");
+                        });
+                        searchResults.appendChild(userElement);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error searching for users:", error);
+                    alert("Failed to search for users. See console for details.");
+                });
+        });
 
         // Filter groups
         $("#searchInput").on("keyup", function () {
@@ -277,7 +323,10 @@
 
             addMemberGroupName.textContent = groupName;
             addMemberGroupId.value = groupId;
-            addMemberUserId.value = "";
+            selectedUserId.value = ""; // Clear previous selection
+            document.getElementById("userSearchInput").value = ""; // Clear search input
+            document.getElementById("userSearchResults").innerHTML = ""; // Clear search results
+
 
             addMemberModal.show();
         });
@@ -285,10 +334,10 @@
         // Confirm add member
         document.getElementById("confirmAddMemberBtn").addEventListener("click", function () {
             const groupId = addMemberGroupId.value;
-            const userId = addMemberUserId.value.trim();
+            const userId = selectedUserId.value;
 
             if (!userId) {
-                alert("Please enter a user ID.");
+                alert("Please enter a user to add.");
                 return;
             }
 

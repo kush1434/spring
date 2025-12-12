@@ -613,4 +613,17 @@ public class PersonApiController {
         // return Bad ID
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+
+    /**
+     * Search for people by name or email.
+     * 
+     * @param query The search query (name or email).
+     * @return A ResponseEntity containing a list of Person entities that match the
+     *         search query.
+     */
+    @GetMapping("/people/search")
+    public ResponseEntity<List<Person>> searchPeople(@RequestParam("query") String query) {
+        List<Person> people = repository.findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query);
+        return new ResponseEntity<>(people, HttpStatus.OK);
+    }
 }
