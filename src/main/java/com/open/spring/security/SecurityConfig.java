@@ -100,6 +100,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/plant/**").permitAll()
                         .requestMatchers("/api/groups/**").permitAll()
                         .requestMatchers("/api/grade-prediction/**").permitAll()
+                        .requestMatchers("/api/admin-evaluation/**").permitAll()
                         .requestMatchers("/api/grades/**").permitAll()
                         .requestMatchers("/api/progress/**").permitAll()
                         .requestMatchers("/api/calendar/**").permitAll()
