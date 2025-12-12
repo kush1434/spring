@@ -1,5 +1,4 @@
 package com.open.spring.mvc.gradePrediction;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,94 +28,104 @@ import smile.data.Tuple;
 import smile.data.formula.Formula;
 import smile.data.vector.BaseVector;
 import smile.data.vector.DoubleVector;
-import smile.data.vector.IntVector;
 import smile.regression.RandomForest;
-
 @RestController
 @RequestMapping("/api/grade-prediction")
 public class GradeTrainingController {
-
     @Autowired
     private GradeTrainingRepository repository;
-
     @Autowired
     private GradePredictionRepository predictionRepository;
-
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
     private RandomForest model;
     private HashMap<Object, Object> encoders;
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PredictionRequest {
-        private String assignmentType;
-        private String difficultyLevel;
-        private String topic;
-        private String completionStatus;
-        private Integer hoursStudied;
-        private Integer attendance;
+        private Double attendance;
+        private Double workHabits;
+        private Double behavior;
+        private Double timeliness;
+        private Double techSense;
+        private Double techTalk;
+        private Double techGrowth;
+        private Double advocacy;
+        private Double communication;
+        private Double integrity;
+        private Double organization;
     }
-
     private ObjectMapper objectMapper = new ObjectMapper();
-
     @GetMapping("/train")
     public ResponseEntity<?> train() {
         try {
             String sql = "CREATE TABLE IF NOT EXISTS grade_training (" +
                          "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                          "student_id INTEGER, " +
-                         "assignment_completion_rate REAL, " +
-                         "average_assignment_score REAL, " +
-                         "collegeboard_quiz_average REAL, " +
-                         "office_hours_visits INTEGER, " +
-                         "conduct INTEGER, " +
-                         "work_habit INTEGER, " +
-                         "github_contributions INTEGER, " +
+                         "attendance REAL, " +
+                         "work_habits REAL, " +
+                         "behavior REAL, " +
+                         "timeliness REAL, " +
+                         "tech_sense REAL, " +
+                         "tech_talk REAL, " +
+                         "tech_growth REAL, " +
+                         "advocacy REAL, " +
+                         "communication REAL, " +
+                         "integrity REAL, " +
+                         "organization REAL, " +
                          "final_grade INTEGER)";
             jdbcTemplate.execute(sql);
-
-            String jsonPath = "src/main/java/com/open/spring/mvc/gradePrediction/fake-records-new.json";
+            String jsonPath = "src/main/java/com/open/spring/mvc/gradePrediction/fake-records-new-new.json";
             File jsonFile = new File(jsonPath);
             JsonNode rootNodeFromFile = objectMapper.readTree(jsonFile);
             
             int n = rootNodeFromFile.size();
-            double[] assignmentCompletionRate = new double[n];
-            double[] averageAssignmentScore = new double[n];
-            double[] collegeboardQuizAverage = new double[n];
-            int[] officeHoursVisits = new int[n];
-            int[] conduct = new int[n];
-            int[] workHabit = new int[n];
-            int[] githubContributions = new int[n];
-            int[] finalGrade = new int[n];
-
+            double[] attendance = new double[n];
+            double[] workHabits = new double[n];
+            double[] behavior = new double[n];
+            double[] timeliness = new double[n];
+            double[] techSense = new double[n];
+            double[] techTalk = new double[n];
+            double[] techGrowth = new double[n];
+            double[] advocacy = new double[n];
+            double[] communication = new double[n];
+            double[] integrity = new double[n];
+            double[] organization = new double[n];
+            double[] finalGrade = new double[n];
+            
             List<GradeTraining> records = new ArrayList<>();
             boolean saveToDb = repository.count() == 0;
-
             for (int i = 0; i < n; i++) {
                 JsonNode node = rootNodeFromFile.get(i);
-                
-                assignmentCompletionRate[i] = node.path("assignment_completion_rate").asDouble();
-                averageAssignmentScore[i] = node.path("average_assignment_score").asDouble();
-                collegeboardQuizAverage[i] = node.path("collegeboard_quiz_average").asDouble();
-                officeHoursVisits[i] = node.path("office_hours_visits").asInt();
-                conduct[i] = node.path("conduct").asInt();
-                workHabit[i] = node.path("work_habit").asInt();
-                githubContributions[i] = node.path("github_contributions").asInt();
-                finalGrade[i] = node.path("final_grade").asInt();
-
+                attendance[i] = node.path("attendance").asDouble();
+                workHabits[i] = node.path("work_habits").asDouble();
+                behavior[i] = node.path("behavior").asDouble();
+                timeliness[i] = node.path("timeliness").asDouble();
+                techSense[i] = node.path("tech_sense").asDouble();
+                techTalk[i] = node.path("tech_talk").asDouble();
+                techGrowth[i] = node.path("tech_growth").asDouble();
+                advocacy[i] = node.path("advocacy").asDouble();
+                communication[i] = node.path("communication").asDouble();
+                integrity[i] = node.path("integrity").asDouble();
+                organization[i] = node.path("organization").asDouble();
+                finalGrade[i] = node.path("final_grade").asDouble();
                 if (saveToDb) {
                     GradeTraining ap = new GradeTraining();
                     ap.setStudentId(node.path("student_id").asLong());
-                    ap.setAssignmentCompletionRate(assignmentCompletionRate[i]);
-                    ap.setAverageAssignmentScore(averageAssignmentScore[i]);
-                    ap.setCollegeboardQuizAverage(collegeboardQuizAverage[i]);
-                    ap.setOfficeHoursVisits(officeHoursVisits[i]);
-                    ap.setConduct(conduct[i]);
-                    ap.setWorkHabit(workHabit[i]);
-                    ap.setGithubContributions(githubContributions[i]);
-                    ap.setFinalGrade(finalGrade[i]);
+                    ap.setAttendance(attendance[i]);
+                    ap.setWorkHabits(workHabits[i]);
+                    ap.setBehavior(behavior[i]);
+                    ap.setTimeliness(timeliness[i]);
+                    ap.setTechSense(techSense[i]);
+                    ap.setTechTalk(techTalk[i]);
+                    ap.setTechGrowth(techGrowth[i]);
+                    ap.setAdvocacy(advocacy[i]);
+                    ap.setCommunication(communication[i]);
+                    ap.setIntegrity(integrity[i]);
+                    ap.setOrganization(organization[i]);
+                    // Fix: Cast double to Double for wrapper class
+                    ap.setFinalGrade(Double.valueOf(finalGrade[i]));
                     records.add(ap);
                 }
             }
@@ -124,68 +133,66 @@ public class GradeTrainingController {
             if (saveToDb) {
                 repository.saveAll(records);
             }
-
             DataFrame data = DataFrame.of(
-                DoubleVector.of("assignment_completion_rate", assignmentCompletionRate),
-                DoubleVector.of("average_assignment_score", averageAssignmentScore),
-                DoubleVector.of("collegeboard_quiz_average", collegeboardQuizAverage),
-                IntVector.of("office_hours_visits", officeHoursVisits),
-                IntVector.of("conduct", conduct),
-                IntVector.of("work_habit", workHabit),
-                IntVector.of("github_contributions", githubContributions),
-                IntVector.of("final_grade", finalGrade)
+                DoubleVector.of("attendance", attendance),
+                DoubleVector.of("work_habits", workHabits),
+                DoubleVector.of("behavior", behavior),
+                DoubleVector.of("timeliness", timeliness),
+                DoubleVector.of("tech_sense", techSense),
+                DoubleVector.of("tech_talk", techTalk),
+                DoubleVector.of("tech_growth", techGrowth),
+                DoubleVector.of("advocacy", advocacy),
+                DoubleVector.of("communication", communication),
+                DoubleVector.of("integrity", integrity),
+                DoubleVector.of("organization", organization),
+                DoubleVector.of("final_grade", finalGrade)
             );
-
-            data = data.select("final_grade", "assignment_completion_rate", "average_assignment_score", 
-                             "collegeboard_quiz_average", "office_hours_visits", "conduct", 
-                             "work_habit", "github_contributions");
-
+            data = data.select("final_grade", "attendance", "work_habits", "behavior", "timeliness", 
+                             "tech_sense", "tech_talk", "tech_growth", "advocacy", "communication", 
+                             "integrity", "organization");
             this.encoders = new HashMap<>();
-
             Formula formula = Formula.lhs("final_grade");
             
             this.model = RandomForest.fit(formula, data);
-
             return ResponseEntity.ok(Map.of(
                 "message", "Model trained successfully",
                 "rows_processed", data.nrows(),
                 "columns", data.names(),
                 "model_type", "RandomForest Regression"
             ));
-
         } catch (IOException | DataAccessException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Training failed: " + e.getMessage()));
         }
     }
-
     @PostMapping("/predict")
     public ResponseEntity<?> predict(@RequestBody Map<String, Object> features) {
         if (model == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Model not trained. Call /train first."));
         }
-
         try {
             String sql = "CREATE TABLE IF NOT EXISTS grade_prediction (" +
                          "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                         "assignment_completion_rate REAL, " +
-                         "average_assignment_score REAL, " +
-                         "collegeboard_quiz_average REAL, " +
-                         "office_hours_visits INTEGER, " +
-                         "conduct INTEGER, " +
-                         "work_habit INTEGER, " +
-                         "github_contributions INTEGER, " +
+                         "attendance REAL, " +
+                         "work_habits REAL, " +
+                         "behavior REAL, " +
+                         "timeliness REAL, " +
+                         "tech_sense REAL, " +
+                         "tech_talk REAL, " +
+                         "tech_growth REAL, " +
+                         "advocacy REAL, " +
+                         "communication REAL, " +
+                         "integrity REAL, " +
+                         "organization REAL, " +
                          "predicted_score REAL, " +
                          "created_at INTEGER)";
             jdbcTemplate.execute(sql);
-
-            String[] numericFeatures = {"assignment_completion_rate", "average_assignment_score", 
-                                       "collegeboard_quiz_average", "office_hours_visits", 
-                                       "conduct", "work_habit", "github_contributions"};
+            String[] numericFeatures = {"attendance", "work_habits", "behavior", "timeliness", 
+                                       "tech_sense", "tech_talk", "tech_growth", "advocacy", "communication", 
+                                       "integrity", "organization"};
             
             List<BaseVector> vectors = new ArrayList<>();
-
             for (String col : numericFeatures) {
                 Number val = (Number) features.get(col);
                 if (val == null) {
@@ -193,36 +200,34 @@ public class GradeTrainingController {
                 }
                 vectors.add(DoubleVector.of(col, new double[]{ val.doubleValue() }));
             }
-
             DataFrame singleRow = DataFrame.of(vectors.toArray(BaseVector[]::new));
             Tuple instance = singleRow.stream().findFirst().orElseThrow();
-
             double prediction = model.predict(instance);
-
             GradePrediction record = new GradePrediction(
-                ((Number) features.get("assignment_completion_rate")).doubleValue(),
-                ((Number) features.get("average_assignment_score")).doubleValue(),
-                ((Number) features.get("collegeboard_quiz_average")).doubleValue(),
-                ((Number) features.get("office_hours_visits")).intValue(),
-                ((Number) features.get("conduct")).intValue(),
-                ((Number) features.get("work_habit")).intValue(),
-                ((Number) features.get("github_contributions")).intValue(),
+                ((Number) features.get("attendance")).doubleValue(),
+                ((Number) features.get("work_habits")).doubleValue(),
+                ((Number) features.get("behavior")).doubleValue(),
+                ((Number) features.get("timeliness")).doubleValue(),
+                ((Number) features.get("tech_sense")).doubleValue(),
+                ((Number) features.get("tech_talk")).doubleValue(),
+                ((Number) features.get("tech_growth")).doubleValue(),
+                ((Number) features.get("advocacy")).doubleValue(),
+                ((Number) features.get("communication")).doubleValue(),
+                ((Number) features.get("integrity")).doubleValue(),
+                ((Number) features.get("organization")).doubleValue(),
                 prediction
             );
             predictionRepository.save(record);
-
             return ResponseEntity.ok(Map.of(
                 "predicted_final_grade", prediction,
                 "status", "success",
                 "prediction_id", record.getId()
             ));
-
         } catch (DataAccessException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Prediction failed: " + e.getMessage()));
         }
     }
-
     @GetMapping("/records")
     public ResponseEntity<List<GradeTraining>> getRecords() {
         return ResponseEntity.ok(repository.findAll());

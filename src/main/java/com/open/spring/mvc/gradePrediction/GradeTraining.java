@@ -18,12 +18,16 @@ public class GradeTraining {
     private Long id;
 
     private Long studentId;
-    private Double assignmentCompletionRate;
-    private Double averageAssignmentScore;
-    private Double collegeboardQuizAverage;
-    private Integer officeHoursVisits;
-    private Integer conduct;
-    private Integer workHabit;
-    private Integer githubContributions;
-    private Integer finalGrade;
+    private Double attendance;
+    private Double workHabits;
+    private Double behavior;
+    private Double timeliness;
+    private Double techSense;
+    private Double techTalk;
+    private Double techGrowth;
+    private Double advocacy;
+    private Double communication;
+    private Double integrity;
+    private Double organization;
+    private Double finalGrade;
 }

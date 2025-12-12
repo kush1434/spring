@@ -21,34 +21,48 @@ public class GradePrediction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonProperty("assignment_completion_rate")
-    private Double assignmentCompletionRate;
-    @JsonProperty("average_assignment_score")
-    private Double averageAssignmentScore;
-    @JsonProperty("collegeboard_quiz_average")
-    private Double collegeboardQuizAverage;
-    @JsonProperty("office_hours_visits")
-    private Integer officeHoursVisits;
-    private Integer conduct;
-    @JsonProperty("work_habit")
-    private Integer workHabit;
-    @JsonProperty("github_contributions")
-    private Integer githubContributions;
+    @JsonProperty("student_id")
+    private Long studentId;
+    @JsonProperty("attendance")
+    private Double attendance;
+    @JsonProperty("work_habits")
+    private Double workHabits;
+    @JsonProperty("behavior")
+    private Double behavior;
+    @JsonProperty("timeliness")
+    private Double timeliness;
+    @JsonProperty("tech_sense")
+    private Double techSense;
+    @JsonProperty("tech_talk")
+    private Double techTalk;
+    @JsonProperty("tech_growth")
+    private Double techGrowth;
+    @JsonProperty("advocacy")
+    private Double advocacy;
+    @JsonProperty("communication")
+    private Double communication;
+    @JsonProperty("integrity")
+    private Double integrity;
+    @JsonProperty("organization")
+    private Double organization;
     @JsonProperty("final_grade")
     private Double predictedScore;
     private Long createdAt;
 
-    public GradePrediction(Double assignmentCompletionRate, Double averageAssignmentScore, 
-                            Double collegeboardQuizAverage, Integer officeHoursVisits, 
-                            Integer conduct, Integer workHabit, Integer githubContributions, 
-                            Double predictedScore) {
-        this.assignmentCompletionRate = assignmentCompletionRate;
-        this.averageAssignmentScore = averageAssignmentScore;
-        this.collegeboardQuizAverage = collegeboardQuizAverage;
-        this.officeHoursVisits = officeHoursVisits;
-        this.conduct = conduct;
-        this.workHabit = workHabit;
-        this.githubContributions = githubContributions;
+    public GradePrediction(Double attendance, Double workHabits, Double behavior, Double timeliness,
+                           Double techSense, Double techTalk, Double techGrowth, Double advocacy,
+                           Double communication, Double integrity, Double organization, Double predictedScore) {
+        this.attendance = attendance;
+        this.workHabits = workHabits;
+        this.behavior = behavior;
+        this.timeliness = timeliness;  
+        this.techSense = techSense;
+        this.techTalk = techTalk;
+        this.techGrowth = techGrowth;
+        this.advocacy = advocacy;
+        this.communication = communication;
+        this.integrity = integrity;
+        this.organization = organization;
         this.predictedScore = predictedScore;
         this.createdAt = System.currentTimeMillis();
     }
