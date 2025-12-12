@@ -28,7 +28,7 @@ public class AdminEvaluationController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AdminEvaluationRequest {
-        @JsonProperty("userId")
+        @JsonProperty("user_id")
         private Integer userId;
         @JsonProperty("attendance")
         private Double attendance;
