@@ -770,29 +770,26 @@ public class ImportsController {
     }
 
     private void createSequenceTableIfNotExists(Connection connection, String tableName) throws SQLException {
-        String safeTable = sanitizeTableName(tableName);
-        if (!tableExists(connection, safeTable)) {
-            String sql = "CREATE TABLE " + safeTable + " (next_val BIGINT NOT NULL)";
+        if (!tableExists(connection, tableName)) {
+            String sql = "CREATE TABLE " + tableName + " (next_val BIGINT NOT NULL)";
             try (Statement statement = connection.createStatement()) {
                 statement.execute(sql);
-                String initSql = "INSERT INTO " + safeTable + " (next_val) VALUES (0)";
+                String initSql = "INSERT INTO " + tableName + " (next_val) VALUES (0)";
                 statement.execute(initSql);
-                System.out.println("Created table: " + safeTable);
+                System.out.println("Created table: " + tableName);
             }
         }
     }
 
     private boolean tableExists(Connection connection, String tableName) throws SQLException {
         DatabaseMetaData meta = connection.getMetaData();
-        String safeTable = sanitizeTableName(tableName);
-        try (ResultSet resultSet = meta.getTables(null, null, safeTable, null)) {
+        try (ResultSet resultSet = meta.getTables(null, null, tableName, null)) {
             return resultSet.next();
         }
     }
 
     private void updateSequenceValue(Connection connection, String tableName, long nextValFromJson) throws SQLException {
-        String safeTable = sanitizeTableName(tableName);
-        String sql = "UPDATE " + safeTable + " SET next_val = CASE WHEN next_val > ? THEN next_val ELSE ? END";
+        String sql = "UPDATE " + tableName + " SET next_val = CASE WHEN next_val > ? THEN next_val ELSE ? END";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, nextValFromJson);
             statement.setLong(2, nextValFromJson);
@@ -801,18 +798,7 @@ public class ImportsController {
     }
 
     private String sanitizeTableName(String tableName) {
-        if (tableName == null) throw new IllegalArgumentException("Table name cannot be null");
-        // Only allow simple alphanumeric and underscore names for identifiers
-        if (!tableName.matches("^[A-Za-z0-9_]+$")) {
-            throw new IllegalArgumentException("Invalid table name: " + tableName);
-        }
-        return tableName;
-    }
-
-    private String sanitizeColumnName(String columnName) {
-        if (columnName == null) throw new IllegalArgumentException("Column name cannot be null");
-        // Replace any characters not allowed in SQL identifiers with underscore
-        return columnName.replaceAll("[^a-zA-Z0-9_]", "_");
+        return tableName.replaceAll("[^a-zA-Z0-9_]", "_");
     }
 
     private void insertTableData(Connection connection, String tableName, List<Map<String, Object>> tableData) throws SQLException {
@@ -821,38 +807,29 @@ public class ImportsController {
             return;
         }
     
-        // Keep original column order and mappings but sanitize SQL identifiers
-        List<String> originalColumns = new ArrayList<>(tableData.get(0).keySet());
-        List<String> sanitizedColumns = new ArrayList<>();
-        Map<String, String> sanitizedToOriginal = new HashMap<>();
-        for (String col : originalColumns) {
-            String safeCol = sanitizeColumnName(col);
-            sanitizedColumns.add(safeCol);
-            sanitizedToOriginal.put(safeCol, col);
-        }
+        Set<String> columns = tableData.get(0).keySet();
         
         if (!tableExists(connection, tableName)) {
             System.out.println("Table " + tableName + " doesn't exist. Creating it now...");
-            createTable(connection, tableName, new HashSet<>(sanitizedColumns));
+            createTable(connection, tableName, columns);
         }
         
         Set<String> existingColumns = getExistingColumns(connection, tableName);
-        for (String safeCol : sanitizedColumns) {
-            if (!existingColumns.contains(safeCol)) {
-                System.out.println("Adding missing column: " + safeCol + " to table: " + tableName);
-                addColumn(connection, tableName, safeCol);
+        for (String column : columns) {
+            if (!existingColumns.contains(column)) {
+                System.out.println("Adding missing column: " + column + " to table: " + tableName);
+                addColumn(connection, tableName, column);
             }
         }
         
-        String sql = buildInsertQuery(tableName, new HashSet<>(sanitizedColumns));
+        String sql = buildInsertQuery(tableName, columns);
     
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             int batchSize = 0;
             for (Map<String, Object> row : tableData) {
                 int index = 1;
-                for (String safeCol : sanitizedColumns) {
-                    String originalCol = sanitizedToOriginal.get(safeCol);
-                    preparedStatement.setObject(index++, row.get(originalCol));
+                for (String column : columns) {
+                    preparedStatement.setObject(index++, row.get(column));
                 }
                 preparedStatement.addBatch();
                 batchSize++;
@@ -862,7 +839,7 @@ public class ImportsController {
                     batchSize = 0;
                 }
             }
-
+    
             if (batchSize > 0) {
                 preparedStatement.executeBatch();
             }
@@ -875,17 +852,16 @@ public class ImportsController {
     }
 
     private String buildInsertQuery(String tableName, Set<String> columns) {
-        String safeTable = sanitizeTableName(tableName);
         String columnList = String.join(", ", columns);
         String valuePlaceholders = String.join(", ", Collections.nCopies(columns.size(), "?"));
-        return "INSERT INTO " + safeTable + " (" + columnList + ") VALUES (" + valuePlaceholders + ")";
+        return "INSERT INTO " + tableName + " (" + columnList + ") VALUES (" + valuePlaceholders + ")";
     }
 
     private Set<String> getExistingColumns(Connection connection, String tableName) throws SQLException {
         Set<String> columns = new HashSet<>();
-        String safeTable = sanitizeTableName(tableName);
+        
         try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("PRAGMA table_info(" + safeTable + ")")) {
+             ResultSet rs = stmt.executeQuery("PRAGMA table_info(" + tableName + ")")) {
             
             while (rs.next()) {
                 columns.add(rs.getString("name"));
@@ -896,11 +872,10 @@ public class ImportsController {
     }
 
     private void ensureTableExists(Connection connection, String tableName, List<Map<String, Object>> tableData, boolean removeExcessData) throws SQLException {
-        String safeTable = sanitizeTableName(tableName);
         if (tableData.isEmpty()) {
-            System.out.println("No data provided for table: " + safeTable + ". Creating with basic structure.");
-            if (!tableExists(connection, safeTable)) {
-                String sql = "CREATE TABLE IF NOT EXISTS " + safeTable + " (" +
+            System.out.println("No data provided for table: " + tableName + ". Creating with basic structure.");
+            if (!tableExists(connection, tableName)) {
+                String sql = "CREATE TABLE IF NOT EXISTS " + tableName + " (" +
                              "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                              "name TEXT, " +
                              "description TEXT, " +
@@ -908,7 +883,7 @@ public class ImportsController {
                              ")";
                 try (Statement stmt = connection.createStatement()) {
                     stmt.execute(sql);
-                    System.out.println("Created basic table structure for: " + safeTable);
+                    System.out.println("Created basic table structure for: " + tableName);
                 }
             }
             return;
@@ -916,37 +891,29 @@ public class ImportsController {
 
         Set<String> columnsInJson = tableData.get(0).keySet();
         
-        boolean tableExists = tableExists(connection, safeTable);
+        boolean tableExists = tableExists(connection, tableName);
         
         if (!tableExists) {
-            System.out.println("Creating new table: " + safeTable + " with columns: " + columnsInJson);
-            // createTable will sanitize column names internally
-            createTable(connection, safeTable, columnsInJson);
+            System.out.println("Creating new table: " + tableName + " with columns: " + columnsInJson);
+            createTable(connection, tableName, columnsInJson);
         } else {
-            Set<String> existingColumns = getExistingColumns(connection, safeTable);
+            Set<String> existingColumns = getExistingColumns(connection, tableName);
             
             for (String column : columnsInJson) {
-                String safeCol = sanitizeColumnName(column);
-                if (!existingColumns.contains(safeCol)) {
-                    System.out.println("Adding column: " + safeCol + " to table: " + safeTable);
-                    addColumn(connection, safeTable, safeCol);
+                if (!existingColumns.contains(column)) {
+                    System.out.println("Adding column: " + column + " to table: " + tableName);
+                    addColumn(connection, tableName, column);
                 }
             }
         }
     }
 
     private void createTable(Connection connection, String tableName, Set<String> columns) throws SQLException {
-        String safeTable = sanitizeTableName(tableName);
-        StringBuilder sqlBuilder = new StringBuilder("CREATE TABLE IF NOT EXISTS " + safeTable + " (");
+        StringBuilder sqlBuilder = new StringBuilder("CREATE TABLE IF NOT EXISTS " + tableName + " (");
         
-        // Sanitize column names before building SQL
-        Set<String> safeColumns = new LinkedHashSet<>();
-        for (String col : columns) {
-            safeColumns.add(sanitizeColumnName(col));
-        }
-        boolean hasIdColumn = safeColumns.stream().anyMatch(col -> col.equalsIgnoreCase("id"));
+        boolean hasIdColumn = columns.stream().anyMatch(col -> col.equalsIgnoreCase("id"));
         
-        for (String column : safeColumns) {
+        for (String column : columns) {
             if (column.equalsIgnoreCase("id") && hasIdColumn) {
                 sqlBuilder.append(column).append(" INTEGER PRIMARY KEY AUTOINCREMENT,");
             } else if (column.toLowerCase().endsWith("_id") || column.toLowerCase().equals("id")) {
@@ -978,17 +945,15 @@ public class ImportsController {
         
         try (Statement statement = connection.createStatement()) {
             statement.execute(sql);
-            System.out.println("Successfully created table: " + safeTable);
+            System.out.println("Successfully created table: " + tableName);
         } catch (SQLException e) {
-            System.err.println("Error creating table " + safeTable + ": " + e.getMessage());
+            System.err.println("Error creating table " + tableName + ": " + e.getMessage());
             throw e;
         }
     }
 
     private void addColumn(Connection connection, String tableName, String columnName) throws SQLException {
-        String safeTable = sanitizeTableName(tableName);
-        String safeColumn = sanitizeColumnName(columnName);
-        String sql = "ALTER TABLE " + safeTable + " ADD COLUMN " + safeColumn + " TEXT";
+        String sql = "ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " TEXT";
         try (Statement statement = connection.createStatement()) {
             statement.execute(sql);
         }
