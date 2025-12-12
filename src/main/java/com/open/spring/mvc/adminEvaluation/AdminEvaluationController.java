@@ -2,11 +2,15 @@ package com.open.spring.mvc.adminEvaluation;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -88,6 +92,47 @@ public class AdminEvaluationController {
         return ResponseEntity.ok(Map.of(
             "count", results.size(),
             "results", results
+        ));
+    }
+
+    @PutMapping("/update/{user_id}")
+    public ResponseEntity<?> updateEvaluation(@PathVariable("user_id") Integer userId, @RequestBody AdminEvaluationRequest req) {
+        Optional<AdminEvaluation> optionalEval = adminEvaluationRepository.findByUserId(userId);
+        if (optionalEval.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "Evaluation not found"));
+        }
+        AdminEvaluation evaluation = optionalEval.get();
+        // Update fields if present in request
+        if (req.getUserId() != null) evaluation.setUserId(req.getUserId());
+        if (req.getAttendance() != null) evaluation.setAttendance(req.getAttendance());
+        if (req.getWorkHabits() != null) evaluation.setWorkHabits(req.getWorkHabits());
+        if (req.getBehavior() != null) evaluation.setBehavior(req.getBehavior());
+        if (req.getTimeliness() != null) evaluation.setTimeliness(req.getTimeliness());
+        if (req.getTechSense() != null) evaluation.setTechSense(req.getTechSense());
+        if (req.getTechTalk() != null) evaluation.setTechTalk(req.getTechTalk());
+        if (req.getTechGrowth() != null) evaluation.setTechGrowth(req.getTechGrowth());
+        if (req.getAdvocacy() != null) evaluation.setAdvocacy(req.getAdvocacy());
+        if (req.getCommunication() != null) evaluation.setCommunication(req.getCommunication());
+        if (req.getIntegrity() != null) evaluation.setIntegrity(req.getIntegrity());
+        if (req.getOrganization() != null) evaluation.setOrganization(req.getOrganization());
+        AdminEvaluation saved = adminEvaluationRepository.save(evaluation);
+        return ResponseEntity.ok(Map.of(
+            "status", "updated",
+            "id", saved.getId(),
+            "evaluation", saved
+        ));
+    }
+
+    @DeleteMapping("/delete/{user_id}")
+    public ResponseEntity<?> deleteEvaluation(@PathVariable("user_id") Integer userId) {
+        Optional<AdminEvaluation> optionalEval = adminEvaluationRepository.findByUserId(userId);
+        if (optionalEval.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "Evaluation not found"));
+        }
+        adminEvaluationRepository.deleteById(optionalEval.get().getId());
+        return ResponseEntity.ok(Map.of(
+            "status", "deleted",
+            "user_id", userId
         ));
     }
 }
