@@ -62,6 +62,9 @@ public class AdminEvaluationController {
         if (req.getUserId() == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "userId is required"));
         }
+        if (adminEvaluationRepository.findByUserId(req.getUserId()).isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Evaluation for this userId already exists"));
+        }
         AdminEvaluation evaluation = new AdminEvaluation(
             req.getUserId(),
             req.getAttendance(),
