@@ -1,4 +1,4 @@
-package com.open.spring.mvc.adminEvaluation;
+package com.open.spring.mvc.evaluationAdmin;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

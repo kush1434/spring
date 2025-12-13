@@ -1,4 +1,4 @@
-package com.open.spring.mvc.adminEvaluation;
+package com.open.spring.mvc.evaluationAdmin;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity(name = "admin_evaluation")
+@Entity(name = "evaluation_admin")
 public class AdminEvaluation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

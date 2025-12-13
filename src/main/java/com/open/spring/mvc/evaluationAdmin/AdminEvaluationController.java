@@ -1,4 +1,4 @@
-package com.open.spring.mvc.adminEvaluation;
+package com.open.spring.mvc.evaluationAdmin;
 
 import java.util.Map;
 import java.util.Optional;
