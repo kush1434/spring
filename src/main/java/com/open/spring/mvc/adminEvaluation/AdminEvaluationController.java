@@ -1,6 +1,5 @@
 package com.open.spring.mvc.adminEvaluation;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -86,12 +85,14 @@ public class AdminEvaluationController {
         ));
     }
 
-    @GetMapping("/get")
-    public ResponseEntity<?> getAllEvaluations() {
-        List<AdminEvaluation> results = adminEvaluationRepository.findAll();
+    @GetMapping("/get/{user_id}")
+    public ResponseEntity<?> getEvaluationByUserId(@PathVariable("user_id") Integer userId) {
+        Optional<AdminEvaluation> optionalEval = adminEvaluationRepository.findByUserId(userId);
+        if (optionalEval.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "Evaluation not found"));
+        }
         return ResponseEntity.ok(Map.of(
-            "count", results.size(),
-            "results", results
+            "evaluation", optionalEval.get()
         ));
     }
 
