@@ -1,4 +1,4 @@
-package com.open.spring.mvc.adminEvaluation;
+package com.open.spring.mvc.evaluationStudent;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity(name = "admin_evaluation")
-public class AdminEvaluation {
+@Entity(name = "evaluation_student")
+public class StudentEvaluation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -57,7 +57,7 @@ public class AdminEvaluation {
     @Column(nullable = false, updatable = false)
     private Long createdAt;
 
-    public AdminEvaluation(Integer userId, Double attendance, Double workHabits, Double behavior, Double timeliness, Double techSense, Double techTalk, Double techGrowth, Double advocacy, Double communication, Double integrity, Double organization) {
+    public StudentEvaluation(Integer userId, Double attendance, Double workHabits, Double behavior, Double timeliness, Double techSense, Double techTalk, Double techGrowth, Double advocacy, Double communication, Double integrity, Double organization) {
         this.userId = userId;
         this.attendance = attendance;
         this.workHabits = workHabits;

@@ -1,8 +1,6 @@
-package com.open.spring.mvc.gradePrediction;
+package com.open.spring.mvc.evaluationAdmin;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,48 +12,57 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class GradePrediction {
+@Entity(name = "evaluation_admin")
+public class AdminEvaluation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonProperty("student_id")
-    private Long studentId;
-    @JsonProperty("attendance")
+    @Column(nullable = false)
+    private Integer userId;
+
+    @Column(nullable = false)
     private Double attendance;
-    @JsonProperty("work_habits")
+
+    @Column(nullable = false)
     private Double workHabits;
-    @JsonProperty("behavior")
+
+    @Column(nullable = false)
     private Double behavior;
-    @JsonProperty("timeliness")
+
+    @Column(nullable = false)
     private Double timeliness;
-    @JsonProperty("tech_sense")
+
+    @Column(nullable = false)
     private Double techSense;
-    @JsonProperty("tech_talk")
+
+    @Column(nullable = false)
     private Double techTalk;
-    @JsonProperty("tech_growth")
+
+    @Column(nullable = false)
     private Double techGrowth;
-    @JsonProperty("advocacy")
+
+    @Column(nullable = false)
     private Double advocacy;
-    @JsonProperty("communication")
+
+    @Column(nullable = false)
     private Double communication;
-    @JsonProperty("integrity")
+
+    @Column(nullable = false)
     private Double integrity;
-    @JsonProperty("organization")
+
+    @Column(nullable = false)
     private Double organization;
-    @JsonProperty("final_grade")
-    private Double predictedScore;
+
+    @Column(nullable = false, updatable = false)
     private Long createdAt;
 
-    public GradePrediction(Double attendance, Double workHabits, Double behavior, Double timeliness,
-                           Double techSense, Double techTalk, Double techGrowth, Double advocacy,
-                           Double communication, Double integrity, Double organization, Double predictedScore) {
+    public AdminEvaluation(Integer userId, Double attendance, Double workHabits, Double behavior, Double timeliness, Double techSense, Double techTalk, Double techGrowth, Double advocacy, Double communication, Double integrity, Double organization) {
+        this.userId = userId;
         this.attendance = attendance;
         this.workHabits = workHabits;
         this.behavior = behavior;
-        this.timeliness = timeliness;  
+        this.timeliness = timeliness;
         this.techSense = techSense;
         this.techTalk = techTalk;
         this.techGrowth = techGrowth;
@@ -63,7 +70,6 @@ public class GradePrediction {
         this.communication = communication;
         this.integrity = integrity;
         this.organization = organization;
-        this.predictedScore = predictedScore;
         this.createdAt = System.currentTimeMillis();
     }
 }

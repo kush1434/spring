@@ -35,8 +35,6 @@ public class GradeTrainingController {
     @Autowired
     private GradeTrainingRepository repository;
     @Autowired
-    private GradePredictionRepository predictionRepository;
-    @Autowired
     private JdbcTemplate jdbcTemplate;
     private RandomForest model;
     private HashMap<Object, Object> encoders;
@@ -172,22 +170,6 @@ public class GradeTrainingController {
                     .body(Map.of("error", "Model not trained. Call /train first."));
         }
         try {
-            String sql = "CREATE TABLE IF NOT EXISTS grade_prediction (" +
-                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                         "attendance REAL, " +
-                         "work_habits REAL, " +
-                         "behavior REAL, " +
-                         "timeliness REAL, " +
-                         "tech_sense REAL, " +
-                         "tech_talk REAL, " +
-                         "tech_growth REAL, " +
-                         "advocacy REAL, " +
-                         "communication REAL, " +
-                         "integrity REAL, " +
-                         "organization REAL, " +
-                         "predicted_score REAL, " +
-                         "created_at INTEGER)";
-            jdbcTemplate.execute(sql);
             String[] numericFeatures = {"attendance", "work_habits", "behavior", "timeliness", 
                                        "tech_sense", "tech_talk", "tech_growth", "advocacy", "communication", 
                                        "integrity", "organization"};
@@ -203,25 +185,9 @@ public class GradeTrainingController {
             DataFrame singleRow = DataFrame.of(vectors.toArray(BaseVector[]::new));
             Tuple instance = singleRow.stream().findFirst().orElseThrow();
             double prediction = model.predict(instance);
-            GradePrediction record = new GradePrediction(
-                ((Number) features.get("attendance")).doubleValue(),
-                ((Number) features.get("work_habits")).doubleValue(),
-                ((Number) features.get("behavior")).doubleValue(),
-                ((Number) features.get("timeliness")).doubleValue(),
-                ((Number) features.get("tech_sense")).doubleValue(),
-                ((Number) features.get("tech_talk")).doubleValue(),
-                ((Number) features.get("tech_growth")).doubleValue(),
-                ((Number) features.get("advocacy")).doubleValue(),
-                ((Number) features.get("communication")).doubleValue(),
-                ((Number) features.get("integrity")).doubleValue(),
-                ((Number) features.get("organization")).doubleValue(),
-                prediction
-            );
-            predictionRepository.save(record);
             return ResponseEntity.ok(Map.of(
                 "predicted_final_grade", prediction,
-                "status", "success",
-                "prediction_id", record.getId()
+                "status", "success"
             ));
         } catch (DataAccessException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
