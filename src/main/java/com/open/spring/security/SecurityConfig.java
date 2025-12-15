@@ -84,7 +84,8 @@ public class SecurityConfig {
                         // Intentionally public - used for polling and public features
                         .requestMatchers("/api/jokes/**").permitAll()
                         // ==========================================
-
+                        .requestMatchers("/api/exports/**").permitAll()
+                        .requestMatchers("/api/imports/**").permitAll()
                         // ========== SYNERGY (ROLE-BASED ACCESS, Legacy system) ==========
                         // Specific endpoint with student/teacher/admin access
                         .requestMatchers(HttpMethod.POST, "/api/synergy/grades/requests").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
@@ -98,7 +99,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/analytics/**").permitAll()
                         .requestMatchers("/api/plant/**").permitAll()
                         .requestMatchers("/api/groups/**").permitAll()
-                        .requestMatchers("/api/academic-progress/**").permitAll()
+                        .requestMatchers("/api/grade-prediction/**").permitAll()
+                        .requestMatchers("/api/admin-evaluation/**").permitAll()
                         .requestMatchers("/api/grades/**").permitAll()
                         .requestMatchers("/api/progress/**").permitAll()
                         .requestMatchers("/api/calendar/**").permitAll()
