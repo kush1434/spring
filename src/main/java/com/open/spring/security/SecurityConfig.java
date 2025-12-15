@@ -83,6 +83,9 @@ public class SecurityConfig {
                         // ========== PUBLIC API ENDPOINTS ==========
                         // Intentionally public - used for polling and public features
                         .requestMatchers("/api/jokes/**").permitAll()
+                        // ==========================================
+                        .requestMatchers("/api/exports/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/imports/**").hasAuthority("ROLE_ADMIN")
                         // ========== SYNERGY (ROLE-BASED ACCESS, Legacy system) ==========
                         // Specific endpoint with student/teacher/admin access
                         .requestMatchers(HttpMethod.POST, "/api/synergy/grades/requests").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
