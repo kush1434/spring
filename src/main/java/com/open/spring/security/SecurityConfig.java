@@ -105,8 +105,8 @@ public class SecurityConfig {
                    
                         .requestMatchers(HttpMethod.GET, "/api/styles/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/styles/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/styles/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/styles/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/styles/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/styles/**").permitAll()
                    
                         .requestMatchers(HttpMethod.GET,"/api/train/**").authenticated()
                        
