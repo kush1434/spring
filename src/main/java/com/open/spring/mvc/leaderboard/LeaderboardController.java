@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestMapping;
+// import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +20,6 @@ import java.util.List;
  * API Controller for Leaderboard Management
  */
 @RestController
-@RequestMapping("/api/leaderboard")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class LeaderboardController {
     
@@ -31,7 +30,7 @@ public class LeaderboardController {
      * CREATE - Add a new leaderboard entry
      * POST /api/leaderboard
      */
-    @PostMapping
+    @PostMapping("/api/leaderboard")
     public ResponseEntity<LeaderboardEntry> createEntry(@RequestBody LeaderboardEntryRequest request) {
         LeaderboardEntry entry = leaderboardService.addEntry(
                 request.getUser(), 
@@ -43,9 +42,10 @@ public class LeaderboardController {
     
     /**
      * READ - Get all leaderboard entries ordered by score
-     * GET /api/leaderboard
+     * GET /api/leaderboard (primary endpoint)
+     * GET /api/pausemenu/score/leaderboard (alias for compatibility)
      */
-    @GetMapping
+    @GetMapping({"/api/leaderboard", "/api/pausemenu/score/leaderboard"})
     public ResponseEntity<List<LeaderboardEntry>> getAllEntries() {
         List<LeaderboardEntry> entries = leaderboardService.getAllEntriesByScore();
         return ResponseEntity.ok(entries);
@@ -55,7 +55,7 @@ public class LeaderboardController {
      * READ - Get a single leaderboard entry by user and game
      * GET /api/leaderboard/{user}/{gameName}
      */
-    @GetMapping("/{user}/{gameName}")
+    @GetMapping("/api/leaderboard/{user}/{gameName}")
     public ResponseEntity<LeaderboardEntry> getEntryByUserAndGame(
             @PathVariable String user, 
             @PathVariable String gameName) {
@@ -67,7 +67,7 @@ public class LeaderboardController {
      * READ - Get top N scores
      * GET /api/leaderboard/top/{limit}
      */
-    @GetMapping("/top/{limit}")
+    @GetMapping("/api/leaderboard/top/{limit}")
     public ResponseEntity<List<LeaderboardEntry>> getTopScores(@PathVariable int limit) {
         List<LeaderboardEntry> entries = leaderboardService.getTopScores(limit);
         return ResponseEntity.ok(entries);
@@ -77,7 +77,7 @@ public class LeaderboardController {
      * READ - Get leaderboard entries for a specific game
      * GET /api/leaderboard/game/{gameName}
      */
-    @GetMapping("/game/{gameName}")
+    @GetMapping("/api/leaderboard/game/{gameName}")
     public ResponseEntity<List<LeaderboardEntry>> getEntriesByGame(@PathVariable String gameName) {
         List<LeaderboardEntry> entries = leaderboardService.getEntriesByGame(gameName);
         return ResponseEntity.ok(entries);
@@ -87,7 +87,7 @@ public class LeaderboardController {
      * READ - Get leaderboard entries for a specific user
      * GET /api/leaderboard/user/{user}
      */
-    @GetMapping("/user/{user}")
+    @GetMapping("/api/leaderboard/user/{user}")
     public ResponseEntity<List<LeaderboardEntry>> getUserEntries(@PathVariable String user) {
         List<LeaderboardEntry> entries = leaderboardService.getUserEntries(user);
         return ResponseEntity.ok(entries);
@@ -97,7 +97,7 @@ public class LeaderboardController {
      * READ - Get entries for a specific user and game
      * GET /api/leaderboard/user/{user}/game/{gameName}
      */
-    @GetMapping("/user/{user}/game/{gameName}")
+    @GetMapping("/api/leaderboard/user/{user}/game/{gameName}")
     public ResponseEntity<List<LeaderboardEntry>> getUserGameEntries(
             @PathVariable String user, 
             @PathVariable String gameName) {
@@ -109,7 +109,7 @@ public class LeaderboardController {
      * UPDATE - Update an existing leaderboard entry
      * PUT /api/leaderboard/{user}/{gameName}
      */
-    @PutMapping("/{user}/{gameName}")
+    @PutMapping("/api/leaderboard/{user}/{gameName}")
     public ResponseEntity<LeaderboardEntry> updateEntry(
             @PathVariable String user,
             @PathVariable String gameName,
@@ -126,7 +126,7 @@ public class LeaderboardController {
      * DELETE - Delete a leaderboard entry by user and game
      * DELETE /api/leaderboard/{user}/{gameName}
      */
-    @DeleteMapping("/{user}/{gameName}")
+    @DeleteMapping("/api/leaderboard/{user}/{gameName}")
     public ResponseEntity<Void> deleteEntry(
             @PathVariable String user,
             @PathVariable String gameName) {
@@ -138,7 +138,7 @@ public class LeaderboardController {
      * DELETE - Delete all leaderboard entries
      * DELETE /api/leaderboard
      */
-    @DeleteMapping
+    @DeleteMapping("/api/leaderboard")
     public ResponseEntity<Void> deleteAllEntries() {
         leaderboardService.deleteAllEntries();
         return ResponseEntity.noContent().build();
@@ -148,7 +148,7 @@ public class LeaderboardController {
      * REFRESH - Refresh entire leaderboard from score tables
      * POST /api/leaderboard/refresh
      */
-    @PostMapping("/refresh")
+    @PostMapping("/api/leaderboard/refresh")
     public ResponseEntity<String> refreshLeaderboard(@RequestParam(defaultValue = "100") int topN) {
         leaderboardService.refreshLeaderboard(topN);
         return ResponseEntity.ok("Leaderboard refreshed with top " + topN + " scores");
@@ -158,7 +158,7 @@ public class LeaderboardController {
      * REFRESH - Refresh leaderboard for a specific game
      * POST /api/leaderboard/refresh/game/{gameName}
      */
-    @PostMapping("/refresh/game/{gameName}")
+    @PostMapping("/api/leaderboard/refresh/game/{gameName}")
     public ResponseEntity<String> refreshLeaderboardForGame(
             @PathVariable String gameName,
             @RequestParam(defaultValue = "100") int topN) {
