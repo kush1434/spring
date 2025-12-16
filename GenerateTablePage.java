@@ -24,14 +24,14 @@ public class GenerateTablePage {
     // ═══════════════════════════════════════════════════════════════════
     // ✏️  EDIT THESE LINES - Everything else is automatic!
     // ═══════════════════════════════════════════════════════════════════
-    static final String ENTITY_NAME = "Game";                                    // ← Your entity class name
-    static final String ENTITY_PACKAGE = "com.open.spring.mvc.rpg.games";       // ← Where your entity class is
-    static final String PAGE_NAME = "Games";                                     // ← Creates /mvc/games/read
+    static final String ENTITY_NAME = "Resume";                                  // ← Your entity class name
+    static final String ENTITY_PACKAGE = "com.open.spring.mvc.resume";          // ← Where your entity class is
+    static final String PAGE_NAME = "Resumes";                                   // ← Creates /mvc/resumes/read
     // ═══════════════════════════════════════════════════════════════════
     
     // Auto-computed (don't touch)
     static final String PAGE_LOWER = PAGE_NAME.toLowerCase();
-    static final String REPO_NAME = "Unified" + ENTITY_NAME + "Repository";
+    static final String REPO_NAME = ENTITY_NAME + "JpaRepository";
     static final String CONTROLLER_PACKAGE = "com.open.spring.mvc." + PAGE_LOWER;
     static final String BASE_PATH = "/mvc/" + PAGE_LOWER;
     static final String PROJECT_ROOT = System.getProperty("user.dir");
@@ -180,6 +180,40 @@ public class %s {
     <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" th:src="@{/js/entity/entity-importation.js}"></script>
     <script type="text/javascript" th:src="@{/js/read-filter.js}"></script>
     <script type="text/javascript" th:src="@{/js/read-overlay.js}"></script>
+    
+    <!-- Inline column toggle - guaranteed to work! -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('.table.table-sm.table-striped');
+            const toggleButtons = document.querySelectorAll('.toggle-column');
+            
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const columnIndex = parseInt(this.getAttribute('data-column'));
+                    const isActive = this.classList.contains('active');
+                    
+                    // Toggle all cells in this column
+                    const headers = table.querySelectorAll('thead th');
+                    const rows = table.querySelectorAll('tbody tr');
+                    
+                    if (headers[columnIndex]) {
+                        headers[columnIndex].style.display = isActive ? 'none' : '';
+                    }
+                    
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td');
+                        if (cells[columnIndex]) {
+                            cells[columnIndex].style.display = isActive ? 'none' : '';
+                        }
+                    });
+                    
+                    // Toggle button state
+                    this.classList.toggle('active');
+                    this.classList.toggle('inactive');
+                });
+            });
+        });
+    </script>
 </th:block>
 
 </html>
