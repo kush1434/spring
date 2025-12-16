@@ -23,6 +23,11 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Groups extends Submitter {
+
+    public Groups() {
+        // REQUIRED by JPA
+    }
+    
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
         name = "group_members", 

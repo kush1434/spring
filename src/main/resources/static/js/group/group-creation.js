@@ -20,7 +20,7 @@ async function populateMemberList() {
     
     persons.forEach(person => {
         const div = document.createElement("div");
-        div.className = "form-check mb-2";
+        div.course = "form-check mb-2";
         div.innerHTML = `
             <input class="form-check-input member-checkbox" type="checkbox" value="${person.id}" id="member-${person.id}">
             <label class="form-check-label" for="member-${person.id}">

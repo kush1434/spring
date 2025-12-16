@@ -93,8 +93,8 @@ public class GroupsApiController {
     /**
      * GET /api/groups - Get all groups with their members
      */
-    @GetMapping
-    @Transactional(readOnly = true)
+    @GetMapping("")
+    // @Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getAllGroups() {
         try {
             List<Groups> groups = groupsRepository.findAll();
@@ -106,8 +106,11 @@ public class GroupsApiController {
 
             return new ResponseEntity<>(result, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+                e.printStackTrace();   // <-- ADD THIS
+                return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(List.of(Map.of("error", e.getMessage())));
+            }
     }
 
     /**
