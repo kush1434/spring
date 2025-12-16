@@ -36,7 +36,12 @@ public class PauseMenuApiController {
     public ResponseEntity<Map<String, Object>> saveScore(@RequestBody ScorePauseMenuRequest request) {
         try {
             ScoreCounter newScore = new ScoreCounter();
-            newScore.setUser(request.getUser());
+            // default to "guest" when user is missing or blank
+            String user = request.getUser();
+            if (user == null || user.trim().isEmpty()) {
+                user = "guest";
+            }
+            newScore.setUser(user);
             newScore.setScore(request.getScore());
 
             ScoreCounter saved = scoreRepository.save(newScore);
@@ -99,5 +104,44 @@ public class PauseMenuApiController {
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of("error", "Score not found"));
+    }
+
+    /**
+     * Alternate endpoint used by frontend
+     * POST /api/gamer/score
+     * Accepts JSON: { "score": number, "user": string? }
+     * If user is missing, defaults to "guest"
+     */
+    @PostMapping(path = "/api/gamer/score", consumes = "application/json")
+    public ResponseEntity<Map<String, Object>> saveGamerScore(@RequestBody Map<String, Object> payload) {
+        try {
+            int score = 0;
+            Object scoreObj = payload.get("score");
+            if (scoreObj instanceof Number) {
+                score = ((Number) scoreObj).intValue();
+            }
+
+            String user = (payload.get("user") instanceof String) ? (String) payload.get("user") : null;
+            if (user == null || user.trim().isEmpty()) {
+                user = "guest";
+            }
+
+            ScoreCounter newScore = new ScoreCounter();
+            newScore.setUser(user);
+            newScore.setScore(score);
+
+            ScoreCounter saved = scoreRepository.save(newScore);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("id", saved.getId());
+            response.put("message", "Score saved successfully");
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Error saving score: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
 }
