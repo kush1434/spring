@@ -24,4 +24,7 @@ public class ScoreCounter {
 
     @Column(nullable = false)
     private int score;
+
+    @Column(nullable = true)
+    private String gameName;
 }

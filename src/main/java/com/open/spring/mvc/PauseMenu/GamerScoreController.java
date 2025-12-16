@@ -24,6 +24,7 @@ public class GamerScoreController {
     public static class GamerScoreRequest {
         public String user;
         public Integer score;
+        public String gameName;
     }
 
     @PostMapping("/score")
@@ -34,10 +35,15 @@ public class GamerScoreController {
             if (user == null || user.trim().isEmpty()) {
                 user = "guest";
             }
+            String gameName = payload != null ? payload.gameName : null;
+            if (gameName == null || gameName.trim().isEmpty()) {
+                gameName = "unknown";
+            }
 
             ScoreCounter newScore = new ScoreCounter();
             newScore.setUser(user);
             newScore.setScore(score);
+            newScore.setGameName(gameName);
 
             ScoreCounter saved = scoreRepository.save(newScore);
 
