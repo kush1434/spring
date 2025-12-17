@@ -1,66 +1,61 @@
 package com.open.spring.mvc.leaderboard;
 
+import com.open.spring.mvc.PauseMenu.ScoreCounter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-// import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import lombok.Data;
 import java.util.List;
 
 /**
- * API Controller for Leaderboard Management
+ * API Controller for Leaderboard (reads from score_counter table)
+ * CORS configured for public access without authentication
+ * 
+ * Endpoints:
+ * - GET /api/leaderboard - Main leaderboard endpoint (all scores)
+ * - GET /api/pausemenu/score/leaderboard - Alias for compatibility with PauseMenu
+ * - GET /api/leaderboard/top/{limit} - Top N scores
+ * - GET /api/leaderboard/game/{gameName} - Scores for specific game
+ * - GET /api/leaderboard/user/{user} - Scores for specific user
  */
 @RestController
-@CrossOrigin(origins = "*", allowedHeaders = "*")
+@CrossOrigin(
+    origins = "*",
+    allowedHeaders = "*",
+    methods = {
+        org.springframework.web.bind.annotation.RequestMethod.GET,
+        org.springframework.web.bind.annotation.RequestMethod.OPTIONS
+    },
+    allowCredentials = "false"
+)
 public class LeaderboardController {
     
     @Autowired
     private LeaderboardService leaderboardService;
     
     /**
-     * CREATE - Add a new leaderboard entry
-     * POST /api/leaderboard
-     */
-    @PostMapping("/api/leaderboard")
-    public ResponseEntity<LeaderboardEntry> createEntry(@RequestBody LeaderboardEntryRequest request) {
-        LeaderboardEntry entry = leaderboardService.addEntry(
-                request.getUser(), 
-                request.getGameName(),
-                request.getScore()
-        );
-        return new ResponseEntity<>(entry, HttpStatus.CREATED);
-    }
-    
-    /**
      * READ - Get all leaderboard entries ordered by score
-     * GET /api/leaderboard (primary endpoint)
-     * GET /api/pausemenu/score/leaderboard (alias for compatibility)
+     * This pulls directly from the score_counter table
+     * GET /api/leaderboard (primary endpoint - used by frontend)
+     * GET /api/pausemenu/score/leaderboard (alias to match PauseMenu path structure)
      */
     @GetMapping({"/api/leaderboard", "/api/pausemenu/score/leaderboard"})
-    public ResponseEntity<List<LeaderboardEntry>> getAllEntries() {
-        List<LeaderboardEntry> entries = leaderboardService.getAllEntriesByScore();
-        return ResponseEntity.ok(entries);
-    }
-    
-    /**
-     * READ - Get a single leaderboard entry by user and game
-     * GET /api/leaderboard/{user}/{gameName}
-     */
-    @GetMapping("/api/leaderboard/{user}/{gameName}")
-    public ResponseEntity<LeaderboardEntry> getEntryByUserAndGame(
-            @PathVariable String user, 
-            @PathVariable String gameName) {
-        LeaderboardEntry entry = leaderboardService.getEntryByUserAndGame(user, gameName);
-        return ResponseEntity.ok(entry);
+    public ResponseEntity<List<ScoreCounter>> getAllEntries() {
+        try {
+            List<ScoreCounter> entries = leaderboardService.getAllEntriesByScore();
+            // Always return a valid JSON array, even if empty
+            if (entries == null) {
+                entries = List.of();
+            }
+            System.out.println("Leaderboard: Returning " + entries.size() + " entries");
+            return ResponseEntity.ok(entries);
+        } catch (Exception e) {
+            System.err.println("Error fetching leaderboard: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.ok(List.of()); // Return empty array on error
+        }
     }
     
     /**
@@ -68,9 +63,9 @@ public class LeaderboardController {
      * GET /api/leaderboard/top/{limit}
      */
     @GetMapping("/api/leaderboard/top/{limit}")
-    public ResponseEntity<List<LeaderboardEntry>> getTopScores(@PathVariable int limit) {
-        List<LeaderboardEntry> entries = leaderboardService.getTopScores(limit);
-        return ResponseEntity.ok(entries);
+    public ResponseEntity<List<ScoreCounter>> getTopScores(@PathVariable int limit) {
+        List<ScoreCounter> entries = leaderboardService.getTopScores(limit);
+        return ResponseEntity.ok(entries != null ? entries : List.of());
     }
     
     /**
@@ -78,9 +73,9 @@ public class LeaderboardController {
      * GET /api/leaderboard/game/{gameName}
      */
     @GetMapping("/api/leaderboard/game/{gameName}")
-    public ResponseEntity<List<LeaderboardEntry>> getEntriesByGame(@PathVariable String gameName) {
-        List<LeaderboardEntry> entries = leaderboardService.getEntriesByGame(gameName);
-        return ResponseEntity.ok(entries);
+    public ResponseEntity<List<ScoreCounter>> getEntriesByGame(@PathVariable String gameName) {
+        List<ScoreCounter> entries = leaderboardService.getEntriesByGame(gameName);
+        return ResponseEntity.ok(entries != null ? entries : List.of());
     }
     
     /**
@@ -88,9 +83,9 @@ public class LeaderboardController {
      * GET /api/leaderboard/user/{user}
      */
     @GetMapping("/api/leaderboard/user/{user}")
-    public ResponseEntity<List<LeaderboardEntry>> getUserEntries(@PathVariable String user) {
-        List<LeaderboardEntry> entries = leaderboardService.getUserEntries(user);
-        return ResponseEntity.ok(entries);
+    public ResponseEntity<List<ScoreCounter>> getUserEntries(@PathVariable String user) {
+        List<ScoreCounter> entries = leaderboardService.getUserEntries(user);
+        return ResponseEntity.ok(entries != null ? entries : List.of());
     }
     
     /**
@@ -98,79 +93,10 @@ public class LeaderboardController {
      * GET /api/leaderboard/user/{user}/game/{gameName}
      */
     @GetMapping("/api/leaderboard/user/{user}/game/{gameName}")
-    public ResponseEntity<List<LeaderboardEntry>> getUserGameEntries(
+    public ResponseEntity<List<ScoreCounter>> getUserGameEntries(
             @PathVariable String user, 
             @PathVariable String gameName) {
-        List<LeaderboardEntry> entries = leaderboardService.getUserGameEntries(user, gameName);
-        return ResponseEntity.ok(entries);
-    }
-    
-    /**
-     * UPDATE - Update an existing leaderboard entry
-     * PUT /api/leaderboard/{user}/{gameName}
-     */
-    @PutMapping("/api/leaderboard/{user}/{gameName}")
-    public ResponseEntity<LeaderboardEntry> updateEntry(
-            @PathVariable String user,
-            @PathVariable String gameName,
-            @RequestBody LeaderboardEntryRequest request) {
-        LeaderboardEntry updated = leaderboardService.updateEntry(
-                user, 
-                gameName,
-                request.getScore()
-        );
-        return ResponseEntity.ok(updated);
-    }
-    
-    /**
-     * DELETE - Delete a leaderboard entry by user and game
-     * DELETE /api/leaderboard/{user}/{gameName}
-     */
-    @DeleteMapping("/api/leaderboard/{user}/{gameName}")
-    public ResponseEntity<Void> deleteEntry(
-            @PathVariable String user,
-            @PathVariable String gameName) {
-        leaderboardService.deleteEntry(user, gameName);
-        return ResponseEntity.noContent().build();
-    }
-    
-    /**
-     * DELETE - Delete all leaderboard entries
-     * DELETE /api/leaderboard
-     */
-    @DeleteMapping("/api/leaderboard")
-    public ResponseEntity<Void> deleteAllEntries() {
-        leaderboardService.deleteAllEntries();
-        return ResponseEntity.noContent().build();
-    }
-    
-    /**
-     * REFRESH - Refresh entire leaderboard from score tables
-     * POST /api/leaderboard/refresh
-     */
-    @PostMapping("/api/leaderboard/refresh")
-    public ResponseEntity<String> refreshLeaderboard(@RequestParam(defaultValue = "100") int topN) {
-        leaderboardService.refreshLeaderboard(topN);
-        return ResponseEntity.ok("Leaderboard refreshed with top " + topN + " scores");
-    }
-    
-    /**
-     * REFRESH - Refresh leaderboard for a specific game
-     * POST /api/leaderboard/refresh/game/{gameName}
-     */
-    @PostMapping("/api/leaderboard/refresh/game/{gameName}")
-    public ResponseEntity<String> refreshLeaderboardForGame(
-            @PathVariable String gameName,
-            @RequestParam(defaultValue = "100") int topN) {
-        leaderboardService.refreshLeaderboardForGame(gameName, topN);
-        return ResponseEntity.ok("Leaderboard refreshed for game '" + gameName + "' with top " + topN + " scores");
-    }
-    
-    // DTO for request body
-    @Data
-    public static class LeaderboardEntryRequest {
-        private String user;
-        private String gameName;
-        private Integer score;
+        List<ScoreCounter> entries = leaderboardService.getUserGameEntries(user, gameName);
+        return ResponseEntity.ok(entries != null ? entries : List.of());
     }
 }
