@@ -18,11 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    // PER-USER limit from application.properties
     @Value("${security.rate-limit.requests-per-minute}")
-    private int requestsPerMinute;
+    private int requestsPerMinute; // PER USER
 
-    // One bucket per user
     private final Map<String, Bucket> userBuckets = new ConcurrentHashMap<>();
 
     @Override
@@ -33,26 +31,18 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         String userKey = getUserKey(request);
 
-        // Create bucket per user if not exists
+        // One bucket per user
         Bucket bucket = userBuckets.computeIfAbsent(
                 userKey,
                 key -> createBucket(requestsPerMinute)
         );
 
-        // ---- CONSOLE LOG (THIS IS WHAT YOU WILL SEE) ----
-        System.out.println(
-                "[RateLimit] User=" + userKey +
-                " | AvailableTokens=" + bucket.getAvailableTokens() +
-                " | Limit=" + requestsPerMinute
-        );
+        response.setHeader("X-Rate-Limit", String.valueOf(requestsPerMinute));
+        response.setHeader("X-User-Key", userKey);
 
         if (bucket.tryConsume(1)) {
             filterChain.doFilter(request, response);
         } else {
-            System.out.println(
-                    "[RateLimit BLOCKED] User=" + userKey +
-                    " | Limit=" + requestsPerMinute
-            );
             response.setStatus(429);
             response.getWriter().write(
                     "Too many requests. Limit: " + requestsPerMinute + " per minute."
@@ -77,6 +67,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (request.getUserPrincipal() != null) {
             return request.getUserPrincipal().getName();
         }
-        return request.getRemoteAddr(); // fallback for unauthenticated users
+        return request.getRemoteAddr();
     }
 }
