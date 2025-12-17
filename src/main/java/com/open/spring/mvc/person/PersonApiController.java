@@ -414,17 +414,6 @@ public class PersonApiController {
             return ResponseEntity.ok("Not a valid barcode");
         }
     };
-
-    @CrossOrigin(origins = {"*"})
-    @GetMapping("/person/uid/{uid}")
-    public ResponseEntity<Person> getPersonByUid(@PathVariable String uid) {
-        Person person = repository.findByUid(uid);
-        if (person != null) {
-            return ResponseEntity.ok(person);
-        }
-        return ResponseEntity.notFound().build();
-    }
-
     // @PostMapping(value = "/person/setSections", produces = MediaType.APPLICATION_JSON_VALUE)
     // public ResponseEntity<?> setSections(@AuthenticationPrincipal UserDetails userDetails, @RequestBody final List<SectionDTO> sections) {
     //     // Check if the authentication object is null

@@ -44,7 +44,7 @@ async function populateMemberList() {
     
     persons.forEach(person => {
         const div = document.createElement("div");
-        div.course = "form-check mb-2";
+        div.className = "form-check mb-2";
         const isChecked = currentMemberIds.includes(person.id);
         div.innerHTML = `
             <input class="form-check-input member-checkbox" type="checkbox" value="${person.id}" id="member-${person.id}" ${isChecked ? "checked" : ""}>

@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.open.spring.mvc.person.PersonJpaRepository;
-
 /*
 This class has an instance of Java Persistence API (JPA)
 -- @Autowired annotation. Allows Spring to resolve and inject collaborating beans into our bean.
@@ -19,9 +17,9 @@ This class has an instance of Java Persistence API (JPA)
 @Service
 @Transactional
 public class GroupsDetailsService {  // "implements" ties ModelRepo to Spring Security
+    // Encapsulate many object into a single Bean (Person, Roles, and Scrum)
     @Autowired  // Inject GroupsJpaRepository
     private GroupsJpaRepository groupsJpaRepository;
-    private PersonJpaRepository personRepository;
 
     /* Groups Section */
 
@@ -49,5 +47,4 @@ public class GroupsDetailsService {  // "implements" ties ModelRepo to Spring Se
     public void delete(long id) {
         groupsJpaRepository.deleteById(id);
     }
-
 }

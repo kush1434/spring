@@ -23,11 +23,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Groups extends Submitter {
-
-    public Groups() {
-        // REQUIRED by JPA
-    }
-    
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
         name = "group_members", 
@@ -39,12 +34,13 @@ public class Groups extends Submitter {
 
     private String name;
     private String period;
-    private String course;
 
-    public Groups(String name, String period, String course, List<Person> groupMembers) {
+    public Groups() {
+    }
+
+    public Groups(String name, String period, List<Person> groupMembers) {
         this.name = name;
         this.period = period;
-        this.course = course;
         this.groupMembers = groupMembers;
     }
 

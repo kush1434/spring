@@ -44,7 +44,6 @@ public class GroupsApiController {
         private String name;
         private String period;
         private List<Long> memberIds;
-        private String course;
     }
 
     @Data
@@ -53,7 +52,6 @@ public class GroupsApiController {
     public static class GroupUpdateDto {
         private String name;
         private String period;
-        private String course;
     }
 
     @Data
@@ -69,8 +67,6 @@ public class GroupsApiController {
         groupMap.put("id", group.getId());
         groupMap.put("name", group.getName());
         groupMap.put("period", group.getPeriod());
-        groupMap.put("course", group.getCourse());
-
 
         List<Map<String, Object>> membersList = new ArrayList<>();
         List<Object[]> memberRows = groupsRepository.findGroupMembersRaw(group.getId());
@@ -93,8 +89,8 @@ public class GroupsApiController {
     /**
      * GET /api/groups - Get all groups with their members
      */
-    @GetMapping("")
-    // @Transactional(readOnly = true)
+    @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getAllGroups() {
         try {
             List<Groups> groups = groupsRepository.findAll();
@@ -106,11 +102,8 @@ public class GroupsApiController {
 
             return new ResponseEntity<>(result, HttpStatus.OK);
         } catch (Exception e) {
-                e.printStackTrace();   // <-- ADD THIS
-                return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(List.of(Map.of("error", e.getMessage())));
-            }
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -164,31 +157,35 @@ public class GroupsApiController {
     @PostMapping
     @Transactional
     public ResponseEntity<Map<String, Object>> createGroup(@RequestBody GroupCreateDto dto) {
-
-        // Validate that course and period are present
-        if (dto.getName() == null || dto.getPeriod() == null || dto.getCourse() == null) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        // IMPORTANT: Use the NEW constructor including course
-        Groups group = new Groups(
-                dto.getName(),
-                dto.getPeriod(),
-                dto.getCourse(),
-                new ArrayList<>()
-        );
-
-        Groups savedGroup = groupsRepository.save(group);
-
-        if (dto.getMemberIds() != null) {
-            for (Long personId : dto.getMemberIds()) {
-                Optional<Person> personOpt = personRepository.findById(personId);
-                personOpt.ifPresent(savedGroup::addPerson);
+        try {
+            if (dto.getName() == null || dto.getName().isEmpty()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Group name is required"),
+                    HttpStatus.BAD_REQUEST
+                );
             }
-            savedGroup = groupsRepository.save(savedGroup);
-        }
 
-        return new ResponseEntity<>(buildGroupResponse(savedGroup), HttpStatus.OK);
+            Groups group = new Groups(dto.getName(), dto.getPeriod(), new ArrayList<>());
+            Groups savedGroup = groupsRepository.save(group);
+
+            // Add members if provided
+            if (dto.getMemberIds() != null) {
+                for (Long personId : dto.getMemberIds()) {
+                    Optional<Person> personOpt = personRepository.findById(personId);
+                    if (personOpt.isPresent()) {
+                        savedGroup.addPerson(personOpt.get());
+                    }
+                }
+                savedGroup = groupsRepository.save(savedGroup);
+            }
+
+            return new ResponseEntity<>(buildGroupResponse(savedGroup), HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                Map.of("error", e.getMessage()),
+                HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
 
@@ -212,7 +209,7 @@ public class GroupsApiController {
 
             for (GroupCreateDto groupDto : dto.getGroups()) {
                 try {
-                    Groups group = new Groups(groupDto.getName(), groupDto.getPeriod(), groupDto.getCourse(),new ArrayList<>());
+                    Groups group = new Groups(groupDto.getName(), groupDto.getPeriod(), new ArrayList<>());
                     Groups savedGroup = groupsRepository.save(group);
 
                     if (groupDto.getMemberIds() != null) {
