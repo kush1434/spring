@@ -2,10 +2,12 @@ package com.open.spring.security;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Refill;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -17,15 +19,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    // User is considered "active" if they made a request in last 5 minutes
-    private static final long ACTIVE_USER_TIMEOUT_MS = 5 * 60 * 1000;
+    @Value("${security.rate-limit.requests-per-minute:20}")
+    private int requestsPerMinute;
 
-    // Track per-user buckets and limits
-    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
     private final Map<String, Integer> userLimits = new ConcurrentHashMap<>();
-
-    // Track active users with last-seen timestamp
-    private final Map<String, Long> activeUsers = new ConcurrentHashMap<>();
+    private final Map<String, Boolean> activeUsers = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -33,64 +32,38 @@ public class RateLimitFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        String userKey = getUserKey(request);
+        String username = request.getUserPrincipal() != null
+                ? request.getUserPrincipal().getName()
+                : request.getRemoteAddr();
 
-        // Update last-seen timestamp
-        activeUsers.put(userKey, System.currentTimeMillis());
-
-        // Remove inactive users
-        cleanupInactiveUsers();
-
-        int activeUserCount = activeUsers.size();
-        int dynamicLimit = computeDynamicLimit(activeUserCount);
-
-        // Rebuild bucket if limit changed
-        Integer previousLimit = userLimits.get(userKey);
-        if (previousLimit == null || previousLimit != dynamicLimit) {
-            buckets.put(userKey, createBucket(dynamicLimit));
-            userLimits.put(userKey, dynamicLimit);
+        // Track logged-in users
+        if (request.getUserPrincipal() != null) {
+            activeUsers.put(username, true);
         }
 
-        Bucket bucket = buckets.get(userKey);
+        int activeUserCount = activeUsers.size();
+        int dynamicLimit = computeDynamicLimit(username, activeUserCount);
 
-        // Expose rate-limit info (helps debugging + clients)
-        response.setHeader("X-Rate-Limit", String.valueOf(dynamicLimit));
-        response.setHeader("X-Active-Users", String.valueOf(activeUserCount));
+        // Check if limit has changed for this user
+        Integer previousLimit = userLimits.get(username);
+        if (previousLimit == null || previousLimit != dynamicLimit) {
+            // Recreate bucket with new limit
+            cache.put(username, createBucketWithLimit(dynamicLimit));
+            userLimits.put(username, dynamicLimit);
+        }
 
-        // Debug log (remove in prod)
-        System.out.println(
-                "User=" + userKey +
-                " | ActiveUsers=" + activeUserCount +
-                " | RateLimit=" + dynamicLimit
-        );
+        Bucket bucket = cache.get(username);
 
         if (bucket.tryConsume(1)) {
             filterChain.doFilter(request, response);
         } else {
             response.setStatus(429);
-            response.getWriter().write(
-                    "Too many requests. Limit: " + dynamicLimit + " requests per minute."
-            );
+            response.getWriter().write("Too many requests - limit: " + dynamicLimit + " per minute");
         }
     }
 
-    // ---------- Helpers ----------
-
-    private String getUserKey(HttpServletRequest request) {
-        if (request.getUserPrincipal() != null) {
-            return request.getUserPrincipal().getName();
-        }
-        return request.getRemoteAddr(); // fallback for unauthenticated users
-    }
-
-    private void cleanupInactiveUsers() {
-        long now = System.currentTimeMillis();
-        activeUsers.entrySet().removeIf(
-                entry -> now - entry.getValue() > ACTIVE_USER_TIMEOUT_MS
-        );
-    }
-
-    private Bucket createBucket(int limit) {
+    private Bucket createBucketWithLimit(int limit) {
+        // Use Bandwidth.builder() instead of Bandwidth.classic()
         Bandwidth bandwidth = Bandwidth.builder()
                 .capacity(limit)
                 .refillGreedy(limit, Duration.ofMinutes(1))
@@ -101,16 +74,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 .build();
     }
 
-    /**
-     * More users → lower per-user rate limit
-     */
-    private int computeDynamicLimit(int activeUsers) {
+    private int computeDynamicLimit(String username, int activeUsers) {
         if (activeUsers < 5) {
-            return 600;   // very low load
+            return 100;
         } else if (activeUsers < 20) {
-            return 300;   // moderate load
+            return 300;
         } else {
-            return 100;   // high load
+            return 600;
         }
     }
 }
