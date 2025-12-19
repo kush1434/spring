@@ -18,8 +18,9 @@ from pathlib import Path
 # Configuration
 LOCAL_URL = "http://localhost:8585"
 PROD_URL = "https://spring.opencodingsociety.com"
-PROD_AUTH_URL = f"{PROD_URL}/authenticate"
+PROD_LOGIN_URL = f"{PROD_URL}/login"
 PROD_IMPORT_URL = f"{PROD_URL}/api/imports/manual"
+LOCAL_LOGIN_URL = f"{LOCAL_URL}/login"
 LOCAL_EXPORT_URL = f"{LOCAL_URL}/api/exports/getAll"
 
 # Credentials
@@ -63,7 +64,30 @@ def export_local_database():
         sys.exit(1)
 
     try:
-        response = requests.get(LOCAL_EXPORT_URL, timeout=30)
+        # Authenticate to local server via form login to obtain session cookies
+        session = requests.Session()
+        auth_data = {
+            "username": ADMIN_UID,
+            "password": load_admin_password(),
+        }
+
+        auth_resp = session.post(LOCAL_LOGIN_URL, data=auth_data, timeout=10, allow_redirects=False)
+
+        if not (auth_resp.status_code == 302 and session.cookies):
+            # Fall back to clearer message if authentication failed
+            msg_preview = auth_resp.text[:200] if hasattr(auth_resp, "text") else ""
+            print(f" Error: Local authentication failed (HTTP {auth_resp.status_code}).")
+            print("   Ensure the credentials are correct and login form is enabled.")
+            if msg_preview:
+                print(f"   Response preview: {msg_preview}")
+            sys.exit(1)
+
+        # Use authenticated session to access protected export endpoint
+        response = session.get(LOCAL_EXPORT_URL, timeout=30)
+        if response.status_code == 401:
+            print(" Error: Unauthorized (401) when accessing local export endpoint.")
+            print("   This endpoint requires login; authentication may have failed.")
+            sys.exit(1)
         response.raise_for_status()
         data = response.json()
 
@@ -92,29 +116,28 @@ def export_local_database():
         sys.exit(1)
 
 def authenticate_to_production(password):
-    """Authenticate to production server and get JWT cookie"""
+    """Authenticate to production server using form login and get session cookie"""
     print("\n Authenticating to production server...")
 
+    # Use form-based login (not JWT) because @JsonIgnore on password field
+    # prevents JSON authentication from working
     auth_data = {
-        "uid": ADMIN_UID,
+        "username": ADMIN_UID,
         "password": password
     }
 
-    headers = {
-        "Content-Type": "application/json"
-    }
-
     try:
-        response = requests.post(PROD_AUTH_URL, json=auth_data, headers=headers, timeout=10)
-        response.raise_for_status()
+        # Create a session to handle cookies and redirects
+        session = requests.Session()
+        response = session.post(PROD_LOGIN_URL, data=auth_data, timeout=10, allow_redirects=False)
 
-        # Extract JWT cookie
-        if "jwt_java_spring" in response.cookies:
+        # Form login returns 302 redirect on success
+        if response.status_code == 302 and "sess_java_spring" in response.cookies:
             print(f" Authenticated as '{ADMIN_UID}'")
-            return response.cookies
+            return session.cookies
         else:
-            print(" Error: No JWT cookie received from server")
-            print(f"   Response: {response.text}")
+            print(f" Authentication failed: HTTP {response.status_code}")
+            print(f"   Response: {response.text[:200]}")
             sys.exit(1)
 
     except requests.exceptions.HTTPError as e:
