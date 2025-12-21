@@ -111,11 +111,6 @@ public class SecurityConfig {
                         // These endpoints are currently wide open - consider if they should require authentication
                         .requestMatchers("/api/analytics/**").permitAll()
                         .requestMatchers("/api/plant/**").permitAll()
-                   
-                        .requestMatchers(HttpMethod.GET, "/api/styles/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/styles/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/styles/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/styles/**").authenticated()
                         .requestMatchers("/api/groups/**").permitAll()
                         .requestMatchers("/api/grade-prediction/**").permitAll()
                         .requestMatchers("/api/admin-evaluation/**").permitAll()
