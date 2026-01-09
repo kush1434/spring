@@ -96,6 +96,7 @@ public class ModelInit {
     @Autowired QuizScoreRepository quizScoreRepository;
     @Autowired ResumeJpaRepository resumeJpaRepository;
     @Autowired StatsRepository statsRepository; // curators - stats
+    @Autowired GroupsJpaRepository groupsJpaRepository;
 
     @Bean
     @Transactional
@@ -506,6 +507,39 @@ public class ModelInit {
             } catch (Exception e) {
                 // Handle exception, e.g., log it, but don't stop startup
                 System.err.println("Error initializing Stats data: " + e.getMessage());
+            }
+
+            // Groups initialization with 3 groups, 3 members each (using hardcoded person IDs)
+            try {
+                if (groupsJpaRepository.count() == 0) {
+                    // Group 1: Period 1 CSA - members with IDs 1, 2, 3
+                    Groups group1 = new Groups("Pioneers", "1", "CSA", new ArrayList<>());
+                    groupsJpaRepository.save(group1);
+                    personJpaRepository.findById(1L).ifPresent(p -> group1.getGroupMembers().add(p));
+                    personJpaRepository.findById(2L).ifPresent(p -> group1.getGroupMembers().add(p));
+                    personJpaRepository.findById(3L).ifPresent(p -> group1.getGroupMembers().add(p));
+                    groupsJpaRepository.save(group1);
+
+                    // Group 2: Period 2 CSA - members with IDs 4, 5, 6
+                    Groups group2 = new Groups("Innovators", "2", "CSA", new ArrayList<>());
+                    groupsJpaRepository.save(group2);
+                    personJpaRepository.findById(4L).ifPresent(p -> group2.getGroupMembers().add(p));
+                    personJpaRepository.findById(5L).ifPresent(p -> group2.getGroupMembers().add(p));
+                    personJpaRepository.findById(6L).ifPresent(p -> group2.getGroupMembers().add(p));
+                    groupsJpaRepository.save(group2);
+
+                    // Group 3: Period 5 CSP - members with IDs 1, 4, 7
+                    Groups group3 = new Groups("Explorers", "5", "CSP", new ArrayList<>());
+                    groupsJpaRepository.save(group3);
+                    personJpaRepository.findById(1L).ifPresent(p -> group3.getGroupMembers().add(p));
+                    personJpaRepository.findById(4L).ifPresent(p -> group3.getGroupMembers().add(p));
+                    personJpaRepository.findById(7L).ifPresent(p -> group3.getGroupMembers().add(p));
+                    groupsJpaRepository.save(group3);
+
+                    System.out.println("Initialized sample Groups data");
+                }
+            } catch (Exception e) {
+                System.err.println("Error initializing Groups data: " + e.getMessage());
             }
         };
     }
