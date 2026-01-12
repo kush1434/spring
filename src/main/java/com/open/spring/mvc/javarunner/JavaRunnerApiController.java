@@ -41,15 +41,16 @@ public class JavaRunnerApiController {
             }
         }
 
-        // Require main method
-        if (!code.contains("public static void main")) {
-            return new ResponseEntity<>(Map.of("output", "❌ Code must contain a public static void main method."), HttpStatus.BAD_REQUEST);
-        }
-
         try {
+            // Extract class name from code
+            String className = extractClassName(code);
+            if (className == null) {
+                return new ResponseEntity<>(Map.of("output", "❌ No public class found in code."), HttpStatus.BAD_REQUEST);
+            }
+
             // Create a temporary directory and file
             Path tempDir = Files.createTempDirectory("java-run-");
-            Path javaFile = tempDir.resolve("Main.java");
+            Path javaFile = tempDir.resolve(className + ".java");
             Files.writeString(javaFile, code);
 
             // Step 1: Compile Java code
@@ -67,7 +68,7 @@ public class JavaRunnerApiController {
             }
 
             // Step 2: Run compiled Java code
-            Process runProcess = new ProcessBuilder("java", "-cp", tempDir.toString(), "Main")
+            Process runProcess = new ProcessBuilder("java", "-cp", tempDir.toString(), className)
                     .redirectErrorStream(true)
                     .start();
 
@@ -86,6 +87,16 @@ public class JavaRunnerApiController {
         } catch (Exception e) {
             return new ResponseEntity<>(Map.of("output", "⚠️ Error running code: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    // Helper: extract public class name from code
+    private String extractClassName(String code) {
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("public\\s+class\\s+(\\w+)");
+        java.util.regex.Matcher matcher = pattern.matcher(code);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
     }
 
     // Helper: safely delete temporary files
