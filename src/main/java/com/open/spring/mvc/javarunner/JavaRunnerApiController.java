@@ -30,14 +30,14 @@ public class JavaRunnerApiController {
     public ResponseEntity<Map<String, String>> runJava(@RequestBody Map<String, String> body) {
         String code = body.get("code");
         if (code == null || code.trim().isEmpty()) {
-            return new ResponseEntity<>(Map.of("output", "⚠️ No code provided."), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(Map.of("output", "No code provided."), HttpStatus.BAD_REQUEST);
         }
 
         // Check for forbidden keywords (case-insensitive)
         String codeUpper = code.toUpperCase();
         for (String keyword : FORBIDDEN_KEYWORDS) {
             if (codeUpper.contains(keyword.toUpperCase())) {
-                return new ResponseEntity<>(Map.of("output", "❌ Code contains forbidden operation: " + keyword), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(Map.of("output", "Code contains forbidden operation: " + keyword), HttpStatus.BAD_REQUEST);
             }
         }
 
@@ -45,7 +45,7 @@ public class JavaRunnerApiController {
             // Extract class name from code
             String className = extractClassName(code);
             if (className == null) {
-                return new ResponseEntity<>(Map.of("output", "❌ No public class found in code."), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(Map.of("output", "No public class found in code."), HttpStatus.BAD_REQUEST);
             }
 
             // Create a temporary directory and file
@@ -64,7 +64,7 @@ public class JavaRunnerApiController {
 
             if (compileProcess.exitValue() != 0) {
                 cleanup(tempDir);
-                return new ResponseEntity<>(Map.of("output", "❌ Compilation error:\n" + compileOutput), HttpStatus.OK);
+                return new ResponseEntity<>(Map.of("output", "Compilation error:\n" + compileOutput), HttpStatus.OK);
             }
 
             // Step 2: Run compiled Java code
@@ -78,14 +78,14 @@ public class JavaRunnerApiController {
             if (!finished) {
                 runProcess.destroyForcibly();
                 cleanup(tempDir);
-                return new ResponseEntity<>(Map.of("output", "⏱️ Execution timed out (" + (TIMEOUT_MS / 1000) + "s limit)."), HttpStatus.OK);
+                return new ResponseEntity<>(Map.of("output", "Execution timed out (" + (TIMEOUT_MS / 1000) + "s limit)."), HttpStatus.OK);
             }
 
             cleanup(tempDir);
             return new ResponseEntity<>(Map.of("output", runOutput), HttpStatus.OK);
 
         } catch (Exception e) {
-            return new ResponseEntity<>(Map.of("output", "⚠️ Error running code: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Map.of("output", "Error running code: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
