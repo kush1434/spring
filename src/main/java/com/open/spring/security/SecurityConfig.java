@@ -95,6 +95,8 @@ public class SecurityConfig {
                         // Allow unauthenticated frontend/client requests to the AI preferences endpoint
                         .requestMatchers(HttpMethod.POST, "/api/upai").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/upai/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/gemini-frq/grade").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/gemini-frq/grade/**").permitAll()
                         // Admin access for certificates + quests
                         .requestMatchers(HttpMethod.POST, "/api/quests/**").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/quests/**").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
