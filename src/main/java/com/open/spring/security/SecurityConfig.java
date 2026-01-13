@@ -121,6 +121,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/grades/**").permitAll()
                         .requestMatchers("/api/progress/**").permitAll()
                         .requestMatchers("/api/calendar/**").permitAll()
+                        // Sprint dates - GET is public, POST/PUT/DELETE require auth
+                        .requestMatchers(HttpMethod.GET, "/api/sprint-dates/**").permitAll()
+                        // User preferences - requires authentication (handled by default rule)
                         // ================================================================================
 
                         // ========== DEFAULT: ALL OTHER API ENDPOINTS ==========
