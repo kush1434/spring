@@ -17,18 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 
-import com.open.spring.mvc.quests.Quest;
-import com.open.spring.mvc.quests.QuestsRepository;
-
 @RestController
 @RequestMapping("/api/certificates")
 public class CertificateController {
 
     @Autowired
     private CertificateRepository repository;
-
-    @Autowired
-    private QuestsRepository questsRepository;
 
     @GetMapping
     public List<Certificate> getAllCertificates() {
@@ -43,8 +37,6 @@ public class CertificateController {
 
     static class CertificateRequest {
         public String title;
-
-        public Number[] questIds;
     }
 
     @PostMapping("/create")
@@ -54,18 +46,7 @@ public class CertificateController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        List<Quest> questRequirments = new java.util.ArrayList<>();
-
-        if (requestBodyCertificate.questIds != null && requestBodyCertificate.questIds.length > 0) {
-            List<Quest> foundQuests = questsRepository.findAllById(java.util.Arrays.stream(requestBodyCertificate.questIds).map(Number::longValue).toList());
-            if (foundQuests.size() != requestBodyCertificate.questIds.length) {
-                System.out.println("One or more quest IDs not found");
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-            questRequirments = foundQuests;
-        }
-
-        Certificate newCertificate = new Certificate(requestBodyCertificate.title, questRequirments);
+        Certificate newCertificate = new Certificate(requestBodyCertificate.title);
         repository.save(newCertificate);
         return new ResponseEntity<>(newCertificate, HttpStatus.CREATED);
     }
