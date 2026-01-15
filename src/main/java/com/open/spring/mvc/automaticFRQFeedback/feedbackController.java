@@ -2,16 +2,28 @@ package com.open.spring.mvc.automaticFRQFeedback;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@Slf4j
 public class feedbackController {
-    
+
     @Value("${gemini.api.key}")
     private String apiKey;
 
@@ -21,63 +33,71 @@ public class feedbackController {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    public GeminiFeedbackService(RestTemplate restTemplate, ObjectMapper objectMapper) {
+    public feedbackController(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
 
-    public FeedbackResponse generateFeedback(FRQMetadata frqData, String studentResponse, String rubric) {
+    public FeedbackResponse generateFeedback(String year, Integer questionNumber, String topic,
+                                             String studentResponse, String rubric, Integer maxScore) {
         try {
-            String prompt = buildPrompt(frqData, studentResponse, rubric);
+            String prompt = buildPrompt(year, questionNumber, topic, studentResponse, rubric, maxScore);
             String geminiResponse = callGeminiAPI(prompt);
             return parseAndValidate(geminiResponse);
         } catch (Exception e) {
+            log.error("Error generating feedback", e);
             throw new RuntimeException("Failed to generate feedback from Gemini API", e);
         }
     }
 
-    private String buildPrompt(FRQMetadata frqData, String studentResponse, String rubric) {
+    private String buildPrompt(String year, Integer questionNumber, String topic,
+                               String studentResponse, String rubric, Integer maxScore) {
         return String.format("""
             You are an AP exam grader. Evaluate the following student response and provide structured feedback.
-            
+
             **FRQ Metadata:**
             - Year: %s
             - Question Number: %d
             - Topic: %s
-            
+            - Maximum Score: %d points
+
             **Student Response:**
             %s
-            
+
             **Scoring Rubric:**
             %s
-            
+
             **Instructions:**
             Provide your evaluation in the following JSON format (respond with ONLY valid JSON, no markdown or extra text):
             {
-              "totalScore": <number>,
-              "maxScore": <number>,
+              "totalScore": <number between 0 and %d>,
+              "maxScore": %d,
               "breakdown": [
                 {
                   "criterion": "<rubric point name>",
                   "pointsEarned": <number>,
                   "pointsPossible": <number>,
-                  "feedback": "<specific feedback>"
+                  "feedback": "<specific, actionable feedback>"
                 }
               ],
               "overallFeedback": [
-                "<actionable feedback point 1>",
-                "<actionable feedback point 2>",
-                "<actionable feedback point 3>"
+                "<key insight 1>",
+                "<key insight 2>",
+                "<key insight 3>"
               ],
-              "strengths": ["<strength 1>", "<strength 2>"],
-              "areasForImprovement": ["<improvement 1>", "<improvement 2>"]
+              "strengths": [
+                "<strength 1>",
+                "<strength 2>"
+              ],
+              "areasForImprovement": [
+                "<specific improvement area 1>",
+                "<specific improvement area 2>"
+              ]
             }
+
+            Be specific, constructive, and educational in your feedback.
             """,
-            frqData.getYear(),
-            frqData.getQuestionNumber(),
-            frqData.getTopic(),
-            studentResponse,
-            rubric
+            year, questionNumber, topic, maxScore, studentResponse, rubric, maxScore, maxScore
         );
     }
 
@@ -88,21 +108,21 @@ public class feedbackController {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> requestBody = new HashMap<>();
-        
+
         List<Map<String, Object>> contents = new ArrayList<>();
         Map<String, Object> content = new HashMap<>();
-        
+
         List<Map<String, String>> parts = new ArrayList<>();
         Map<String, String> part = new HashMap<>();
         part.put("text", prompt);
         parts.add(part);
-        
+
         content.put("parts", parts);
         contents.add(content);
         requestBody.put("contents", contents);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        
+
         ResponseEntity<String> response = restTemplate.exchange(
             url,
             HttpMethod.POST,
@@ -120,18 +140,18 @@ public class feedbackController {
     private String extractTextFromGeminiResponse(String responseBody) throws Exception {
         JsonNode root = objectMapper.readTree(responseBody);
         JsonNode candidates = root.get("candidates");
-        
+
         if (candidates != null && candidates.isArray() && candidates.size() > 0) {
             JsonNode firstCandidate = candidates.get(0);
             JsonNode content = firstCandidate.get("content");
             JsonNode parts = content.get("parts");
-            
+
             if (parts != null && parts.isArray() && parts.size() > 0) {
                 JsonNode text = parts.get(0).get("text");
                 return text.asText();
             }
         }
-        
+
         throw new RuntimeException("Unable to extract text from Gemini response");
     }
 
@@ -154,28 +174,5 @@ public class feedbackController {
         }
 
         return feedback;
-    }
-
-    // Inner classes for metadata
-    public static class FRQMetadata {
-        private String year;
-        private Integer questionNumber;
-        private String topic;
-
-        // Constructors, getters, setters
-        public FRQMetadata() {}
-
-        public FRQMetadata(String year, Integer questionNumber, String topic) {
-            this.year = year;
-            this.questionNumber = questionNumber;
-            this.topic = topic;
-        }
-
-        public String getYear() { return year; }
-        public void setYear(String year) { this.year = year; }
-        public Integer getQuestionNumber() { return questionNumber; }
-        public void setQuestionNumber(Integer questionNumber) { this.questionNumber = questionNumber; }
-        public String getTopic() { return topic; }
-        public void setTopic(String topic) { this.topic = topic; }
     }
 }
