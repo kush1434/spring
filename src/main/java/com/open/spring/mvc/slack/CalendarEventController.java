@@ -50,41 +50,52 @@ public class CalendarEventController {
     }
 
     @PostMapping("/add_event")
-    public ResponseEntity<Map<String, String>> addEvent(@RequestBody Map<String, String> jsonMap) {
-        Map<String, String> response = new HashMap<>();
+    public ResponseEntity<Object> addEvent(@RequestBody Map<String, String> jsonMap) {
+        Map<String, String> errorResponse = new HashMap<>();
         try {
             String title = jsonMap.get("title");
             String dateStr = jsonMap.get("date");
 
             if (title == null || title.trim().isEmpty()) {
-                response.put("message", "Invalid input: 'title' cannot be null or empty.");
-                return ResponseEntity.badRequest().body(response);
+                errorResponse.put("message", "Invalid input: 'title' cannot be null or empty.");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
             if (dateStr == null || dateStr.trim().isEmpty()) {
-                response.put("message", "Invalid input: 'date' cannot be null or empty.");
-                return ResponseEntity.badRequest().body(response);
+                errorResponse.put("message", "Invalid input: 'date' cannot be null or empty.");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
 
             LocalDate date;
             try {
                 date = LocalDate.parse(dateStr);
             } catch (Exception e) {
-                response.put("message", "Invalid date format. Use YYYY-MM-DD.");
-                return ResponseEntity.badRequest().body(response);
+                errorResponse.put("message", "Invalid date format. Use YYYY-MM-DD.");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
 
             String description = jsonMap.getOrDefault("description", "");
             String type = jsonMap.getOrDefault("type", "general");
             String period = jsonMap.get("period"); // Might be null
 
-            CalendarEvent event = new CalendarEvent(date, title, description, type, period);
-            calendarEventService.saveEvent(event);
+            // Check for duplicate (same title and date)
+            CalendarEvent existingEvent = calendarEventService.findByTitleAndDate(title.trim(), date);
+            if (existingEvent != null) {
+                // Update existing event instead of creating duplicate
+                existingEvent.setDescription(description);
+                existingEvent.setType(type);
+                existingEvent.setPeriod(period);
+                CalendarEvent updatedEvent = calendarEventService.saveEvent(existingEvent);
+                return ResponseEntity.ok(updatedEvent);
+            }
 
-            response.put("message", "Event added successfully.");
-            return ResponseEntity.ok(response);
+            CalendarEvent event = new CalendarEvent(date, title, description, type, period);
+            CalendarEvent savedEvent = calendarEventService.saveEvent(event);
+
+            // Return the full event object with id
+            return ResponseEntity.ok(savedEvent);
         } catch (Exception e) {
-            response.put("message", "Error adding event: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            errorResponse.put("message", "Error adding event: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
