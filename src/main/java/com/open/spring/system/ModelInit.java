@@ -1,16 +1,15 @@
 package com.open.spring.system;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.sql.DataSource;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,8 +33,6 @@ import com.open.spring.mvc.bathroom.TeacherJpaRepository;
 import com.open.spring.mvc.bathroom.TinkleJPARepository;
 import com.open.spring.mvc.comment.Comment;
 import com.open.spring.mvc.comment.CommentJPA;
-import com.open.spring.mvc.groups.Groups;
-import com.open.spring.mvc.groups.GroupsJpaRepository;
 import com.open.spring.mvc.hardAssets.HardAssetsRepository;
 import com.open.spring.mvc.jokes.Jokes;
 import com.open.spring.mvc.jokes.JokesJpaRepository;
@@ -48,20 +45,22 @@ import com.open.spring.mvc.person.PersonDetailsService;
 import com.open.spring.mvc.person.PersonJpaRepository;
 import com.open.spring.mvc.person.PersonRole;
 import com.open.spring.mvc.person.PersonRoleJpaRepository;
-import com.open.spring.mvc.quiz.QuizScore;
-import com.open.spring.mvc.quiz.QuizScoreRepository;
-import com.open.spring.mvc.resume.Resume;
-import com.open.spring.mvc.resume.ResumeJpaRepository;
-import com.open.spring.mvc.rpg.adventure.Adventure;
-import com.open.spring.mvc.rpg.adventure.AdventureJpaRepository;
-import com.open.spring.mvc.rpg.games.Game; // curators - stats api
-import com.open.spring.mvc.rpg.games.UnifiedGameRepository;
-import com.open.spring.mvc.stats.Stats;
-import com.open.spring.mvc.stats.StatsRepository;
+
+// Adventure sub-APIs have been unified into a single Adventure entity
 import com.open.spring.mvc.student.StudentQueue;
 import com.open.spring.mvc.student.StudentQueueJPARepository;
 import com.open.spring.mvc.synergy.SynergyGrade;
 import com.open.spring.mvc.synergy.SynergyGradeJpaRepository;
+import com.open.spring.mvc.quiz.QuizScore;
+import com.open.spring.mvc.quiz.QuizScoreRepository;
+import com.open.spring.mvc.resume.Resume;
+import com.open.spring.mvc.resume.ResumeJpaRepository;
+import com.open.spring.mvc.stats.Stats; // curators - stats api
+import com.open.spring.mvc.stats.StatsRepository;
+import com.open.spring.mvc.rpg.adventure.Adventure;
+import com.open.spring.mvc.rpg.adventure.AdventureJpaRepository;
+import com.open.spring.mvc.rpg.games.Game;
+import com.open.spring.mvc.rpg.games.UnifiedGameRepository;
 
 
 @Component
