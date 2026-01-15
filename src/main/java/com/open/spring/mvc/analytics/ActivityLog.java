@@ -35,7 +35,7 @@ import lombok.NoArgsConstructor;
  *   "artifact": "arrays-lesson",
  *   "event_type": "page_view | commit | issue | lesson_complete",
  *   "event_weight": 1.0,
- *   "timestamp": "2026-01-12T18:42:00Z"
+ *  *   "timestamp": "2026-01-12T18:42:00Z"
  * }
  */
 @Data
