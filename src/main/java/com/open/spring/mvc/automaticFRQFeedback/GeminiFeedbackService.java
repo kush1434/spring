@@ -17,12 +17,16 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class feedbackController {
+public class GeminiFeedbackService {
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -32,21 +36,110 @@ public class feedbackController {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    
+    @Autowired
+    private FeedbackRepository feedbackRepository;
 
-    public feedbackController(RestTemplate restTemplate, ObjectMapper objectMapper) {
+    @Autowired
+    private com.open.spring.mvc.assignments.AssignmentSubmissionJPA submissionRepo;
+
+    @Autowired
+    private com.open.spring.mvc.synergy.SynergyGradeJpaRepository gradesRepo;
+    
+    public GeminiFeedbackService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
 
-    public FeedbackResponse generateFeedback(String year, Integer questionNumber, String topic,
-                                             String studentResponse, String rubric, Integer maxScore) {
+    /**
+     * Evaluate a submission with Gemini, persist structured feedback, and update submission grade.
+     * Returns the saved Feedback entity.
+     */
+    @Transactional
+    public Feedback evaluateAndPersistForSubmission(Long submissionId) throws Exception {
+        var submissionOpt = submissionRepo.findById(submissionId);
+        if (submissionOpt.isEmpty()) {
+            throw new IllegalArgumentException("Submission not found: " + submissionId);
+        }
+
+        var submission = submissionOpt.get();
+        var assignment = submission.getAssignment();
+
+        String year = String.valueOf(java.time.Year.now().getValue());
+        Integer questionNumber = 1;
+        String topic = assignment != null ? assignment.getType() : "";
+        Integer maxScore = assignment != null && assignment.getPoints() != null ? assignment.getPoints().intValue() : 1;
+        String rubric = assignment != null ? (assignment.getDescription() == null ? assignment.getName() : assignment.getDescription()) : "";
+
+        // Call Gemini
+        String prompt = buildPrompt(year, questionNumber, topic, submission.getContent(), rubric, maxScore);
+        String raw = callGeminiAPI(prompt);
+        FeedbackResponse parsed = parseAndValidate(raw);
+
+        // Serialize structured parts to JSON for storage
+        String breakdownJson = toJsonSafe(parsed.getBreakdown());
+        String overallJson = toJsonSafe(parsed.getOverallFeedback());
+        String strengthsJson = toJsonSafe(parsed.getStrengths());
+        String areasJson = toJsonSafe(parsed.getAreasForImprovement());
+
+        Double totalScore = parsed.getTotalScore();
+        Integer parsedMax = parsed.getMaxScore() != null ? parsed.getMaxScore() : maxScore;
+        double normalized = 0.0;
+        if (totalScore != null && parsedMax != null && parsedMax > 0) {
+            normalized = totalScore / parsedMax;
+        }
+
+        // Save Feedback entity
+        Feedback fb = new Feedback(submissionId,
+                                   submission.getSubmitter() != null ? submission.getSubmitter().getId() : null,
+                                   Integer.valueOf(year),
+                                   questionNumber,
+                                   1,
+                                   totalScore,
+                                   parsedMax,
+                                   breakdownJson,
+                                   overallJson,
+                                   strengthsJson,
+                                   areasJson,
+                                   raw);
+
+        Feedback saved = feedbackRepository.save(fb);
+
+        // Update assignment submission with short feedback and normalized grade
+        String shortFeedback = parsed.getOverallFeedback() != null && !parsed.getOverallFeedback().isEmpty()
+                ? String.join("; ", parsed.getOverallFeedback().subList(0, Math.min(3, parsed.getOverallFeedback().size())))
+                : null;
+
+        submission.setGrade(normalized);
+        submission.setFeedback(shortFeedback);
+        submissionRepo.save(submission);
+
+        // Update SynergyGrade records for students
         try {
-            String prompt = buildPrompt(year, questionNumber, topic, studentResponse, rubric, maxScore);
-            String geminiResponse = callGeminiAPI(prompt);
-            return parseAndValidate(geminiResponse);
-        } catch (Exception e) {
-            log.error("Error generating feedback", e);
-            throw new RuntimeException("Failed to generate feedback from Gemini API", e);
+            for (com.open.spring.mvc.person.Person student : submission.getSubmitter().getMembers()) {
+                com.open.spring.mvc.synergy.SynergyGrade assignedGrade = gradesRepo.findByAssignmentAndStudent(submission.getAssignment(), student);
+                if (assignedGrade != null) {
+                    assignedGrade.setGrade(normalized);
+                    gradesRepo.save(assignedGrade);
+                } else {
+                    com.open.spring.mvc.synergy.SynergyGrade newGrade = new com.open.spring.mvc.synergy.SynergyGrade(normalized, submission.getAssignment(), student);
+                    gradesRepo.save(newGrade);
+                }
+            }
+        } catch (Exception ex) {
+            // non-fatal: log and continue
+            log.warn("Failed to update per-student SynergyGrade records", ex);
+        }
+
+        return saved;
+    }
+
+    private String toJsonSafe(Object obj) {
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize JSON for storage", e);
+            return "";
         }
     }
 
@@ -144,11 +237,16 @@ public class feedbackController {
         if (candidates != null && candidates.isArray() && candidates.size() > 0) {
             JsonNode firstCandidate = candidates.get(0);
             JsonNode content = firstCandidate.get("content");
+            if (content == null || content.isNull()) {
+                throw new RuntimeException("Gemini response missing content node");
+            }
             JsonNode parts = content.get("parts");
 
             if (parts != null && parts.isArray() && parts.size() > 0) {
                 JsonNode text = parts.get(0).get("text");
-                return text.asText();
+                if (text != null && !text.isNull()) {
+                    return text.asText();
+                }
             }
         }
 
