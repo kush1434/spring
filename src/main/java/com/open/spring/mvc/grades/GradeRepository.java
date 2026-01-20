@@ -9,4 +9,6 @@ public interface GradeRepository extends JpaRepository<Grade, Long> {
     List<Grade> findByUid(String uid);
 
     List<Grade> findByAssignment(String assignment);
+
+    List<Grade> findByUidAndAssignmentIn(String uid, List<String> assignments);
 }
