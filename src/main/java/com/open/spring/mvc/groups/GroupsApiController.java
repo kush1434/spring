@@ -420,4 +420,68 @@ public class GroupsApiController {
             );
         }
     }
+    // ===== Group Grades (JSON blob) =====
+
+    @GetMapping("/{id}/grades")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getGroupGrades(@PathVariable Long id) {
+        Optional<Groups> groupOpt = groupsRepository.findById(id);
+        if (groupOpt.isEmpty()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        return new ResponseEntity<>(groupOpt.get().getGradesJson(), HttpStatus.OK);
+    }
+
+    /**
+     * Replaces the entire group grades blob.
+     * Body example: [ {"assignment":"HW1","score":95,"course":"CSA"}, ... ]
+     */
+    @PutMapping("/{id}/grades")
+    @Transactional
+    public ResponseEntity<?> putGroupGrades(@PathVariable Long id,
+                                        @RequestBody List<Map<String, Object>> grades) {
+        Optional<Groups> groupOpt = groupsRepository.findById(id);
+        if (groupOpt.isEmpty()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        Groups group = groupOpt.get();
+        group.setGradesJson(grades != null ? grades : new ArrayList<>());
+        groupsRepository.save(group);
+
+        return new ResponseEntity<>(group.getGradesJson(), HttpStatus.OK);
+    }
+
+    /**
+     * Appends one grade object to the blob.
+     * Body example: {"assignment":"HW1","score":95,"course":"CSA"}
+     */
+    @PostMapping("/{id}/grades")
+    @Transactional
+    public ResponseEntity<?> addGroupGrade(@PathVariable Long id,
+                                        @RequestBody Map<String, Object> gradeEntry) {
+        Optional<Groups> groupOpt = groupsRepository.findById(id);
+        if (groupOpt.isEmpty()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        Groups group = groupOpt.get();
+        if (group.getGradesJson() == null) group.setGradesJson(new ArrayList<>());
+        group.getGradesJson().add(gradeEntry);
+
+        groupsRepository.save(group);
+        return new ResponseEntity<>(group.getGradesJson(), HttpStatus.OK);
+    }
+
+    /**
+     * Clears the group grades blob.
+     */
+    @DeleteMapping("/{id}/grades")
+    @Transactional
+    public ResponseEntity<?> clearGroupGrades(@PathVariable Long id) {
+        Optional<Groups> groupOpt = groupsRepository.findById(id);
+        if (groupOpt.isEmpty()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        Groups group = groupOpt.get();
+        group.setGradesJson(new ArrayList<>());
+        groupsRepository.save(group);
+
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
 }
