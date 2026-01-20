@@ -454,10 +454,6 @@ public class GroupsApiController {
         return new ResponseEntity<>(group.getGradesJson(), HttpStatus.OK);
     }
 
-    /**
-     * Appends one grade object to the blob.
-     * Body example: {"assignment":"HW1","score":95,"course":"CSA"}
-     */
     @PostMapping("/{id}/grades")
     @Transactional
     public ResponseEntity<?> addGroupGrade(@PathVariable Long id,
@@ -468,13 +464,58 @@ public class GroupsApiController {
         Groups group = groupOpt.get();
         if (group.getGradesJson() == null) group.setGradesJson(new ArrayList<>());
 
-        gradeEntry.put("type", "GROUP");
+        // --- Build a canonical group-grade entry (so group + persons get same schema) ---
+        Map<String, Object> canonical = new LinkedHashMap<>(gradeEntry);
 
-        group.getGradesJson().add(gradeEntry);
+        // REQUIRED: you should include assignmentId in request, because upsert logic depends on it
+        // canonical.get("assignmentId") should exist
 
+        canonical.put("type", "GROUP");
+        canonical.put("origin", "GROUP");
+        canonical.put("groupId", group.getId());
+        canonical.put("groupName", group.getName());
+        canonical.put("period", group.getPeriod());
+        canonical.put("course", group.getCourse());
+
+        // --- 1) Save into GROUP's gradesJson (use upsert to avoid duplicates) ---
+        upsertGradeEntry(group.getGradesJson(), canonical);
         groupsRepository.save(group);
-        return new ResponseEntity<>(group.getGradesJson(), HttpStatus.OK);
+
+        // --- 2) Propagate into each MEMBER's Person.gradesJson ---
+        List<Object[]> memberRows = groupsRepository.findGroupMembersRaw(group.getId());
+
+        List<Long> memberIds = new ArrayList<>();
+        for (Object[] row : memberRows) {
+            memberIds.add(((Number) row[0]).longValue());
+        }
+
+        List<Person> members = personRepository.findAllById(memberIds);
+
+        for (Person p : members) {
+            List<Map<String, Object>> grades =
+                (p.getGradesJson() == null) ? new ArrayList<>() : new ArrayList<>(p.getGradesJson());
+
+            Map<String, Object> perPerson = new LinkedHashMap<>(canonical);
+            upsertGradeEntry(grades, perPerson);
+
+            // IMPORTANT: setter triggers Hibernate dirty checking
+            p.setGradesJson(grades);
+        }
+
+        personRepository.saveAll(members);
+
+
+        // Return something useful
+        return new ResponseEntity<>(
+            Map.of(
+                "groupId", group.getId(),
+                "updatedMembers", members.size(),
+                "groupGrades", group.getGradesJson()
+            ),
+            HttpStatus.OK
+        );
     }
+
 
     /**
      * Clears the group grades blob.
@@ -520,6 +561,36 @@ public class GroupsApiController {
             Object k = g.get("groupGradeKey");
             return (k instanceof String) && ((String) k).startsWith(prefix);
         });
+    }
+
+    private void upsertGradeEntry(List<Map<String, Object>> grades, Map<String, Object> incoming) {
+        if (grades == null) return;
+
+        String assignmentId = incoming.get("assignmentId") != null ? incoming.get("assignmentId").toString() : null;
+        String groupId = incoming.get("groupId") != null ? incoming.get("groupId").toString() : null;
+
+        if (assignmentId == null) {
+            // if you want, throw instead:
+            // throw new IllegalArgumentException("assignmentId is required");
+            grades.add(incoming);
+            return;
+        }
+
+        // Find existing entry with same assignmentId + groupId (for GROUP-origin grades)
+        for (int i = 0; i < grades.size(); i++) {
+            Map<String, Object> existing = grades.get(i);
+
+            String existingAssignmentId = existing.get("assignmentId") != null ? existing.get("assignmentId").toString() : null;
+            String existingGroupId = existing.get("groupId") != null ? existing.get("groupId").toString() : null;
+
+            if (assignmentId.equals(existingAssignmentId) &&
+                ((groupId == null && existingGroupId == null) || (groupId != null && groupId.equals(existingGroupId)))) {
+                grades.set(i, incoming); // replace
+                return;
+            }
+        }
+
+        grades.add(incoming); // insert
     }
 
 
