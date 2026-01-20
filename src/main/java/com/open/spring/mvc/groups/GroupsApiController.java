@@ -151,6 +151,35 @@ public class GroupsApiController {
         }
     }
 
+    /**
+     * GET /api/groups/search?name={searchTerm} - Search groups by name
+     * Returns a list of groups whose names contain the search term (case-insensitive)
+     */
+    @GetMapping("/search")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<Map<String, Object>>> searchGroupsByName(
+            @org.springframework.web.bind.annotation.RequestParam(value = "name", required = true) String searchTerm) {
+        try {
+            if (searchTerm == null || searchTerm.trim().isEmpty()) {
+                return new ResponseEntity<>(
+                    new ArrayList<>(),
+                    HttpStatus.OK
+                );
+            }
+
+            List<Groups> groups = groupsRepository.searchByName(searchTerm.trim());
+            List<Map<String, Object>> result = new ArrayList<>();
+
+            for (Groups group : groups) {
+                result.add(buildGroupResponse(group));
+            }
+
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // ===== POST Operations =====
 
     /**
