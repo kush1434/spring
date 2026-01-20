@@ -442,6 +442,11 @@ public class GroupsApiController {
         Optional<Groups> groupOpt = groupsRepository.findById(id);
         if (groupOpt.isEmpty()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
+        
+        for (Map<String, Object> grade : grades) {
+            grade.put("type", "GROUP");
+        }
+
         Groups group = groupOpt.get();
         group.setGradesJson(grades != null ? grades : new ArrayList<>());
         groupsRepository.save(group);
@@ -462,6 +467,9 @@ public class GroupsApiController {
 
         Groups group = groupOpt.get();
         if (group.getGradesJson() == null) group.setGradesJson(new ArrayList<>());
+
+        gradeEntry.put("type", "GROUP");
+
         group.getGradesJson().add(gradeEntry);
 
         groupsRepository.save(group);
@@ -483,5 +491,36 @@ public class GroupsApiController {
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+    private static String makeGroupGradeKey(Long groupId, String assignmentId) {
+        return "GROUP:" + groupId + ":" + assignmentId;
+    }
+
+    private static void upsertGrade(List<Map<String, Object>> grades, Map<String, Object> newEntry) {
+        String key = (String) newEntry.get("groupGradeKey");
+        if (key == null) return;
+
+        for (int i = 0; i < grades.size(); i++) {
+            Object existingKey = grades.get(i).get("groupGradeKey");
+            if (key.equals(existingKey)) {
+                grades.set(i, newEntry); // replace
+                return;
+            }
+        }
+        grades.add(newEntry); // insert if not found
+    }
+
+    private static void removeGroupGrade(List<Map<String, Object>> grades, Long groupId, String assignmentId) {
+        String key = makeGroupGradeKey(groupId, assignmentId);
+        grades.removeIf(g -> key.equals(g.get("groupGradeKey")));
+    }
+
+    private static void removeAllGroupGradesForGroup(List<Map<String, Object>> grades, Long groupId) {
+        String prefix = "GROUP:" + groupId + ":";
+        grades.removeIf(g -> {
+            Object k = g.get("groupGradeKey");
+            return (k instanceof String) && ((String) k).startsWith(prefix);
+        });
+    }
+
 
 }
