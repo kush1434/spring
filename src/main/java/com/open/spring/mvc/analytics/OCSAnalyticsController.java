@@ -11,12 +11,10 @@ import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonJpaRepository;
 
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.*;
 
 @RestController
 @RequestMapping("/api/ocs-analytics")
-@CrossOrigin(origins = {"http://localhost:8080", "http://localhost:4000"})
 public class OCSAnalyticsController {
 
     @Autowired
