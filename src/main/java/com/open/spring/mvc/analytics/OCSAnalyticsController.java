@@ -40,7 +40,7 @@ public class OCSAnalyticsController {
 
         try {
             // Get person from database
-            Person person = personRepository.findByEmail(userDetails.getUsername());
+            Person person = personRepository.findByUid(userDetails.getUsername());
             if (person == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
             }
@@ -116,7 +116,7 @@ public class OCSAnalyticsController {
         }
 
         try {
-            Person person = personRepository.findByEmail(userDetails.getUsername());
+            Person person = personRepository.findByUid(userDetails.getUsername());
             if (person == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
             }
@@ -143,7 +143,7 @@ public class OCSAnalyticsController {
         }
 
         try {
-            Person person = personRepository.findByEmail(userDetails.getUsername());
+            Person person = personRepository.findByUid(userDetails.getUsername());
             if (person == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
             }
@@ -195,7 +195,7 @@ public class OCSAnalyticsController {
         }
 
         try {
-            Person person = personRepository.findByEmail(userDetails.getUsername());
+            Person person = personRepository.findByUid(userDetails.getUsername());
             if (person == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
             }
@@ -249,7 +249,7 @@ public class OCSAnalyticsController {
         }
 
         try {
-            Person person = personRepository.findByEmail(userDetails.getUsername());
+            Person person = personRepository.findByUid(userDetails.getUsername());
             if (person == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
             }
@@ -286,7 +286,7 @@ public class OCSAnalyticsController {
         }
 
         try {
-            Person person = personRepository.findByEmail(userDetails.getUsername());
+            Person person = personRepository.findByUid(userDetails.getUsername());
             if (person == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
             }
