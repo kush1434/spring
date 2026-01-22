@@ -137,6 +137,11 @@ public class SecurityConfig {
                         // User preferences - requires authentication (handled by default rule)
                         // ================================================================================
 
+                        // ========== OCS ANALYTICS ==========
+                        // OCS Analytics endpoints - require authentication to associate data with user
+                        .requestMatchers("/api/ocs-analytics/**").authenticated()
+                        // ===================================
+
                         // ========== DEFAULT: ALL OTHER API ENDPOINTS ==========
                         // Secure by default - any endpoint not explicitly listed above requires authentication
                         .requestMatchers("/api/**").authenticated()
