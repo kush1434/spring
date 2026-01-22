@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class OCSAnalyticsDTO {
     
     private Long personId;
+    private String uid;  // Frontend sends UID to identify user
     private LocalDateTime sessionStartTime;
     private LocalDateTime sessionEndTime;
     private Long sessionDurationSeconds;

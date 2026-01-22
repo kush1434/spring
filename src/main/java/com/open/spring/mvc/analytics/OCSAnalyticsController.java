@@ -33,15 +33,21 @@ public class OCSAnalyticsController {
             @RequestBody OCSAnalyticsDTO dto,
             @AuthenticationPrincipal UserDetails userDetails) {
         
-        if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
-        }
-
         try {
-            // Get person from database
-            Person person = personRepository.findByUid(userDetails.getUsername());
+            // Try to get person from authentication first
+            Person person = null;
+            
+            if (userDetails != null) {
+                // User is authenticated - use their UID from auth
+                person = personRepository.findByUid(userDetails.getUsername());
+            } else if (dto.getUid() != null && !dto.getUid().isEmpty()) {
+                // Fallback: use UID from DTO if provided
+                person = personRepository.findByUid(dto.getUid());
+            }
+            
             if (person == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("User not found. Please provide valid uid or be authenticated.");
             }
 
             // Create analytics record
