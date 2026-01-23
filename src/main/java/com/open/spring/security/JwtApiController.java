@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -40,6 +41,9 @@ public class JwtApiController {
 	@Autowired
 	private PersonDetailsService personDetailsService;
 
+	@Value("${server.servlet.context-path:}")
+	private String contextPath;
+
     // @CrossOrigin(origins = "http://127.0.0.1:4500")
 	@CrossOrigin(origins = "http://localhost:4500")
 	@PostMapping("/authenticate")
@@ -60,13 +64,25 @@ public class JwtApiController {
 			return new ResponseEntity<>("Token generation failed", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		final ResponseCookie tokenCookie = ResponseCookie.from("jwt_java_spring", token)
+		// Build cookie with development-friendly settings
+		// For localhost: allow HTTP and SameSite=Lax
+		// For production: require HTTPS and SameSite=None; Secure
+		ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from("jwt_java_spring", token)
 			.httpOnly(false)
-			.secure(true)
 			.path("/")
-			.maxAge(3600)
-			.sameSite("None; Secure")
-			.build();
+			.maxAge(3600);
+
+		// Check if running on localhost (development) or production
+		boolean isLocalhost = contextPath == null || contextPath.isEmpty();
+		if (isLocalhost) {
+			// Development: allow HTTP and use Lax SameSite
+			cookieBuilder.secure(false).sameSite("Lax");
+		} else {
+			// Production: require HTTPS and use None; Secure
+			cookieBuilder.secure(true).sameSite("None; Secure");
+		}
+
+		final ResponseCookie tokenCookie = cookieBuilder.build();
 
 		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, tokenCookie.toString()).body(authenticationRequest.getUid() + " was authenticated successfully");
 	}
@@ -93,13 +109,20 @@ public class JwtApiController {
 			logoutHandler.logout(request, response, authentication);
 	
 			// Expire the JWT token immediately by setting a past expiration date
-			ResponseCookie cookie = ResponseCookie.from("jwt_java_spring", "")
+			ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from("jwt_java_spring", "")
 				.httpOnly(false)
-				.secure(true)
 				.path("/")
-				.maxAge(0)  // Set maxAge to 0 to expire the cookie immediately
-				.sameSite("None; Secure")
-				.build();
+				.maxAge(0);  // Set maxAge to 0 to expire the cookie immediately
+
+			// Use development-friendly settings for localhost
+			boolean isLocalhost = contextPath == null || contextPath.isEmpty();
+			if (isLocalhost) {
+				cookieBuilder.secure(false).sameSite("Lax");
+			} else {
+				cookieBuilder.secure(true).sameSite("None; Secure");
+			}
+
+			ResponseCookie cookie = cookieBuilder.build();
 	
 			// Set the cookie in the response to effectively "remove" the JWT
 			response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());

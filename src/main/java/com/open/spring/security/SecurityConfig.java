@@ -137,6 +137,11 @@ public class SecurityConfig {
                         // User preferences - requires authentication (handled by default rule)
                         // ================================================================================
 
+                        // ========== CHALLENGE SUBMISSION ==========
+                        // Code runner challenge submissions - requires authentication
+                        .requestMatchers(HttpMethod.POST, "/api/challenge-submission/**").authenticated()
+                        // ==========================================
+
                         // ========== OCS ANALYTICS ==========
                         // OCS Analytics endpoints - require authentication to associate data with user
                         .requestMatchers("/api/ocs-analytics/**").authenticated()
