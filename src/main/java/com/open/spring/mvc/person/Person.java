@@ -338,7 +338,7 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("sid", dotenv.get("ADMIN_SID")),
                 Map.entry("pfp", dotenv.get("ADMIN_PFP")),
                 Map.entry("kasmServerNeeded", false),
-                Map.entry("roles", Arrays.asList("ROLE_ADMIN", "ROLE_USER", "ROLE_TESTER", "ROLE_TEACHER")),
+                Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")),
                 Map.entry("stocks", "BTC,ETH")
             ),
             // Teacher user from .env
@@ -350,7 +350,7 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("sid", dotenv.get("TEACHER_SID")),
                 Map.entry("pfp", dotenv.get("TEACHER_PFP")),
                 Map.entry("kasmServerNeeded", true),
-                Map.entry("roles", Arrays.asList("ROLE_TEACHER", "ROLE_USER")),
+                Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_TEACHER")),
                 Map.entry("stocks", "BTC,ETH")
             ),
             // Default user from .env
@@ -365,7 +365,7 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
                 Map.entry("stocks", "BTC,ETH")
             ),
-            // Alexander Graham Bell - test user
+            // Alexander Graham Bell - hardcoded student user
             Map.ofEntries(
                 Map.entry("name", "Alexander Graham Bell"),
                 Map.entry("uid", "lex"),
@@ -373,11 +373,11 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("password", dotenv.get("DEFAULT_PASSWORD")),
                 Map.entry("sid", "1"),
                 Map.entry("pfp", "/images/lex.png"),
-                Map.entry("kasmServerNeeded", true),
+                Map.entry("kasmServerNeeded", false),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
                 Map.entry("stocks", "BTC,ETH")
             ),
-            // Madam Curie - test user
+            // Madam Curie - hardcoded student user
             Map.ofEntries(
                 Map.entry("name", "Madam Curie"),
                 Map.entry("uid", "madam"),
@@ -385,23 +385,23 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("password", dotenv.get("DEFAULT_PASSWORD")),
                 Map.entry("sid", "1"),
                 Map.entry("pfp", "/images/madam.png"),
-                Map.entry("kasmServerNeeded", true),
+                Map.entry("kasmServerNeeded", false),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
                 Map.entry("stocks", "BTC,ETH")
             ),
-            // John Mortensen - hardcoded fallback admin
+            // My user - from .env
             Map.ofEntries(
-                Map.entry("name", "John Mortensen"),
-                Map.entry("uid", "jm1021"),
+                Map.entry("name", dotenv.get("MY_NAME")),
+                Map.entry("uid", dotenv.get("MY_UID")),
                 Map.entry("email", "jmort1021@gmail.com"),
                 Map.entry("password", dotenv.get("DEFAULT_PASSWORD")),
                 Map.entry("sid", "1"),
-                Map.entry("pfp", "/images/jm1021.png"),
+                Map.entry("pfp", "/images/default.png"),
                 Map.entry("kasmServerNeeded", true),
-                Map.entry("roles", Arrays.asList("ROLE_ADMIN", "ROLE_TEACHER")),
+                Map.entry("roles", Arrays.asList("ROLE_USER", dotenv)),
                 Map.entry("stocks", "BTC,ETH")
             ),
-            // Alan Turing - hardcoded test user
+            // Alan Turing - hardcoded student user 
             Map.ofEntries(
                 Map.entry("name", "Alan Turing"),
                 Map.entry("uid", "alan"),
@@ -410,7 +410,7 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("sid", "2"),
                 Map.entry("pfp", "/images/alan.png"),
                 Map.entry("kasmServerNeeded", false),
-                Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_TESTER", "ROLE_STUDENT")),
+                Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
                 Map.entry("stocks", "BTC,ETH")
             )
         );
