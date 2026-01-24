@@ -82,11 +82,42 @@ socket.port=8589
 
 ## .env files
 
-- In order to run this project locally, a .env file should be set up with the appropriate variables:
-- GAMIFY_API_URL=
-- GAMIFY_API_KEY= 
-- ADMIN_PASSWORD=123Toby!
-- DEFAULT_PASSWORD=123Qwerty!
+The `.env` file provides local environment-specific configuration that overrides `application.properties`. This file is excluded from git (via `.gitignore`) to prevent committing sensitive credentials and local settings.
+
+**How it works:**
+- Spring Boot loads `application.properties` first (production defaults)
+- Then imports `.env` which overrides those values
+- Properties in `.env` take precedence over `application.properties`
+
+**Required .env setup for local development:**
+
+```bash
+# User Authentication (required)
+ADMIN_PASSWORD=123Toby!
+DEFAULT_PASSWORD=123Qwerty!
+
+# JWT Cookie Settings - Local Development (HTTP)
+# These override the production defaults in application.properties
+jwt.cookie.secure=false
+jwt.cookie.same-site=Lax
+
+# API Keys (optional - defaults exist in application.properties)
+GAMIFY_API_URL=https://api.openai.com/v1/chat/completions
+GAMIFY_API_KEY=your-openai-api-key-here
+GEMINI_API_KEY=your-gemini-api-key-here
+GITHUB_API_TOKEN=your-github-token-here
+
+# Email Configuration (optional - overrides application.properties)
+# spring.mail.username=your-email@gmail.com
+# spring.mail.password=your-app-password
+```
+
+**Production Configuration:**
+- Production uses the secure defaults from `application.properties` (HTTPS settings)
+- No `.env` file needed on production unless overriding specific values
+- Use environment variables on production servers if preferred (e.g., `JWT_COOKIE_SECURE=true`)
+
+**Important:** Never commit the `.env` file to git. It contains sensitive credentials and local-only settings.
 
 ## Person MVC
 
