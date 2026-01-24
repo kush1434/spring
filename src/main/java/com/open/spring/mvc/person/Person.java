@@ -398,7 +398,7 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("sid", "9999993"),
                 Map.entry("pfp", "/images/default.png"),
                 Map.entry("kasmServerNeeded", true),
-                Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_ADMIN", "ROLE_TEACHER")),
+                Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")),
                 Map.entry("stocks", "BTC,ETH")
             ),
             // Alan Turing - hardcoded student user 
