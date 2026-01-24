@@ -1,5 +1,6 @@
 package com.open.spring.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -8,6 +9,10 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.CorsConfigurationSource;
+
 
 /*
  * THIS FILE IS IMPORTANT
@@ -45,19 +50,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfig {
 
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final JwtRequestFilter jwtRequestFilter;
+    @Autowired
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-    // Inject the RateLimitFilter
-    private final RateLimitFilter rateLimitFilter;
+    @Autowired
+    private JwtRequestFilter jwtRequestFilter;
 
-    public SecurityConfig(JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-                          JwtRequestFilter jwtRequestFilter,
-                          RateLimitFilter rateLimitFilter) {
-        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
-        this.jwtRequestFilter = jwtRequestFilter;
-        this.rateLimitFilter = rateLimitFilter; 
-    }
+    @Autowired
+    private RateLimitFilter rateLimitFilter;
 
     @Bean
     @Order(1)
@@ -65,6 +65,9 @@ public class SecurityConfig {
 
         http
                 .securityMatcher("/api/**", "/authenticate")
+                
+                .cors(Customizer.withDefaults())
+
                 // JWT related configuration
                 .csrf(csrf -> csrf.disable())
                 // .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) OBSOLETE, OVERWRITTEN BY BELOW
@@ -158,4 +161,19 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowCredentials(true);
+        configuration.addAllowedOriginPattern("http://localhost:4500" );
+        configuration.addAllowedOriginPattern("https://opencodingsociety.com" );
+        configuration.addAllowedOriginPattern("http://opencodingsociety.com" );
+        configuration.addAllowedHeader("*");
+        configuration.addAllowedMethod("*");
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
 }
