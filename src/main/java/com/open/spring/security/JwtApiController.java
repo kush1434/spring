@@ -100,7 +100,7 @@ public class JwtApiController {
 
     private final SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
 	
-		@PostMapping("/my/logout")
+		@PostMapping("/api/logout")
 		public String performLogout(Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
 			// Perform logout using SecurityContextLogoutHandler
 			logoutHandler.logout(request, response, authentication);
