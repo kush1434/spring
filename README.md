@@ -92,9 +92,38 @@ The `.env` file provides local environment-specific configuration that overrides
 **Required .env setup for local development:**
 
 ```bash
-# User Authentication (required)
-ADMIN_PASSWORD=123Toby!
+# Default password and reset passwor
 DEFAULT_PASSWORD=123Qwerty!
+
+# Admin user defaults
+ADMIN_NAME=Thomas Edison
+ADMIN_UID=toby
+ADMIN_EMAIL=toby@example.com
+ADMIN_SID=0000001
+ADMIN_PASSWORD=123Toby!
+ADMIN_PFP=/images/toby.png
+
+# Teacher user defaults
+TEACHER_NAME=Nikola Tesla
+TEACHER_UID=niko
+TEACHER_EMAIL=niko@example.com
+TEACHER_SID=0000002
+TEACHER_PASSWORD=123Niko!
+TEACHER_PFP=/images/niko.png
+
+# Default user for testing 
+USER_NAME=Grace Hopper
+USER_UID=hop
+USER_EMAIL=hop@example.com
+USER_SID=0000003
+USER_PASSWORD=123Hop!
+USER_PFP=/images/hop.png
+
+# Convience user defaults
+MY_NAME=John Mortensen
+MY_UID=jm1021
+MY_SID=0000004
+MY_EMAIL=jmort1021@gmail.com
 
 # JWT Cookie Settings - Local Development (HTTP)
 # These override the production defaults in application.properties

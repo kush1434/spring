@@ -395,7 +395,7 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("uid", dotenv.get("MY_UID")),
                 Map.entry("email", dotenv.get("MY_EMAIL")),
                 Map.entry("password", dotenv.get("DEFAULT_PASSWORD")),
-                Map.entry("sid", "9999993"),
+                Map.entry("sid", dotenv.get("MY_SID") != null ? dotenv.get("MY_SID") : "9999993"),
                 Map.entry("pfp", "/images/default.png"),
                 Map.entry("kasmServerNeeded", true),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")),
@@ -414,7 +414,6 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("stocks", "BTC,ETH")
             )
         );
-    
         // Iterate over the JSON-like list to create Person objects
         for (Map<String, Object> data : personData) {
             Person person = createPerson(
