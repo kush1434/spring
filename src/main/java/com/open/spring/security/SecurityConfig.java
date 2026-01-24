@@ -166,9 +166,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.addAllowedOriginPattern("http://localhost:4500" );
-        configuration.addAllowedOriginPattern("https://opencodingsociety.com" );
-        configuration.addAllowedOriginPattern("http://opencodingsociety.com" );
+        configuration.addAllowedOriginPattern("http://localhost:4500");
+        configuration.addAllowedOriginPattern("https://opencodingsociety.com");
+        configuration.addAllowedOriginPattern("http://opencodingsociety.com");
+        configuration.addAllowedOriginPattern("https://pages.opencodingsociety.com");
+        configuration.addAllowedOriginPattern("https://spring.opencodingsociety.com");
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
