@@ -8,7 +8,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.header.writers.StaticHeadersWriter;
 
 /*
  * THIS FILE IS IMPORTANT
@@ -73,6 +72,7 @@ public class SecurityConfig {
 
                         // ========== AUTHENTICATION & USER MANAGEMENT ==========
                         // Public endpoints - no authentication required, support user login and account creation
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // Allow CORS preflight requests
                         .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/person/create").permitAll()
                         // Admin-only endpoints, beware of DELETE operations and impact to cascading relational data 
@@ -148,16 +148,6 @@ public class SecurityConfig {
                         // ======================================================
                        
                 )
-                .cors(Customizer.withDefaults())
-                .headers(headers -> headers
-                        .addHeaderWriter(new StaticHeadersWriter("Access-Control-Allow-Credentials", "true"))
-                        .addHeaderWriter(
-                                new StaticHeadersWriter("Access-Control-Allow-ExposedHeaders", "*", "Authorization"))
-                        .addHeaderWriter(new StaticHeadersWriter("Access-Control-Allow-Headers", "Content-Type",
-                                "Authorization", "x-csrf-token"))
-                        .addHeaderWriter(new StaticHeadersWriter("Access-Control-Allow-MaxAge", "600"))
-                        .addHeaderWriter(new StaticHeadersWriter("Access-Control-Allow-Methods", "POST", "GET",
-                                "PUT", "DELETE", "OPTIONS", "HEAD")))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint))
 

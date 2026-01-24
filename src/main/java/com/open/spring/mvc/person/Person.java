@@ -26,6 +26,7 @@ import jakarta.persistence.Convert;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.open.spring.mvc.assignments.AssignmentSubmission;
 import com.open.spring.mvc.bank.Bank;
 import com.open.spring.mvc.bathroom.Tinkle;
@@ -93,7 +94,7 @@ public class Person extends Submitter implements Comparable<Person> {
      */
 
     @NotEmpty
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @NotEmpty
