@@ -54,8 +54,8 @@ public class S3FileHandler implements FileHandler {
     }
 
     @Override
-    public String uploadFile(String base64Data, String filename, String uid, String assignmentTitle) {
-        String key = generateKey(uid, assignmentTitle, filename);
+    public String uploadFile(String base64Data, String filename, String uid) {
+        String key = generateKey(uid, filename);
         System.out.println("S3 Upload: " + key);
 
         try {
@@ -76,8 +76,8 @@ public class S3FileHandler implements FileHandler {
     }
 
     @Override
-    public String decodeFile(String uid, String assignmentTitle, String filename) {
-        String key = generateKey(uid, assignmentTitle, filename);
+    public String decodeFile(String uid, String filename) {
+        String key = generateKey(uid, filename);
         System.out.println("S3 Download: " + key);
 
         try {
@@ -98,8 +98,8 @@ public class S3FileHandler implements FileHandler {
     }
 
     @Override
-    public boolean deleteFiles(String uid, String assignmentTitle) {
-        String prefix = uid + "/" + assignmentTitle + "/";
+    public boolean deleteFiles(String uid) {
+        String prefix = uid + "/";
         System.out.println("S3 Delete Prefix: " + prefix);
 
         try {
@@ -133,7 +133,7 @@ public class S3FileHandler implements FileHandler {
         }
     }
 
-    private String generateKey(String uid, String assignmentTitle, String filename) {
-        return uid + "/" + assignmentTitle + "/" + filename;
+    private String generateKey(String uid, String filename) {
+        return uid + "/" + filename;
     }
 }
