@@ -52,3 +52,7 @@ backups/*
 testoutput/
 
 volumes/data.json
+
+# Bathroom
+bathroom_cleaned.csv
+bathroom_summary.csv
