@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
 import jakarta.annotation.PostConstruct;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -26,25 +28,31 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 // TODO: Change the BUCKET NAME from pages-assignments to something else
 
 @Service
+@Slf4j
 // @ConditionalOnProperty(name = "file.storage-type", havingValue = "prod")
 public class S3FileHandler implements FileHandler {
 
-    @Value("${AWS_BUCKET_NAME}")
+    @Value("${aws.s3.bucket-name}")
     private String bucketName;
 
-    @Value("${AWS_ACCESS_KEY_ID}")
+    @Value("${aws.s3.access-key-id}")
     private String accessKey;
 
-    @Value("${AWS_SECRET_ACCESS_KEY}")
+    @Value("${aws.s3.secret-access-key}")
     private String secretKey;
 
-    @Value("${AWS_REGION}")
+    @Value("${aws.s3.region}")
     private String region;
 
     private S3Client s3Client;
 
     @PostConstruct
     public void init() {
+        if (isBlank(accessKey) || isBlank(secretKey) || isBlank(region) || isBlank(bucketName)) {
+            log.warn("S3 is disabled: missing AWS credentials/region/bucket. Upload API will return errors until configured.");
+            return;
+        }
+
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey.trim(), secretKey.trim());
 
         this.s3Client = S3Client.builder()
@@ -55,6 +63,10 @@ public class S3FileHandler implements FileHandler {
 
     @Override
     public String uploadFile(String base64Data, String filename, String uid) {
+        if (s3Client == null) {
+            log.warn("S3 upload attempted but S3 client is not configured.");
+            return null;
+        }
         String key = generateKey(uid, filename);
         System.out.println("S3 Upload: " + key);
 
@@ -77,6 +89,10 @@ public class S3FileHandler implements FileHandler {
 
     @Override
     public String decodeFile(String uid, String filename) {
+        if (s3Client == null) {
+            log.warn("S3 download attempted but S3 client is not configured.");
+            return null;
+        }
         String key = generateKey(uid, filename);
         System.out.println("S3 Download: " + key);
 
@@ -99,6 +115,10 @@ public class S3FileHandler implements FileHandler {
 
     @Override
     public boolean deleteFiles(String uid) {
+        if (s3Client == null) {
+            log.warn("S3 delete attempted but S3 client is not configured.");
+            return false;
+        }
         String prefix = uid + "/";
         System.out.println("S3 Delete Prefix: " + prefix);
 
@@ -135,5 +155,9 @@ public class S3FileHandler implements FileHandler {
 
     private String generateKey(String uid, String filename) {
         return uid + "/" + filename;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 }
