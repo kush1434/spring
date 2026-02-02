@@ -97,7 +97,9 @@ public class GenericCollectionController {
         }
 
         // Update fields
-        item.setType(updatedItem.getType());
+        if (updatedItem.getType() != null) {
+            item.setType(updatedItem.getType());
+        }
         item.setName(updatedItem.getName());
         item.setAttributes(updatedItem.getAttributes());
 

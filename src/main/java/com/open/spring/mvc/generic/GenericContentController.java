@@ -96,7 +96,9 @@ public class GenericContentController {
         }
 
         // Update fields
-        content.setType(updatedContent.getType());
+        if (updatedContent.getType() != null) {
+            content.setType(updatedContent.getType());
+        }
         content.setBody(updatedContent.getBody());
         content.setMetadata(updatedContent.getMetadata());
 

@@ -39,7 +39,7 @@ public class AlgorithmicEvent {
     @JoinColumn(name = "user_id")
     private User user; // Optional, can be null for anonymous events
 
-    private String algoName; // e.g. "TITANIC_PREDICTION"
+
 
     @Enumerated(EnumType.STRING)
     private EventType type;

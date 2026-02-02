@@ -88,7 +88,9 @@ public class GenericEventController {
         }
 
         // Update fields
-        event.setType(updatedEvent.getType());
+        if (updatedEvent.getType() != null) {
+            event.setType(updatedEvent.getType());
+        }
         event.setPayload(updatedEvent.getPayload());
 
         AlgorithmicEvent saved = eventRepository.save(event);
