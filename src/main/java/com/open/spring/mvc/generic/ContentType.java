@@ -4,5 +4,6 @@ public enum ContentType {
     NOTE,
     COMMENT,
     ANNOUNCEMENT,
-    JOKE
+    JOKE,
+    CHATTER
 }
