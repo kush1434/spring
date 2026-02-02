@@ -326,41 +326,64 @@ public class Person extends Submitter implements Comparable<Person> {
     public static Person[] init() {
         ArrayList<Person> people = new ArrayList<>();
         final Dotenv dotenv = Dotenv.load();
+        final String defaultPassword = dotenv.get("DEFAULT_PASSWORD", "password");
+        final String adminName = dotenv.get("ADMIN_NAME", "Admin");
+        final String adminUid = dotenv.get("ADMIN_UID", "admin");
+        final String adminEmail = dotenv.get("ADMIN_EMAIL", "admin@example.com");
+        final String adminPassword = dotenv.get("ADMIN_PASSWORD", defaultPassword);
+        final String adminSid = dotenv.get("ADMIN_SID", "0000001");
+        final String adminPfp = dotenv.get("ADMIN_PFP", "/images/default.png");
+        final String teacherName = dotenv.get("TEACHER_NAME", "Teacher");
+        final String teacherUid = dotenv.get("TEACHER_UID", "teacher");
+        final String teacherEmail = dotenv.get("TEACHER_EMAIL", "teacher@example.com");
+        final String teacherPassword = dotenv.get("TEACHER_PASSWORD", defaultPassword);
+        final String teacherSid = dotenv.get("TEACHER_SID", "0000002");
+        final String teacherPfp = dotenv.get("TEACHER_PFP", "/images/default.png");
+        final String userName = dotenv.get("USER_NAME", "User");
+        final String userUid = dotenv.get("USER_UID", "user");
+        final String userEmail = dotenv.get("USER_EMAIL", "user@example.com");
+        final String userPassword = dotenv.get("USER_PASSWORD", defaultPassword);
+        final String userSid = dotenv.get("USER_SID", "0000003");
+        final String userPfp = dotenv.get("USER_PFP", "/images/default.png");
+        final String myName = dotenv.get("MY_NAME", "My User");
+        final String myUid = dotenv.get("MY_UID", "myuser");
+        final String myEmail = dotenv.get("MY_EMAIL", "myuser@example.com");
+        final String mySid = dotenv.get("MY_SID", "9999993");
     
         // JSON-like list of person data using Map.ofEntries
         List<Map<String, Object>> personData = Arrays.asList(
             // Admin user from .env
             Map.ofEntries(
-                Map.entry("name", dotenv.get("ADMIN_NAME")),
-                Map.entry("uid", dotenv.get("ADMIN_UID")),
-                Map.entry("email", dotenv.get("ADMIN_EMAIL")),
-                Map.entry("password", dotenv.get("ADMIN_PASSWORD")),
-                Map.entry("sid", dotenv.get("ADMIN_SID")),
-                Map.entry("pfp", dotenv.get("ADMIN_PFP")),
+                Map.entry("name", adminName),
+                Map.entry("uid", adminUid),
+                Map.entry("email", adminEmail),
+                Map.entry("password", adminPassword),
+                Map.entry("sid", adminSid),
+                Map.entry("pfp", adminPfp),
                 Map.entry("kasmServerNeeded", false),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")),
                 Map.entry("stocks", "BTC,ETH")
             ),
             // Teacher user from .env
             Map.ofEntries(
-                Map.entry("name", dotenv.get("TEACHER_NAME")),
-                Map.entry("uid", dotenv.get("TEACHER_UID")),
-                Map.entry("email", dotenv.get("TEACHER_EMAIL")),
-                Map.entry("password", dotenv.get("TEACHER_PASSWORD")),
-                Map.entry("sid", dotenv.get("TEACHER_SID")),
-                Map.entry("pfp", dotenv.get("TEACHER_PFP")),
+                Map.entry("name", teacherName),
+                Map.entry("uid", teacherUid),
+                Map.entry("email", teacherEmail),
+                Map.entry("password", teacherPassword),
+                Map.entry("sid", teacherSid),
+                Map.entry("pfp", teacherPfp),
                 Map.entry("kasmServerNeeded", true),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_TEACHER")),
                 Map.entry("stocks", "BTC,ETH")
             ),
             // Default user from .env
             Map.ofEntries(
-                Map.entry("name", dotenv.get("USER_NAME")),
-                Map.entry("uid", dotenv.get("USER_UID")),
-                Map.entry("email", dotenv.get("USER_EMAIL")),
-                Map.entry("password", dotenv.get("USER_PASSWORD")),
-                Map.entry("sid", dotenv.get("USER_SID")),
-                Map.entry("pfp", dotenv.get("USER_PFP")),
+                Map.entry("name", userName),
+                Map.entry("uid", userUid),
+                Map.entry("email", userEmail),
+                Map.entry("password", userPassword),
+                Map.entry("sid", userSid),
+                Map.entry("pfp", userPfp),
                 Map.entry("kasmServerNeeded", true),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT")),
                 Map.entry("stocks", "BTC,ETH")
@@ -370,7 +393,7 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("name", "Alexander Graham Bell"),
                 Map.entry("uid", "lex"),
                 Map.entry("email", "lexb@gmail.com"),
-                Map.entry("password", dotenv.get("DEFAULT_PASSWORD")),
+                Map.entry("password", defaultPassword),
                 Map.entry("sid", "9999991"),
                 Map.entry("pfp", "/images/lex.png"),
                 Map.entry("kasmServerNeeded", false),
@@ -382,7 +405,7 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("name", "Madam Curie"),
                 Map.entry("uid", "madam"),
                 Map.entry("email", "madam@gmail.com"),
-                Map.entry("password", dotenv.get("DEFAULT_PASSWORD")),
+                Map.entry("password", defaultPassword),
                 Map.entry("sid", "9999992"),
                 Map.entry("pfp", "/images/madam.png"),
                 Map.entry("kasmServerNeeded", false),
@@ -391,11 +414,11 @@ public class Person extends Submitter implements Comparable<Person> {
             ),
             // My user - from .env
             Map.ofEntries(
-                Map.entry("name", dotenv.get("MY_NAME")),
-                Map.entry("uid", dotenv.get("MY_UID")),
-                Map.entry("email", dotenv.get("MY_EMAIL")),
-                Map.entry("password", dotenv.get("DEFAULT_PASSWORD")),
-                Map.entry("sid", dotenv.get("MY_SID") != null ? dotenv.get("MY_SID") : "9999993"),
+                Map.entry("name", myName),
+                Map.entry("uid", myUid),
+                Map.entry("email", myEmail),
+                Map.entry("password", defaultPassword),
+                Map.entry("sid", mySid),
                 Map.entry("pfp", "/images/default.png"),
                 Map.entry("kasmServerNeeded", true),
                 Map.entry("roles", Arrays.asList("ROLE_USER", "ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")),
@@ -406,7 +429,7 @@ public class Person extends Submitter implements Comparable<Person> {
                 Map.entry("name", "Alan Turing"),
                 Map.entry("uid", "alan"),
                 Map.entry("email", "turing@gmail.com"),
-                Map.entry("password", dotenv.get("DEFAULT_PASSWORD")),
+                Map.entry("password", defaultPassword),
                 Map.entry("sid", "9999994"),
                 Map.entry("pfp", "/images/alan.png"),
                 Map.entry("kasmServerNeeded", false),
