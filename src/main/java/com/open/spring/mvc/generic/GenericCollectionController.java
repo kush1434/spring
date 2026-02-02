@@ -22,9 +22,9 @@ public class GenericCollectionController {
     @Autowired
     private UserRepository userRepository;
 
-    @PostMapping("/{category}")
+    @PostMapping("/{type}")
     public ResponseEntity<UserCollectionItem> addItem(
-            @PathVariable String category,
+            @PathVariable CollectionItemType type,
             @RequestBody UserCollectionItem item,
             @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -37,21 +37,21 @@ public class GenericCollectionController {
             }
         }
 
-        item.setCategory(category);
+        item.setType(type);
         UserCollectionItem saved = collectionRepository.save(item);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
     }
 
-    @GetMapping("/{category}")
-    public ResponseEntity<List<UserCollectionItem>> listItems(@PathVariable String category) {
-        return new ResponseEntity<>(collectionRepository.findByCategory(category), HttpStatus.OK);
+    @GetMapping("/{type}")
+    public ResponseEntity<List<UserCollectionItem>> listItems(@PathVariable CollectionItemType type) {
+        return new ResponseEntity<>(collectionRepository.findByType(type), HttpStatus.OK);
     }
 
-    @GetMapping("/{category}/{ownerId}")
+    @GetMapping("/{type}/{ownerId}")
     public ResponseEntity<List<UserCollectionItem>> listItemsByOwner(
-            @PathVariable String category,
+            @PathVariable CollectionItemType type,
             @PathVariable Long ownerId) {
-        return new ResponseEntity<>(collectionRepository.findByOwnerIdAndCategory(ownerId, category), HttpStatus.OK);
+        return new ResponseEntity<>(collectionRepository.findByOwnerIdAndType(ownerId, type), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")

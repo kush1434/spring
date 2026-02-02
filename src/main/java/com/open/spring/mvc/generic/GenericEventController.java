@@ -22,9 +22,9 @@ public class GenericEventController {
     @Autowired
     private UserRepository userRepository;
 
-    @PostMapping("/{algoName}")
+    @PostMapping("/{type}")
     public ResponseEntity<AlgorithmicEvent> logEvent(
-            @PathVariable String algoName,
+            @PathVariable EventType type,
             @RequestBody AlgorithmicEvent event,
             @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -35,14 +35,13 @@ public class GenericEventController {
             user.ifPresent(event::setUser);
         }
 
-        event.setAlgoName(algoName);
+        event.setType(type);
         AlgorithmicEvent saved = eventRepository.save(event);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
     }
 
-    @GetMapping("/{algoName}")
-    public ResponseEntity<List<AlgorithmicEvent>> listEvents(@PathVariable String algoName) {
-        // In a real app, this should probably be restricted or paginated
-        return new ResponseEntity<>(eventRepository.findByAlgoName(algoName), HttpStatus.OK);
+    @GetMapping("/{type}")
+    public ResponseEntity<List<AlgorithmicEvent>> listEvents(@PathVariable EventType type) {
+        return new ResponseEntity<>(eventRepository.findByType(type), HttpStatus.OK);
     }
 }
