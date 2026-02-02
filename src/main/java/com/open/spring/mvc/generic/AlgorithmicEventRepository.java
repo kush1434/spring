@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface AlgorithmicEventRepository extends JpaRepository<AlgorithmicEvent, Long> {
     List<AlgorithmicEvent> findByType(EventType type);
 
-    List<AlgorithmicEvent> findByUserIdAndType(Long userId, EventType type);
+    List<AlgorithmicEvent> findByUserIdAndType(String userId, EventType type);
 }

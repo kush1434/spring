@@ -9,5 +9,5 @@ import java.util.List;
 public interface UserContentRepository extends JpaRepository<UserContent, Long> {
     List<UserContent> findByType(ContentType type);
 
-    List<UserContent> findByAuthorIdAndType(Long authorId, ContentType type);
+    List<UserContent> findByUserIdAndType(String userId, ContentType type);
 }

@@ -5,8 +5,6 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,9 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.open.spring.mvc.identity.User;
-import com.open.spring.mvc.identity.UserRepository;
-
 @RestController
 @RequestMapping("/api/events")
 public class GenericEventController {
@@ -26,22 +21,12 @@ public class GenericEventController {
     @Autowired
     private AlgorithmicEventRepository eventRepository;
 
-    @Autowired
-    private UserRepository userRepository;
-
     @PostMapping("/{type}")
     public ResponseEntity<AlgorithmicEvent> logEvent(
             @PathVariable EventType type,
-            @RequestBody AlgorithmicEvent event,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @RequestBody AlgorithmicEvent event) {
 
-        // Events can be anonymous or authenticated
-        if (userDetails != null) {
-            String email = userDetails.getUsername();
-            Optional<User> user = userRepository.findByEmail(email);
-            user.ifPresent(event::setUser);
-        }
-
+        // Store provided userId verbatim (may be null for anonymous)
         event.setType(type);
         AlgorithmicEvent saved = eventRepository.save(event);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
@@ -69,8 +54,7 @@ public class GenericEventController {
     @PutMapping("/{id}")
     public ResponseEntity<AlgorithmicEvent> updateEvent(
             @PathVariable Long id,
-            @RequestBody AlgorithmicEvent updatedEvent,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @RequestBody AlgorithmicEvent updatedEvent) {
 
         Optional<AlgorithmicEvent> existing = eventRepository.findById(id);
         if (existing.isEmpty()) {
@@ -79,40 +63,23 @@ public class GenericEventController {
 
         AlgorithmicEvent event = existing.get();
 
-        // Allow update if user is the event owner or if event is anonymous
-        if (event.getUser() != null && userDetails != null) {
-            String email = userDetails.getUsername();
-            if (!event.getUser().getEmail().equals(email)) {
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-            }
-        }
-
-        // Update fields
+        // No owner-by-email checks; update allowed
         if (updatedEvent.getType() != null) {
             event.setType(updatedEvent.getType());
         }
         event.setPayload(updatedEvent.getPayload());
+        // allow replacing userId if provided
+        event.setUserId(updatedEvent.getUserId());
 
         AlgorithmicEvent saved = eventRepository.save(event);
         return new ResponseEntity<>(saved, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEvent(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
         Optional<AlgorithmicEvent> event = eventRepository.findById(id);
         if (event.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        // Allow delete if user is the event owner or if event is anonymous
-        if (event.get().getUser() != null) {
-            if (userDetails == null) {
-                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-            }
-            String email = userDetails.getUsername();
-            if (!event.get().getUser().getEmail().equals(email)) {
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-            }
         }
 
         eventRepository.deleteById(id);

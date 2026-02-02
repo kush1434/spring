@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface UserCollectionItemRepository extends JpaRepository<UserCollectionItem, Long> {
     List<UserCollectionItem> findByType(CollectionItemType type);
 
-    List<UserCollectionItem> findByOwnerIdAndType(Long ownerId, CollectionItemType type);
+    List<UserCollectionItem> findByUserIdAndType(String userId, CollectionItemType type);
 }
