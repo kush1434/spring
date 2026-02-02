@@ -15,6 +15,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name = "generic_user_content")
 public class UserContent {
 
     @Id
