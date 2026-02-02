@@ -1,16 +1,19 @@
 package com.open.spring.mvc.generic;
 
-import com.open.spring.mvc.identity.User;
-import com.open.spring.mvc.identity.UserRepository;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/collections")
@@ -19,55 +22,73 @@ public class GenericCollectionController {
     @Autowired
     private UserCollectionItemRepository collectionRepository;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @PostMapping("/{category}")
+    @PostMapping("/{type}")
     public ResponseEntity<UserCollectionItem> addItem(
-            @PathVariable String category,
-            @RequestBody UserCollectionItem item,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @PathVariable CollectionItemType type,
+            @RequestBody UserCollectionItem item) {
 
-        if (userDetails != null) {
-            String email = userDetails.getUsername();
-            Optional<User> owner = userRepository.findByEmail(email);
-
-            if (owner.isPresent()) {
-                item.setOwner(owner.get());
-            }
-        }
-
-        item.setCategory(category);
+        // Store provided userId verbatim (may be null)
+        item.setType(type);
         UserCollectionItem saved = collectionRepository.save(item);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
     }
 
-    @GetMapping("/{category}")
-    public ResponseEntity<List<UserCollectionItem>> listItems(@PathVariable String category) {
-        return new ResponseEntity<>(collectionRepository.findByCategory(category), HttpStatus.OK);
+    @GetMapping("/{param}")
+    public ResponseEntity<?> listItems(@PathVariable String param) {
+        // Try to parse as Long (id)
+        try {
+            Long id = Long.parseLong(param);
+            return collectionRepository.findById(id)
+                    .map(item -> new ResponseEntity<Object>(item, HttpStatus.OK))
+                    .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        } catch (NumberFormatException e) {
+            // Not a number, try as CollectionItemType
+            try {
+                CollectionItemType type = CollectionItemType.valueOf(param.toUpperCase());
+                return new ResponseEntity<>(collectionRepository.findByType(type), HttpStatus.OK);
+            } catch (IllegalArgumentException ex) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+        }
     }
 
-    @GetMapping("/{category}/{ownerId}")
+    @GetMapping("/{type}/{userId}")
     public ResponseEntity<List<UserCollectionItem>> listItemsByOwner(
-            @PathVariable String category,
-            @PathVariable Long ownerId) {
-        return new ResponseEntity<>(collectionRepository.findByOwnerIdAndCategory(ownerId, category), HttpStatus.OK);
+            @PathVariable CollectionItemType type,
+            @PathVariable String userId) {
+        return new ResponseEntity<>(collectionRepository.findByUserIdAndType(userId, type), HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserCollectionItem> updateItem(
+            @PathVariable Long id,
+            @RequestBody UserCollectionItem updatedItem) {
+
+        Optional<UserCollectionItem> existing = collectionRepository.findById(id);
+        if (existing.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        UserCollectionItem item = existing.get();
+
+        // No owner-by-email checks; allow update and allow changing userId if provided
+        if (updatedItem.getType() != null) {
+            item.setType(updatedItem.getType());
+        }
+        item.setName(updatedItem.getName());
+        item.setAttributes(updatedItem.getAttributes());
+        item.setUserId(updatedItem.getUserId());
+
+        UserCollectionItem saved = collectionRepository.save(item);
+        return new ResponseEntity<>(saved, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteItem(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
+    public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
 
         Optional<UserCollectionItem> item = collectionRepository.findById(id);
         if (item.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        String email = userDetails.getUsername();
-        if (!item.get().getOwner().getEmail().equals(email)) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         collectionRepository.deleteById(id);

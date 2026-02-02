@@ -1,13 +1,13 @@
 package com.open.spring.mvc.generic;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface UserCollectionItemRepository extends JpaRepository<UserCollectionItem, Long> {
-    List<UserCollectionItem> findByCategory(String category);
+    List<UserCollectionItem> findByType(CollectionItemType type);
 
-    List<UserCollectionItem> findByOwnerIdAndCategory(Long ownerId, String category);
+    List<UserCollectionItem> findByUserIdAndType(String userId, CollectionItemType type);
 }
