@@ -1,6 +1,8 @@
 package com.open.spring.mvc.challengeSubmission;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,19 +15,21 @@ public interface ChallengeSubmissionRepository extends JpaRepository<ChallengeSu
     /**
      * Find a submission by user and lesson
      * 
-     * @param userId    The user's UID
+     * @param user_id    The user's UID
      * @param lessonKey The lesson identifier
      * @return Optional containing the submission if found
      */
-    Optional<ChallengeSubmission> findByUserIdAndLessonKey(String userId, String lessonKey);
+    @Query("SELECT c FROM ChallengeSubmission c WHERE c.user_id = :user_id AND c.lessonKey = :lessonKey")
+    Optional<ChallengeSubmission> findByUser_idAndLessonKey(@Param("user_id") String user_id, @Param("lessonKey") String lessonKey);
 
     /**
      * Find all submissions for a specific user
      * 
-     * @param userId The user's UID
+     * @param user_id The user's UID
      * @return List of all submissions by this user
      */
-    List<ChallengeSubmission> findByUserId(String userId);
+    @Query("SELECT c FROM ChallengeSubmission c WHERE c.user_id = :user_id")
+    List<ChallengeSubmission> findByUser_id(@Param("user_id") String user_id);
 
     /**
      * Find all submissions for a specific lesson
@@ -38,9 +42,10 @@ public interface ChallengeSubmissionRepository extends JpaRepository<ChallengeSu
     /**
      * Check if a submission exists for a user and lesson
      * 
-     * @param userId    The user's UID
+     * @param user_id    The user's UID
      * @param lessonKey The lesson identifier
      * @return true if submission exists
      */
-    boolean existsByUserIdAndLessonKey(String userId, String lessonKey);
+    @Query("SELECT COUNT(c) > 0 FROM ChallengeSubmission c WHERE c.user_id = :user_id AND c.lessonKey = :lessonKey")
+    boolean existsByuser_idAndLessonKey(@Param("user_id") String user_id, @Param("lessonKey") String lessonKey);
 }

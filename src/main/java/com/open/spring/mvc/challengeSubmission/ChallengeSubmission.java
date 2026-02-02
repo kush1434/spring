@@ -22,7 +22,7 @@ import java.util.Map;
  * - Value: the submitted code string
  */
 @Entity
-@Table(name = "challenge_submissions", uniqueConstraints = @UniqueConstraint(columnNames = { "userId", "lessonKey" }))
+@Table(name = "challenge_submissions", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "lessonKey" }))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -35,7 +35,7 @@ public class ChallengeSubmission {
 
     /** The authenticated user's UID (from Person entity) */
     @Column(nullable = false)
-    private String userId;
+    private String user_id;
 
     /** Lesson identifier derived from permalink (e.g., "csa-frqs-2019-3") */
     @Column(nullable = false)
