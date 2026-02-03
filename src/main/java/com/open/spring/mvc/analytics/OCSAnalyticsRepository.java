@@ -89,4 +89,21 @@ public interface OCSAnalyticsRepository extends JpaRepository<OCSAnalytics, Long
      */
     @Query("SELECT SUM(a.copyPasteAttempts) FROM OCSAnalytics a WHERE a.person = :person AND a.questName = :questName")
     Optional<Integer> getCopyPasteAttemptsForQuest(@Param("person") Person person, @Param("questName") String questName);
-}
+
+    /**
+     * Get total code executions by person
+     */
+    @Query("SELECT SUM(a.codeExecutions) FROM OCSAnalytics a WHERE a.person = :person")
+    Optional<Integer> getTotalCodeExecutions(@Param("person") Person person);
+
+    /**
+     * Get average interaction percentage
+     */
+    @Query("SELECT AVG(a.interactionPercentage) FROM OCSAnalytics a WHERE a.person = :person AND a.interactionPercentage > 0")
+    Optional<Double> getAverageInteractionPercentage(@Param("person") Person person);
+
+    /**
+     * Get average scroll depth
+     */
+    @Query("SELECT AVG(a.scrollDepthPercentage) FROM OCSAnalytics a WHERE a.person = :person")
+    Optional<Double> getAverageScrollDepth(@Param("person") Person person);}
