@@ -435,12 +435,6 @@ public class ModelInit {
                 Assignment assignment = assignmentJpaRepository.findByName(gradeInfo[1]);
                 Person student = personJpaRepository.findByUid(gradeInfo[2]);
 
-                if (assignment == null || student == null) {
-                    System.err.println("Skipping SynergyGrade seed: missing assignment or student. assignment="
-                            + gradeInfo[1] + ", studentUid=" + gradeInfo[2]);
-                    continue;
-                }
-
                 SynergyGrade gradeFound = gradeJpaRepository.findByAssignmentAndStudent(assignment, student);
                 if (gradeFound == null) { // If the grade doesn't exist
                     SynergyGrade newGrade = new SynergyGrade(gradeValue, assignment, student);
