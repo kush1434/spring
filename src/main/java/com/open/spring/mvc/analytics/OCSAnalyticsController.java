@@ -85,6 +85,7 @@ public class OCSAnalyticsController {
             
             // Engagement
             analytics.setScrollDepthPercentage(dto.getScrollDepthPercentage() != null ? dto.getScrollDepthPercentage() : 0);
+            analytics.setInteractionPercentage(dto.getInteractionPercentage() != null ? dto.getInteractionPercentage() : 0.0);
             analytics.setHoverEventsCount(dto.getHoverEventsCount() != null ? dto.getHoverEventsCount() : 0);
             analytics.setKeyboardInputEvents(dto.getKeyboardInputEvents() != null ? dto.getKeyboardInputEvents() : 0);
             analytics.setMouseClicksCount(dto.getMouseClicksCount() != null ? dto.getMouseClicksCount() : 0);
@@ -171,6 +172,15 @@ public class OCSAnalyticsController {
             
             Integer totalCopyPaste = analyticsRepository.getTotalCopyPasteAttempts(person).orElse(0);
             summary.put("totalCopyPasteAttempts", totalCopyPaste);
+            
+            Integer totalCodeExecutions = analyticsRepository.getTotalCodeExecutions(person).orElse(0);
+            summary.put("totalCodeExecutions", totalCodeExecutions);
+            
+            Double avgInteraction = analyticsRepository.getAverageInteractionPercentage(person).orElse(0.0);
+            summary.put("interactionPercentage", avgInteraction);
+            
+            Double avgScrollDepth = analyticsRepository.getAverageScrollDepth(person).orElse(0.0);
+            summary.put("averageScrollDepth", avgScrollDepth);
             
             Double avgAccuracy = analyticsRepository.getAverageAccuracy(person).orElse(0.0);
             summary.put("averageAccuracyPercentage", avgAccuracy);
@@ -307,6 +317,36 @@ public class OCSAnalyticsController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error fetching analytics range: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get detailed per-lesson analytics for current user
+     * GET /api/ocs-analytics/user/detailed
+     */
+    @GetMapping("/user/detailed")
+    public ResponseEntity<?> getUserDetailedAnalytics(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        }
+
+        try {
+            Person person = personRepository.findByUid(userDetails.getUsername());
+            if (person == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
+
+            // Get all analytics sessions ordered by start time (most recent first)
+            List<OCSAnalytics> sessions = analyticsRepository
+                    .findByPersonOrderBySessionStartTimeDesc(person);
+            
+            return ResponseEntity.ok(sessions);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching detailed analytics: " + e.getMessage());
         }
     }
 
