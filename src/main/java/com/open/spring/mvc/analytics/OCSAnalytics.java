@@ -117,6 +117,9 @@ public class OCSAnalytics {
     private Integer scrollDepthPercentage = 0; // How far down page user scrolled
 
     @Column
+    private Double interactionPercentage = 0.0; // Percentage of time spent interacting vs idle
+
+    @Column
     private Integer hoverEventsCount = 0; // Count of hover/focus interactions
 
     @Column

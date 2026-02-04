@@ -47,6 +47,7 @@ public class OCSAnalyticsDTO {
     
     // Engagement
     private Integer scrollDepthPercentage;
+    private Double interactionPercentage;
     private Integer hoverEventsCount;
     private Integer keyboardInputEvents;
     private Integer mouseClicksCount;
