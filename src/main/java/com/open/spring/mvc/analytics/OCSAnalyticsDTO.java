@@ -29,6 +29,7 @@ public class OCSAnalyticsDTO {
     
     // User actions
     private Integer lessonsViewed;
+    private Integer lessonsCompleted;
     private Integer modulesViewed;
     private Integer videosWatched;
     private Integer videosCompleted;

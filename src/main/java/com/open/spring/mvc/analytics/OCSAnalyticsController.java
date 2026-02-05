@@ -66,6 +66,7 @@ public class OCSAnalyticsController {
             
             // User actions
             analytics.setLessonsViewed(dto.getLessonsViewed() != null ? dto.getLessonsViewed() : 0);
+            analytics.setLessonsCompleted(dto.getLessonsCompleted() != null ? dto.getLessonsCompleted() : 0);
             analytics.setModulesViewed(dto.getModulesViewed() != null ? dto.getModulesViewed() : 0);
             analytics.setVideosWatched(dto.getVideosWatched() != null ? dto.getVideosWatched() : 0);
             analytics.setVideosCompleted(dto.getVideosCompleted() != null ? dto.getVideosCompleted() : 0);
@@ -166,6 +167,9 @@ public class OCSAnalyticsController {
             
             Integer totalLessons = analyticsRepository.getTotalLessonsViewed(person).orElse(0);
             summary.put("totalLessonsViewed", totalLessons);
+            
+            Integer totalLessonsCompleted = analyticsRepository.getTotalLessonsCompleted(person).orElse(0);
+            summary.put("totalLessonsCompleted", totalLessonsCompleted);
             
             Integer totalModules = analyticsRepository.getTotalModulesViewed(person).orElse(0);
             summary.put("totalModulesViewed", totalModules);

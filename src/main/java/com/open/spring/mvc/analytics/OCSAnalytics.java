@@ -67,6 +67,9 @@ public class OCSAnalytics {
     private Integer lessonsViewed = 0; // Count of unique lessons viewed
 
     @Column
+    private Integer lessonsCompleted = 0; // Count of lessons marked as complete
+
+    @Column
     private Integer modulesViewed = 0; // Count of unique modules viewed
 
     @Column
