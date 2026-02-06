@@ -10,6 +10,8 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -79,8 +81,11 @@ public class CalendarEventController {
                 String title = eventMap.get("title");
                 String dateStr = eventMap.get("date");
                 String description = eventMap.getOrDefault("description", "");
-                String type = eventMap.getOrDefault("type", "general");
+                String type = eventMap.getOrDefault("type", "event");
                 String period = eventMap.get("period");
+                String classPeriod = eventMap.getOrDefault("classPeriod", "");
+                String groupName = eventMap.getOrDefault("groupName", "");
+                String individual = eventMap.getOrDefault("individual", "");
 
                 if (title == null || title.trim().isEmpty() || dateStr == null || dateStr.trim().isEmpty()) {
                     response.setFailed(response.getFailed() + 1);
@@ -104,12 +109,15 @@ public class CalendarEventController {
                     existingEvent.setDescription(description);
                     existingEvent.setType(type);
                     existingEvent.setPeriod(period);
+                    existingEvent.setClassPeriod(classPeriod);
+                    existingEvent.setGroupName(groupName);
+                    existingEvent.setIndividual(individual);
                     CalendarEvent updatedEvent = calendarEventService.saveEvent(existingEvent);
                     response.getEvents().add(updatedEvent);
                     response.setUpdated(response.getUpdated() + 1);
                 } else {
                     // Create new event
-                    CalendarEvent event = new CalendarEvent(date, title.trim(), description, type, period);
+                    CalendarEvent event = new CalendarEvent(date, title.trim(), description, type, period, classPeriod, groupName, individual);
                     CalendarEvent savedEvent = calendarEventService.saveEvent(event);
                     response.getEvents().add(savedEvent);
                     response.setCreated(response.getCreated() + 1);
@@ -137,17 +145,21 @@ public class CalendarEventController {
             String dateStr = eventMap.get("date");
             String title = eventMap.get("title");
             String description = eventMap.get("description");
-            String type = eventMap.get("type");
+            String type = eventMap.getOrDefault("type", "event");
             String period = eventMap.get("period");
+            String classPeriod = eventMap.getOrDefault("classPeriod", "");
+            String groupName = eventMap.getOrDefault("groupName", "");
+            String individual = eventMap.getOrDefault("individual", "");
 
             LocalDate date = LocalDate.parse(dateStr);
-            CalendarEvent event = new CalendarEvent(date, title, description, type, period);
+            CalendarEvent event = new CalendarEvent(date, title, description, type, period, classPeriod, groupName, individual);
             calendarEventService.saveEvent(event);
         }
     }
 
     @PostMapping("/add_event")
-    public ResponseEntity<Object> addEvent(@RequestBody Map<String, String> jsonMap) {
+    public ResponseEntity<Object> addEvent(@RequestBody Map<String, String> jsonMap,
+                                           @AuthenticationPrincipal UserDetails userDetails) {
         Map<String, String> errorResponse = new HashMap<>();
         try {
             String title = jsonMap.get("title");
@@ -171,8 +183,29 @@ public class CalendarEventController {
             }
 
             String description = jsonMap.getOrDefault("description", "");
-            String type = jsonMap.getOrDefault("type", "general");
+            String type = jsonMap.getOrDefault("type", "event");
             String period = jsonMap.get("period"); // Might be null
+            String classPeriod = jsonMap.getOrDefault("classPeriod", "");
+            String groupName = jsonMap.getOrDefault("groupName", "");
+            String individual = jsonMap.getOrDefault("individual", "");
+
+            // Validation for appointments
+            if ("appointment".equals(type)) {
+                // Require authentication for appointments
+                if (userDetails == null) {
+                    errorResponse.put("message", "Must be logged in to create appointments");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                }
+
+                // Check appointment limit per classPeriod per date
+                if (classPeriod != null && !classPeriod.isEmpty()) {
+                    long count = calendarEventService.countAppointmentsByDateAndClassPeriod(date, classPeriod);
+                    if (count >= 4) {
+                        errorResponse.put("message", "Maximum 4 appointments allowed per period per day");
+                        return ResponseEntity.badRequest().body(errorResponse);
+                    }
+                }
+            }
 
             // Check for duplicate (same title and date)
             CalendarEvent existingEvent = calendarEventService.findByTitleAndDate(title.trim(), date);
@@ -181,11 +214,14 @@ public class CalendarEventController {
                 existingEvent.setDescription(description);
                 existingEvent.setType(type);
                 existingEvent.setPeriod(period);
+                existingEvent.setClassPeriod(classPeriod);
+                existingEvent.setGroupName(groupName);
+                existingEvent.setIndividual(individual);
                 CalendarEvent updatedEvent = calendarEventService.saveEvent(existingEvent);
                 return ResponseEntity.ok(updatedEvent);
             }
 
-            CalendarEvent event = new CalendarEvent(date, title, description, type, period);
+            CalendarEvent event = new CalendarEvent(date, title, description, type, period, classPeriod, groupName, individual);
             CalendarEvent savedEvent = calendarEventService.saveEvent(event);
 
             // Return the full event object with id
@@ -204,39 +240,85 @@ public class CalendarEventController {
 
     @PutMapping("/edit/{id}")
     @CrossOrigin(origins = {"http://127.0.0.1:4500","https://pages.opencodingsociety.com"}, allowCredentials = "true")
-    public ResponseEntity<String> editEvent(@PathVariable int id, @RequestBody Map<String, String> payload) {
+    public ResponseEntity<Object> editEvent(@PathVariable int id, @RequestBody Map<String, String> payload,
+                                            @AuthenticationPrincipal UserDetails userDetails) {
+        Map<String, String> errorResponse = new HashMap<>();
         try {
             String newTitle = payload.get("newTitle");
             String description = payload.get("description");
             String dateStr = payload.get("date");
             String period = payload.get("period");
+            String type = payload.getOrDefault("type", "event");
+            String classPeriod = payload.getOrDefault("classPeriod", "");
+            String groupName = payload.getOrDefault("groupName", "");
+            String individual = payload.getOrDefault("individual", "");
 
             if (newTitle == null || newTitle.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("New title cannot be null or empty.");
+                errorResponse.put("message", "New title cannot be null or empty.");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
             if (description == null || description.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Description cannot be null or empty.");
+                errorResponse.put("message", "Description cannot be null or empty.");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
             if (dateStr == null || dateStr.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Date cannot be null or empty.");
+                errorResponse.put("message", "Date cannot be null or empty.");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
             if (period == null || period.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Period cannot be null or empty.");
+                errorResponse.put("message", "Period cannot be null or empty.");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
 
             LocalDate date;
             try {
                 date = LocalDate.parse(dateStr);
             } catch (Exception e) {
-                return ResponseEntity.badRequest().body("Invalid date format. Use YYYY-MM-DD.");
+                errorResponse.put("message", "Invalid date format. Use YYYY-MM-DD.");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            boolean updated = calendarEventService.updateEventById(id, newTitle.trim(), description.trim(), date, period.trim());
-            return updated ? ResponseEntity.ok("Event updated successfully.")
-                        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Event with the given id not found.");
+            // Validation for appointments
+            if ("appointment".equals(type)) {
+                // Require authentication for appointments
+                if (userDetails == null) {
+                    errorResponse.put("message", "Must be logged in to create appointments");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+                }
+
+                // Check appointment limit per classPeriod per date (exclude current event)
+                if (classPeriod != null && !classPeriod.isEmpty()) {
+                    CalendarEvent existingEvent = calendarEventService.getEventById(id);
+                    // Only check limit if classPeriod or date changed
+                    boolean needsLimitCheck = existingEvent == null 
+                        || !classPeriod.equals(existingEvent.getClassPeriod())
+                        || !date.equals(existingEvent.getDate())
+                        || !"appointment".equals(existingEvent.getType());
+                    
+                    if (needsLimitCheck) {
+                        long count = calendarEventService.countAppointmentsByDateAndClassPeriod(date, classPeriod);
+                        if (count >= 4) {
+                            errorResponse.put("message", "Maximum 4 appointments allowed per period per day");
+                            return ResponseEntity.badRequest().body(errorResponse);
+                        }
+                    }
+                }
+            }
+
+            boolean updated = calendarEventService.updateEventById(id, newTitle.trim(), description.trim(), date, 
+                    period.trim(), type, classPeriod, groupName, individual);
+            
+            if (updated) {
+                Map<String, String> successResponse = new HashMap<>();
+                successResponse.put("message", "Event updated successfully.");
+                return ResponseEntity.ok(successResponse);
+            } else {
+                errorResponse.put("message", "Event with the given id not found.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            }
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An error occurred while updating the event: " + e.getMessage());
+            errorResponse.put("message", "An error occurred while updating the event: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
@@ -253,6 +335,29 @@ public class CalendarEventController {
     @GetMapping("/events/next-day")
     public List<CalendarEvent> getNextDayEvents() {
         return calendarEventService.getEventsByDate(LocalDate.now().plusDays(1));
+    }
+
+    /**
+     * GET /api/calendar/appointments/count
+     * Returns the count of appointments for a specific date and classPeriod.
+     * Allows frontend to check availability before submission.
+     * 
+     * @param date The date in YYYY-MM-DD format
+     * @param classPeriod The class period (P1, P2, P3, P4, P5)
+     * @return ResponseEntity containing the count
+     */
+    @GetMapping("/appointments/count")
+    public ResponseEntity<Object> getAppointmentCount(@RequestParam String date, @RequestParam String classPeriod) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            LocalDate parsedDate = LocalDate.parse(date);
+            long count = calendarEventService.countAppointmentsByDateAndClassPeriod(parsedDate, classPeriod);
+            response.put("count", count);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("error", "Invalid date format. Use YYYY-MM-DD.");
+            return ResponseEntity.badRequest().body(response);
+        }
     }
     
     @DeleteMapping("/delete/{id}")
