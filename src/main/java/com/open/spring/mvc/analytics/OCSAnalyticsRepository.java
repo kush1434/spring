@@ -55,6 +55,12 @@ public interface OCSAnalyticsRepository extends JpaRepository<OCSAnalytics, Long
     Optional<Integer> getTotalLessonsViewed(@Param("person") Person person);
 
     /**
+     * Get total lessons completed by person
+     */
+    @Query("SELECT SUM(a.lessonsCompleted) FROM OCSAnalytics a WHERE a.person = :person")
+    Optional<Integer> getTotalLessonsCompleted(@Param("person") Person person);
+
+    /**
      * Get total modules viewed by person
      */
     @Query("SELECT SUM(a.modulesViewed) FROM OCSAnalytics a WHERE a.person = :person")
