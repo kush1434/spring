@@ -31,8 +31,13 @@ public class CertificateViewController {
     }
 
     @PostMapping("/create")
+<<<<<<< HEAD
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public String createCertificate(@RequestParam String title) {
+=======
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public String createCertificate(@RequestParam String title, @RequestParam(required = false) Long[] questIds) {
+>>>>>>> upstream/master
         Certificate newCertificate = new Certificate();
         newCertificate.setTitle(title);
         certificateRepository.save(newCertificate);
@@ -40,7 +45,7 @@ public class CertificateViewController {
     }
 
     @PostMapping("/delete/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public String deleteCertificate(@PathVariable Long id) {
         // First, delete associated user certificates
         List<UserCertificate> userCertificates = userCertificateRepository.findByCertificateId(id);
