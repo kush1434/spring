@@ -4,6 +4,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -31,6 +34,15 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class MvcSecurityConfig {
+
+    @Value("${jwt.cookie.secure:true}")
+    private boolean cookieSecure;
+
+    @Value("${jwt.cookie.same-site:None}")
+    private String cookieSameSite;
+
+    @Value("${server.servlet.session.cookie.name:sess_java_spring}")
+    private String sessionCookieName;
 
     /**
      * MVC security: form login, session-based.
@@ -73,16 +85,35 @@ public class MvcSecurityConfig {
                 .requestMatchers("/mvc/assignments/read").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
                 .requestMatchers("/mvc/bank/read").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/mvc/progress/read").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
-
-                // Fallback ---------------------------------------------------
-                .requestMatchers("/**").permitAll()
+                .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
                 .defaultSuccessUrl("/mvc/person/read"))
             .logout(logout -> logout
-                .deleteCookies("sess_java_spring")
-                .logoutSuccessUrl("/"));
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    boolean secureFlag = cookieSecure && request.isSecure();
+                    String sameSite = secureFlag ? cookieSameSite : "Lax";
+                    ResponseCookie sessionCookie = ResponseCookie.from(sessionCookieName, "")
+                        .httpOnly(true)
+                        .secure(secureFlag)
+                        .path("/")
+                        .maxAge(0)
+                        .sameSite(sameSite)
+                        .build();
+                    ResponseCookie jwtCookie = ResponseCookie.from("jwt_java_spring", "")
+                        .httpOnly(true)
+                        .secure(secureFlag)
+                        .path("/")
+                        .maxAge(0)
+                        .sameSite(sameSite)
+                        .build();
+                    response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie.toString());
+                    response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+                    response.sendRedirect("/login?logout");
+                }));
 
         return http.build();
     }
