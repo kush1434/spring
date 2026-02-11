@@ -122,7 +122,7 @@ public class GroupChatApiController {
         // }
 
         String groupName = groupOpt.get().getName();
-        List<String> files = groupChatService.listSharedFiles(groupName);
+        List<Map<String, String>> files = groupChatService.listSharedFiles(groupName);
         return new ResponseEntity<>(files, HttpStatus.OK);
     }
 

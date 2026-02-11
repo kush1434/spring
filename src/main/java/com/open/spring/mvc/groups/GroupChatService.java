@@ -5,7 +5,9 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -25,6 +27,15 @@ public class GroupChatService {
 
     private final S3FileHandler s3FileHandler;
     private final ObjectMapper objectMapper;
+
+    public void initGroupStorage(String groupName) {
+        // Create empty messages.jsonl file
+        String emptyBase64 = Base64.getEncoder().encodeToString(new byte[0]);
+        s3FileHandler.uploadFile(emptyBase64, MESSAGES_FILE, groupName);
+
+        // Create shared-files/ folder (S3 uses a zero-byte placeholder to represent an empty folder)
+        s3FileHandler.uploadFile(emptyBase64, SHARED_FILES_PREFIX, groupName);
+    }
 
     public List<GroupChatMessage> getMessages(String groupName) {
         String base64Data = s3FileHandler.decodeFile(groupName, MESSAGES_FILE);
@@ -79,14 +90,24 @@ public class GroupChatService {
         return messages;
     }
 
-    public List<String> listSharedFiles(String groupName) {
+    public List<Map<String, String>> listSharedFiles(String groupName) {
         String prefix = groupName + "/" + SHARED_FILES_PREFIX;
         List<String> keys = s3FileHandler.listFiles(prefix);
 
-        return keys.stream()
+        List<String> filenames = keys.stream()
                 .map(key -> key.substring(prefix.length()))
                 .filter(name -> !name.isEmpty())
                 .collect(Collectors.toList());
+
+        List<Map<String, String>> files = new ArrayList<>();
+        for (String filename : filenames) {
+            Map<String, String> fileEntry = new HashMap<>();
+            fileEntry.put("filename", filename);
+            String base64Data = s3FileHandler.decodeFile(groupName, SHARED_FILES_PREFIX + filename);
+            fileEntry.put("base64Data", base64Data);
+            files.add(fileEntry);
+        }
+        return files;
     }
 
     public String uploadSharedFile(String groupName, String filename, String base64Data) {
