@@ -1,14 +1,21 @@
 package com.open.spring.security;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseCookie;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.SecurityFilterChain;
 
 /*
@@ -43,6 +50,9 @@ public class MvcSecurityConfig {
 
     @Value("${server.servlet.session.cookie.name:sess_java_spring}")
     private String sessionCookieName;
+
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
 
     /**
      * MVC security: form login, session-based.
@@ -89,7 +99,36 @@ public class MvcSecurityConfig {
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/mvc/person/read"))
+                .successHandler((request, response, authentication) -> {
+                    if (authentication == null || !authentication.isAuthenticated()) {
+                        response.sendRedirect("/login?error");
+                        return;
+                    }
+
+                    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+                    List<String> roles = authentication.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.toList());
+
+                    String token = jwtTokenUtil.generateToken(userDetails, roles);
+                    if (token == null) {
+                        response.sendError(500, "Token generation failed");
+                        return;
+                    }
+
+                    boolean secureFlag = cookieSecure && request.isSecure();
+                    String sameSite = secureFlag ? cookieSameSite : "Lax";
+                    ResponseCookie jwtCookie = ResponseCookie.from("jwt_java_spring", token)
+                        .httpOnly(true)
+                        .secure(secureFlag)
+                        .path("/api")
+                        .maxAge(-1)
+                        .sameSite(sameSite)
+                        .build();
+
+                    response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+                    response.sendRedirect("/mvc/person/read");
+                }))
             .logout(logout -> logout
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
@@ -106,7 +145,7 @@ public class MvcSecurityConfig {
                     ResponseCookie jwtCookie = ResponseCookie.from("jwt_java_spring", "")
                         .httpOnly(true)
                         .secure(secureFlag)
-                        .path("/")
+                        .path("/api")
                         .maxAge(0)
                         .sameSite(sameSite)
                         .build();

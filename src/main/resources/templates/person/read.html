@@ -80,9 +80,10 @@
                         <td>
                             <div class="profile-picture-container">
                                 <a id="profile-link-${person.id}" th:data-person-id="${person.id}" target="_blank">
-                                    <img id="profile-img-${person.id}" th:src="|https://github.com/${person.uid}.png|"
+                                    <img id="profile-img-${person.id}"
+                                        th:src="${#strings.isEmpty(person.pfp)} ? 'https://github.com/' + person.uid + '.png' : person.pfp"
                                         alt="Profile Picture"
-                                        onerror="this.onerror=null; this.src='https://github.com/user-attachments/assets/13dec9b2-21d6-458e-b099-f5f85ae9caf2';" />
+                                        onerror="this.onerror=null; this.src='/images/default.png';" />
                                 </a>
                             </div>
                         </td>
