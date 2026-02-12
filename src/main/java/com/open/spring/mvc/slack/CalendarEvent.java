@@ -21,6 +21,10 @@ public class CalendarEvent {
     private String description;
     private String type; // Added new column for event type
     private String period; // New field for the period (e.g., Period 1, Period 3)
+    
+    // Break-specific fields
+    private boolean isBreak = false; // Flag to indicate if this is a break event
+    private String name; // Break name (e.g., "Winter Break") - used when isBreak is true
 
     // Default constructor
     public CalendarEvent() {
@@ -33,6 +37,19 @@ public class CalendarEvent {
         this.description = description;
         this.type = type;
         this.period = period; // Initialize period
+        this.isBreak = false;
+    }
+    
+    // Constructor for break events
+    public CalendarEvent(LocalDate date, String name, String description, boolean isBreak) {
+        this.date = date;
+        this.name = name;
+        this.description = description;
+        this.isBreak = isBreak;
+        if (isBreak) {
+            this.title = name; // Use name as title for breaks
+            this.type = "break";
+        }
     }
 
     // Getters and setters
@@ -78,5 +95,22 @@ public class CalendarEvent {
 
     public void setPeriod(String period) {
         this.period = period;
+    }
+
+    // Break-specific getters and setters
+    public boolean isBreak() {
+        return isBreak;
+    }
+
+    public void setBreak(boolean isBreak) {
+        this.isBreak = isBreak;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

@@ -13,4 +13,8 @@ public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Lo
     List<CalendarEvent> findAll();
     Optional<CalendarEvent> findByTitle(String title); // Optional is fine here
     Optional<CalendarEvent> findByTitleAndDate(String title, LocalDate date); // Find duplicate by title and date
+    
+    // Break-specific query methods
+    List<CalendarEvent> findByIsBreakAndDate(boolean isBreak, LocalDate date); // Find breaks by date
+    List<CalendarEvent> findByIsBreak(boolean isBreak); // Find all breaks
 }
