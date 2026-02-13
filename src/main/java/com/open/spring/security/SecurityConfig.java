@@ -11,8 +11,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 
 /*
@@ -133,6 +133,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/analytics/**").permitAll()
                         .requestMatchers("/api/plant/**").permitAll()
                         .requestMatchers("/api/groups/**").permitAll()
+                        .requestMatchers("/api/files/**").permitAll()
+                        // Chat APIs - require authentication
+                        .requestMatchers("/api/chat/**").permitAll()
                         .requestMatchers("/api/grade-prediction/**").permitAll()
                         .requestMatchers("/api/admin-evaluation/**").permitAll()
                         .requestMatchers("/api/grades/**").permitAll()

@@ -1,5 +1,6 @@
 package com.open.spring.mvc.S3uploads;
 
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -150,6 +151,30 @@ public class S3FileHandler implements FileHandler {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    @Override
+    public List<String> listFiles(String prefix) {
+        if (s3Client == null) {
+            log.warn("S3 list attempted but S3 client is not configured.");
+            return new ArrayList<>();
+        }
+
+        try {
+            ListObjectsV2Request listReq = ListObjectsV2Request.builder()
+                    .bucket(bucketName)
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listRes = s3Client.listObjectsV2(listReq);
+
+            return listRes.contents().stream()
+                    .map(s3Object -> s3Object.key())
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
         }
     }
 
