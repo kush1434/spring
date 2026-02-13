@@ -63,6 +63,30 @@ public class CalendarEventService {
         return false;
     }
 
+    // Update event by id with appointment fields
+    public boolean updateEventById(int id, String newTitle, String description, LocalDate date, String period,
+                                   String type, String classPeriod, String groupName, String individual) {
+        CalendarEvent event = getEventById(id);
+        if (event != null) {
+            event.setTitle(newTitle);
+            event.setDescription(description);
+            event.setDate(date);
+            event.setPeriod(period);
+            event.setType(type != null ? type : "event");
+            event.setClassPeriod(classPeriod);
+            event.setGroupName(groupName);
+            event.setIndividual(individual);
+            calendarEventRepository.save(event);
+            return true;
+        }
+        return false;
+    }
+
+    // Count appointments by date and classPeriod
+    public long countAppointmentsByDateAndClassPeriod(LocalDate date, String classPeriod) {
+        return calendarEventRepository.countAppointmentsByDateAndClassPeriod(date, classPeriod);
+    }
+
     // Delete event by id
     public boolean deleteEventById(int id) {
         CalendarEvent event = getEventById(id);

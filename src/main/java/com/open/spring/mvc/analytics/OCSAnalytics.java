@@ -67,6 +67,9 @@ public class OCSAnalytics {
     private Integer lessonsViewed = 0; // Count of unique lessons viewed
 
     @Column
+    private Integer lessonsCompleted = 0; // Count of lessons marked as complete
+
+    @Column
     private Integer modulesViewed = 0; // Count of unique modules viewed
 
     @Column
@@ -115,6 +118,9 @@ public class OCSAnalytics {
     // Engagement metrics
     @Column
     private Integer scrollDepthPercentage = 0; // How far down page user scrolled
+
+    @Column
+    private Double interactionPercentage = 0.0; // Percentage of time spent interacting vs idle
 
     @Column
     private Integer hoverEventsCount = 0; // Count of hover/focus interactions

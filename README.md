@@ -139,6 +139,12 @@ GITHUB_API_TOKEN=your-github-token-here
 # Email Configuration (optional - overrides application.properties)
 # spring.mail.username=your-email@gmail.com
 # spring.mail.password=your-app-password
+
+# S3 Bucket Defaults
+AWS_BUCKET_NAME=your-bucket-name
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_REGION=us-east-2
 ```
 
 **Production Configuration:**

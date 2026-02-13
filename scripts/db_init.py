@@ -93,15 +93,15 @@ def remove_database():
     print("Old database removed")
 
 
-def wait_for_spring_boot(timeout=60):
-    """Wait for Spring Boot to start"""
+def wait_for_spring_boot(timeout=180):
+    """Wait for Spring Boot to start (includes compilation time)"""
     print("\nWaiting for Spring Boot to start", end="", flush=True)
     start_time = time.time()
     
     while time.time() - start_time < timeout:
         if is_port_in_use(SPRING_PORT):
             print(" OK")
-            time.sleep(3)  # Give ModelInit time to run
+            time.sleep(5)  # Give ModelInit time to run
             return True
         print(".", end="", flush=True)
         time.sleep(1)

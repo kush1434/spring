@@ -353,7 +353,7 @@ def remove_skip_flag():
         print("Removed skip-modelinit flag")
 
 
-def wait_for_spring_boot(timeout=60):
+def wait_for_spring_boot(timeout=180):
     """Wait for Spring Boot to start"""
     print("Waiting for Spring Boot", end="", flush=True)
     start_time = time.time()
@@ -361,7 +361,7 @@ def wait_for_spring_boot(timeout=60):
     while time.time() - start_time < timeout:
         if is_port_in_use(SPRING_PORT):
             print(" OK")
-            time.sleep(3)  # Give it time to complete schema creation
+            time.sleep(5)  # Give it time to complete schema creation
             return True
         print(".", end="", flush=True)
         time.sleep(1)

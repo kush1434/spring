@@ -29,6 +29,7 @@ public class OCSAnalyticsDTO {
     
     // User actions
     private Integer lessonsViewed;
+    private Integer lessonsCompleted;
     private Integer modulesViewed;
     private Integer videosWatched;
     private Integer videosCompleted;
@@ -47,6 +48,7 @@ public class OCSAnalyticsDTO {
     
     // Engagement
     private Integer scrollDepthPercentage;
+    private Double interactionPercentage;
     private Integer hoverEventsCount;
     private Integer keyboardInputEvents;
     private Integer mouseClicksCount;

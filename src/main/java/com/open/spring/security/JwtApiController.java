@@ -73,7 +73,10 @@ public class JwtApiController {
 			return new ResponseEntity<>("Token generation failed", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		final ResponseCookie tokenCookie = ResponseCookie.from("jwt_java_spring", token)
+		// Build cookie with development-friendly settings
+		// For localhost: allow HTTP and SameSite=Lax
+		// For production: require HTTPS and SameSite=None; Secure
+		ResponseCookie tokenCookie = ResponseCookie.from("jwt_java_spring", token)
 			.httpOnly(false)
 			.secure(cookieSecure)  // Configured via jwt.cookie.secure in application.properties
 			.path("/")
@@ -106,8 +109,7 @@ public class JwtApiController {
 			logoutHandler.logout(request, response, authentication);
 	
 			// Expire the JWT token immediately by setting a past expiration date
-			ResponseCookie cookie = ResponseCookie.from("jwt_java_spring", "")
-				.httpOnly(false)
+		ResponseCookie cookie = ResponseCookie.from("jwt_java_spring", "")
 				.secure(cookieSecure)  // Configured via jwt.cookie.secure in application.properties
 				.path("/")
 				.maxAge(0)  // Set maxAge to 0 to expire the cookie immediately

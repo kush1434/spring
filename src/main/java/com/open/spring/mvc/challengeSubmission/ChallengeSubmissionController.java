@@ -49,7 +49,7 @@ public class ChallengeSubmissionController {
         }
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String userId = userDetails.getUsername();
+        String user_id = userDetails.getUsername();
 
         // Validate request body
         String lessonKey = (String) body.get("lessonKey");
@@ -68,10 +68,10 @@ public class ChallengeSubmissionController {
 
         // Find existing or create new submission
         ChallengeSubmission submission = submissionRepo
-                .findByUserIdAndLessonKey(userId, lessonKey)
+                .findByUser_idAndLessonKey(user_id, lessonKey)
                 .orElseGet(() -> {
                     ChallengeSubmission newSubmission = new ChallengeSubmission();
-                    newSubmission.setUserId(userId);
+                    newSubmission.setUser_id(user_id);
                     newSubmission.setLessonKey(lessonKey);
                     return newSubmission;
                 });
@@ -108,7 +108,7 @@ public class ChallengeSubmissionController {
         }
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String userId = userDetails.getUsername();
+        String user_id = userDetails.getUsername();
 
         // Validate request body
         String lessonKey = body.get("lessonKey");
@@ -132,10 +132,10 @@ public class ChallengeSubmissionController {
 
         // Find existing or create new submission
         ChallengeSubmission submission = submissionRepo
-                .findByUserIdAndLessonKey(userId, lessonKey)
+                .findByUser_idAndLessonKey(user_id, lessonKey)
                 .orElseGet(() -> {
                     ChallengeSubmission newSubmission = new ChallengeSubmission();
-                    newSubmission.setUserId(userId);
+                    newSubmission.setUser_id(user_id);
                     newSubmission.setLessonKey(lessonKey);
                     newSubmission.setChallenges(new HashMap<>());
                     return newSubmission;
@@ -168,17 +168,17 @@ public class ChallengeSubmissionController {
         }
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String userId = userDetails.getUsername();
+        String user_id = userDetails.getUsername();
 
         Optional<ChallengeSubmission> submission = submissionRepo
-                .findByUserIdAndLessonKey(userId, lessonKey);
+                .findByUser_idAndLessonKey(user_id, lessonKey);
 
         if (submission.isPresent()) {
             return ResponseEntity.ok(submission.get());
         } else {
             // Return empty response indicating no submission exists yet
             return ResponseEntity.ok(Map.of(
-                    "userId", userId,
+                    "user_id", user_id,
                     "lessonKey", lessonKey,
                     "challenges", Map.of(),
                     "exists", false));
@@ -197,12 +197,12 @@ public class ChallengeSubmissionController {
         }
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String userId = userDetails.getUsername();
+        String user_id = userDetails.getUsername();
 
-        List<ChallengeSubmission> submissions = submissionRepo.findByUserId(userId);
+        List<ChallengeSubmission> submissions = submissionRepo.findByUser_id(user_id);
 
         return ResponseEntity.ok(Map.of(
-                "userId", userId,
+                "user_id", user_id,
                 "submissions", submissions,
                 "count", submissions.size()));
     }

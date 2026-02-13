@@ -19,8 +19,11 @@ public class CalendarEvent {
     private LocalDate date;
     private String title;
     private String description;
-    private String type; // Added new column for event type
+    private String type = "event"; // Event type: "event" or "appointment". Default: "event"
     private String period; // New field for the period (e.g., Period 1, Period 3)
+    private String classPeriod; // For appointments: "P1", "P2", "P3", "P4", "P5", or empty
+    private String groupName; // For appointments: freeform text
+    private String individual; // For appointments: name of user who created the appointment
     
     // Break-specific fields
     private boolean isBreak = false; // Flag to indicate if this is a break event
@@ -35,7 +38,7 @@ public class CalendarEvent {
         this.date = date;
         this.title = title;
         this.description = description;
-        this.type = type;
+        this.type = type != null ? type : "event";
         this.period = period; // Initialize period
         this.isBreak = false;
     }
@@ -50,6 +53,19 @@ public class CalendarEvent {
             this.title = name; // Use name as title for breaks
             this.type = "break";
         }
+    }
+
+    // Constructor with all appointment fields
+    public CalendarEvent(LocalDate date, String title, String description, String type, String period,
+                         String classPeriod, String groupName, String individual) {
+        this.date = date;
+        this.title = title;
+        this.description = description;
+        this.type = type != null ? type : "event";
+        this.period = period;
+        this.classPeriod = classPeriod;
+        this.groupName = groupName;
+        this.individual = individual;
     }
 
     // Getters and setters
@@ -95,6 +111,30 @@ public class CalendarEvent {
 
     public void setPeriod(String period) {
         this.period = period;
+    }
+
+    public String getClassPeriod() {
+        return classPeriod;
+    }
+
+    public void setClassPeriod(String classPeriod) {
+        this.classPeriod = classPeriod;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+
+    public String getIndividual() {
+        return individual;
+    }
+
+    public void setIndividual(String individual) {
+        this.individual = individual;
     }
 
     // Break-specific getters and setters
