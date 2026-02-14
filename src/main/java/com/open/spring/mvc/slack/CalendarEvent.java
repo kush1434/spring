@@ -24,6 +24,10 @@ public class CalendarEvent {
     private String classPeriod; // For appointments: "P1", "P2", "P3", "P4", "P5", or empty
     private String groupName; // For appointments: freeform text
     private String individual; // For appointments: name of user who created the appointment
+    
+    // Break-specific fields
+    private boolean isBreak = false; // Flag to indicate if this is a break event
+    private String name; // Break name (e.g., "Winter Break") - used when isBreak is true
 
     // Default constructor
     public CalendarEvent() {
@@ -36,6 +40,19 @@ public class CalendarEvent {
         this.description = description;
         this.type = type != null ? type : "event";
         this.period = period; // Initialize period
+        this.isBreak = false;
+    }
+    
+    // Constructor for break events
+    public CalendarEvent(LocalDate date, String name, String description, boolean isBreak) {
+        this.date = date;
+        this.name = name;
+        this.description = description;
+        this.isBreak = isBreak;
+        if (isBreak) {
+            this.title = name; // Use name as title for breaks
+            this.type = "break";
+        }
     }
 
     // Constructor with all appointment fields
@@ -118,5 +135,22 @@ public class CalendarEvent {
 
     public void setIndividual(String individual) {
         this.individual = individual;
+    }
+
+    // Break-specific getters and setters
+    public boolean isBreak() {
+        return isBreak;
+    }
+
+    public void setBreak(boolean isBreak) {
+        this.isBreak = isBreak;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

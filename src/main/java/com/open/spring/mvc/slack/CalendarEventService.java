@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CalendarEventService {
@@ -18,6 +19,8 @@ public class CalendarEventService {
 
     @Autowired
     private SlackService slackService;
+
+    private static final int MAX_DAYS_AHEAD = 365;
 
     // Save a new event
     public CalendarEvent saveEvent(CalendarEvent event) {
@@ -240,5 +243,211 @@ public class CalendarEventService {
             }
         }
         return dateRange;
+    }
+
+    // ==================== BREAK-RELATED METHODS ====================
+
+    /**
+     * Create a break for a specific date.
+     * Moves all regular events from that date to the next non-break day.
+     * 
+     * @param date The date of the break
+     * @param name The name of the break
+     * @param description Description of the break
+     * @param moveToNextNonBreakDay Whether to move events to next non-break day
+     * @return The created break CalendarEvent
+     */
+    @Transactional
+    public CalendarEvent createBreak(LocalDate date, String name, String description, boolean moveToNextNonBreakDay) {
+        // Validate inputs
+        if (name == null || name.trim().isEmpty()) {
+            name = "Break";
+        }
+        if (description == null) {
+            description = "";
+        }
+
+        // Check if a break already exists for this date
+        List<CalendarEvent> existingBreaks = calendarEventRepository.findByIsBreakAndDate(true, date);
+        if (!existingBreaks.isEmpty()) {
+            // Break already exists, just return it
+            return existingBreaks.get(0);
+        }
+
+        // Move all regular events from this date if requested
+        if (moveToNextNonBreakDay) {
+            List<CalendarEvent> eventsOnDate = calendarEventRepository.findByDate(date);
+            LocalDate nextNonBreakDay = findNextNonBreakDay(date);
+
+            for (CalendarEvent event : eventsOnDate) {
+                if (!event.isBreak()) { // Only move regular events, not breaks
+                    event.setDate(nextNonBreakDay);
+                    calendarEventRepository.save(event);
+                }
+            }
+        }
+
+        // Create and save the break as a CalendarEvent
+        CalendarEvent breakEvent = new CalendarEvent(date, name, description, true);
+        return calendarEventRepository.save(breakEvent);
+    }
+
+    /**
+     * Create a break with name and description.
+     * 
+     * @param date The date of the break
+     * @param name The name of the break
+     * @param description Description of the break
+     * @return The created break CalendarEvent
+     */
+    public CalendarEvent createBreak(LocalDate date, String name, String description) {
+        return createBreak(date, name, description, false);
+    }
+
+    /**
+     * Create a break with a simple name.
+     * 
+     * @param date The date of the break
+     * @param name The name of the break
+     * @return The created break CalendarEvent
+     */
+    public CalendarEvent createBreak(LocalDate date, String name) {
+        return createBreak(date, name, "", false);
+    }
+
+    /**
+     * Create a break with default name.
+     * 
+     * @param date The date of the break
+     * @return The created break CalendarEvent
+     */
+    public CalendarEvent createBreak(LocalDate date) {
+        return createBreak(date, "Break", "", false);
+    }
+
+    /**
+     * Find the next non-break day starting from the given date.
+     * Skips the break day itself and checks subsequent days.
+     * 
+     * @param date The starting date
+     * @return The first date that doesn't have a break
+     */
+    public LocalDate findNextNonBreakDay(LocalDate date) {
+        LocalDate currentDate = date.plusDays(1); // Start from the next day
+        int daysChecked = 0;
+
+        while (daysChecked < MAX_DAYS_AHEAD) {
+            if (!isBreakDay(currentDate)) {
+                return currentDate;
+            }
+            currentDate = currentDate.plusDays(1);
+            daysChecked++;
+        }
+
+        // Fallback: return a date 365 days from now if no non-break day found
+        return date.plusDays(MAX_DAYS_AHEAD);
+    }
+
+    /**
+     * Update a break's name and description.
+     * 
+     * @param id The ID of the break to update
+     * @param name The new name
+     * @param description The new description
+     * @return The updated break or null if not found
+     */
+    @Transactional
+    public CalendarEvent updateBreak(Long id, String name, String description) {
+        CalendarEvent breakEvent = getEventById(Math.toIntExact(id));
+        if (breakEvent != null && breakEvent.isBreak()) {
+            if (name != null && !name.trim().isEmpty()) {
+                breakEvent.setName(name);
+                breakEvent.setTitle(name);
+            }
+            if (description != null) {
+                breakEvent.setDescription(description);
+            }
+            return calendarEventRepository.save(breakEvent);
+        }
+        return null;
+    }
+
+    /**
+     * Delete a break by its ID.
+     * Does NOT move events back (they stay on their rescheduled dates).
+     * 
+     * @param id The ID of the break to delete
+     * @return true if the break was deleted, false if not found
+     */
+    @Transactional
+    public boolean deleteBreakById(Long id) {
+        CalendarEvent breakEvent = getEventById(Math.toIntExact(id));
+        if (breakEvent != null && breakEvent.isBreak()) {
+            calendarEventRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Delete a break by date.
+     * 
+     * @param date The date of the break to delete
+     * @return true if a break was deleted, false if not found
+     */
+    @Transactional
+    public boolean deleteBreakByDate(LocalDate date) {
+        List<CalendarEvent> breaks = calendarEventRepository.findByIsBreakAndDate(true, date);
+        if (!breaks.isEmpty()) {
+            for (CalendarEvent breakEvent : breaks) {
+                calendarEventRepository.delete(breakEvent);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get all breaks for a specific date.
+     * 
+     * @param date The date to check
+     * @return List of breaks for that date
+     */
+    public List<CalendarEvent> getBreaksByDate(LocalDate date) {
+        return calendarEventRepository.findByIsBreakAndDate(true, date);
+    }
+
+    /**
+     * Get all breaks.
+     * 
+     * @return List of all breaks
+     */
+    public List<CalendarEvent> getAllBreaks() {
+        return calendarEventRepository.findByIsBreak(true);
+    }
+
+    /**
+     * Check if a date is a break day.
+     * 
+     * @param date The date to check
+     * @return true if there is a break on this date, false otherwise
+     */
+    public boolean isBreakDay(LocalDate date) {
+        List<CalendarEvent> breaks = calendarEventRepository.findByIsBreakAndDate(true, date);
+        return !breaks.isEmpty();
+    }
+
+    /**
+     * Get a break by ID.
+     * 
+     * @param id The ID of the break
+     * @return The break if found, null otherwise
+     */
+    public CalendarEvent getBreakById(Long id) {
+        CalendarEvent event = getEventById(Math.toIntExact(id));
+        if (event != null && event.isBreak()) {
+            return event;
+        }
+        return null;
     }
 }
