@@ -46,12 +46,75 @@ public class AnalyticsApiController {
     // Get all analytics records
     // Get all analytics records
     @GetMapping("/")
-    public ResponseEntity<List<SynergyGrade>> getAllAnalytics() {
+    public ResponseEntity<List<AnalyticsGradeDto>> getAllAnalytics() {
         List<SynergyGrade> gradeList = gradeJpaRepository.findAll();  // Fetch all grade records from database
         if (gradeList.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT); // No records found
         }
-        return new ResponseEntity<>(gradeList, HttpStatus.OK); // Return found records
+
+        List<AnalyticsGradeDto> dtoList = new ArrayList<>();
+        for (SynergyGrade grade : gradeList) {
+            dtoList.add(AnalyticsGradeDto.from(grade));
+        }
+
+        return new ResponseEntity<>(dtoList, HttpStatus.OK); // Return found records
+    }
+
+    public static class AnalyticsGradeDto {
+        private Long id;
+        private Double grade;
+        private Long assignmentId;
+        private String assignmentName;
+        private Long studentId;
+        private String studentUid;
+        private String studentName;
+
+        public static AnalyticsGradeDto from(SynergyGrade grade) {
+            AnalyticsGradeDto dto = new AnalyticsGradeDto();
+            if (grade == null) {
+                return dto;
+            }
+            dto.id = grade.getId();
+            dto.grade = grade.getGrade();
+            if (grade.getAssignment() != null) {
+                dto.assignmentId = grade.getAssignment().getId();
+                dto.assignmentName = grade.getAssignment().getName();
+            }
+            if (grade.getStudent() != null) {
+                dto.studentId = grade.getStudent().getId();
+                dto.studentUid = grade.getStudent().getUid();
+                dto.studentName = grade.getStudent().getName();
+            }
+            return dto;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public Double getGrade() {
+            return grade;
+        }
+
+        public Long getAssignmentId() {
+            return assignmentId;
+        }
+
+        public String getAssignmentName() {
+            return assignmentName;
+        }
+
+        public Long getStudentId() {
+            return studentId;
+        }
+
+        public String getStudentUid() {
+            return studentUid;
+        }
+
+        public String getStudentName() {
+            return studentName;
+        }
     }
 
     

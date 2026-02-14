@@ -70,6 +70,7 @@ public class Assignment {
 
 
     @OneToMany(mappedBy="assignment", cascade=CascadeType.ALL, orphanRemoval=true)
+    @JsonIgnore
     private List<SynergyGrade> grades;
 
     @NotNull

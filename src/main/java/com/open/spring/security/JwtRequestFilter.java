@@ -105,18 +105,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 			return;
 		}
 
-		String origin = request.getHeader("X-Origin");
-		
-		// If the request is coming from the client api
-    	if (origin != null && origin.equals("client")) {
-			logger.warn("Client request: " + buildRequestLogMessage(request));
+		String requestUri = request.getRequestURI();
+		if (requestUri != null && requestUri.startsWith("/api/")) {
+			logger.warn("API request: " + buildRequestLogMessage(request));
 			handleClientRequest(request, response, chain);
-		// Else the request is coming from session
-		} else {
-			logger.warn("Session request: " + buildRequestLogMessage(request));
-			chain.doFilter(request, response);
 			return;
 		}
+
+		logger.warn("Session request: " + buildRequestLogMessage(request));
+		chain.doFilter(request, response);
 	}
 	
 	/**
