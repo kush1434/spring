@@ -22,9 +22,17 @@ public interface FileHandler {
 
     /**
      * Deletes all files associated with a user.
-     * 
+     *
      * @param uid             User ID
      * @return true if successful
      */
     boolean deleteFiles(String uid);
+
+    /**
+     * Lists all file keys under a given prefix.
+     *
+     * @param prefix          The S3 key prefix to list
+     * @return List of S3 object keys matching the prefix
+     */
+    java.util.List<String> listFiles(String prefix);
 }

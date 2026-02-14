@@ -19,4 +19,8 @@ public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Lo
     // Count appointments by date and classPeriod for validation
     @Query("SELECT COUNT(e) FROM CalendarEvent e WHERE e.date = :date AND e.classPeriod = :classPeriod AND e.type = 'appointment'")
     long countAppointmentsByDateAndClassPeriod(@Param("date") LocalDate date, @Param("classPeriod") String classPeriod);
+    
+    // Break-specific query methods
+    List<CalendarEvent> findByIsBreakAndDate(boolean isBreak, LocalDate date); // Find breaks by date
+    List<CalendarEvent> findByIsBreak(boolean isBreak); // Find all breaks
 }
