@@ -31,6 +31,8 @@ import com.open.spring.mvc.userStocks.UserStocksRepository;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class provides RESTful API endpoints for managing Person entities.
@@ -40,6 +42,8 @@ import lombok.Setter;
 @RestController
 @RequestMapping("/api")
 public class PersonApiController {
+    private static final Logger logger = LoggerFactory.getLogger(PersonApiController.class);
+
     /*
      * #### RESTful API REFERENCE ####
      * Resource: https://spring.io/guides/gs/rest-service/
@@ -154,6 +158,7 @@ public class PersonApiController {
         private String uid;
         private String sid;
         private String password;
+        private String currentPassword;
         private String name;
         private String pfp;
         private Boolean kasmServerNeeded; 
@@ -335,17 +340,51 @@ public class PersonApiController {
      */
     @PostMapping(value = "/person/update", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> updatePerson(Authentication authentication, @RequestBody final PersonDto personDto) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
         // Get the email of the current user from the authentication context
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String email = userDetails.getUsername(); // Assuming email is used as the username in Spring Security
-        System.out.println(email);
+
         // Find the person by email
         Optional<Person> optionalPerson = Optional.ofNullable(repository.findByUid(email));
         if (optionalPerson.isPresent()) {
             Person existingPerson = optionalPerson.get();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+
+            boolean emailChanged = personDto.getEmail() != null && !personDto.getEmail().equals(existingPerson.getEmail());
+            boolean passwordChanged = personDto.getPassword() != null && !personDto.getPassword().isBlank();
+            boolean sidChanged = personDto.getSid() != null && !personDto.getSid().equals(existingPerson.getSid());
+            boolean nameChanged = personDto.getName() != null && !personDto.getName().equals(existingPerson.getName());
+            boolean pfpChanged = personDto.getPfp() != null && !personDto.getPfp().equals(existingPerson.getPfp());
+            boolean kasmChanged = personDto.getKasmServerNeeded() != null && !personDto.getKasmServerNeeded().equals(existingPerson.getKasmServerNeeded());
+            boolean uidChangeRequested = personDto.getUid() != null && !personDto.getUid().equals(existingPerson.getUid());
+
+            if (!isAdmin && uidChangeRequested) {
+                logger.warn("AUDIT profile_update_blocked actor={} reason=uid_change_not_allowed", existingPerson.getUid());
+                JSONObject responseObject = new JSONObject();
+                responseObject.put("error", "UID cannot be changed through this endpoint");
+                return new ResponseEntity<>(responseObject.toString(), HttpStatus.FORBIDDEN);
+            }
+
+            if (!isAdmin && (emailChanged || passwordChanged)) {
+                if (personDto.getCurrentPassword() == null
+                    || personDto.getCurrentPassword().isBlank()
+                    || !passwordEncoder.matches(personDto.getCurrentPassword(), existingPerson.getPassword())) {
+                    logger.warn("AUDIT profile_update_blocked actor={} reason=invalid_current_password", existingPerson.getUid());
+                    JSONObject responseObject = new JSONObject();
+                    responseObject.put("error", "Current password is required for sensitive updates");
+                    return new ResponseEntity<>(responseObject.toString(), HttpStatus.FORBIDDEN);
+                }
+            }
+
+            StringBuilder changedFields = new StringBuilder();
 
             // Update fields only if they're provided in personDto
-            if (personDto.getEmail() != null && !personDto.getEmail().equals(existingPerson.getEmail())) {
+            if (emailChanged) {
                 // Check if email is already taken by another person
                 Person personWithEmail = repository.findByEmail(personDto.getEmail());
                 if (personWithEmail != null && !personWithEmail.getId().equals(existingPerson.getId())) {
@@ -354,12 +393,13 @@ public class PersonApiController {
                     return new ResponseEntity<>(responseObject.toString(), HttpStatus.CONFLICT);
                 }
                 existingPerson.setEmail(personDto.getEmail());
+                changedFields.append("email,");
             }
-            if (personDto.getPassword() != null) {
+            if (passwordChanged) {
                 existingPerson.setPassword(passwordEncoder.encode(personDto.getPassword()));
-
+                changedFields.append("password,");
             }
-            if (personDto.getUid() != null && !personDto.getUid().equals(existingPerson.getUid())) {
+            if (isAdmin && uidChangeRequested) {
                 // Check if uid is already taken by another person
                 Person personWithUid = repository.findByUid(personDto.getUid());
                 if (personWithUid != null && !personWithUid.getId().equals(existingPerson.getId())) {
@@ -368,22 +408,32 @@ public class PersonApiController {
                     return new ResponseEntity<>(responseObject.toString(), HttpStatus.CONFLICT);
                 }
                 existingPerson.setUid(personDto.getUid());
+                changedFields.append("uid,");
             }
-            if (personDto.getSid() != null) {
+            if (sidChanged) {
                 existingPerson.setSid(personDto.getSid());
+                changedFields.append("sid,");
             }
         
-            if (personDto.getName() != null) {
+            if (nameChanged) {
                 existingPerson.setName(personDto.getName());
+                changedFields.append("name,");
             }
-            if (personDto.getPfp() != null) {
+            if (pfpChanged) {
                 existingPerson.setPfp(personDto.getPfp());
+                changedFields.append("pfp,");
             }
-            if (personDto.getKasmServerNeeded() != null) {
+            if (kasmChanged) {
                 existingPerson.setKasmServerNeeded(personDto.getKasmServerNeeded());
+                changedFields.append("kasmServerNeeded,");
             }
             // Save the updated person back to the repository
             Person updatedPerson = repository.save(existingPerson);
+
+            String changed = changedFields.length() == 0
+                ? "none"
+                : changedFields.substring(0, changedFields.length() - 1);
+            logger.info("AUDIT profile_update actor={} target={} fields={} admin={}", email, updatedPerson.getUid(), changed, isAdmin);
 
             // Return the updated person entity
             return new ResponseEntity<>(updatedPerson, HttpStatus.OK);
@@ -480,13 +530,60 @@ public class PersonApiController {
 
 
     @PutMapping("/person/{id}")
-    public ResponseEntity<Object> updatePerson(@PathVariable long id, @RequestBody PersonDto personDto) {
+    public ResponseEntity<Object> updatePerson(Authentication authentication, @PathVariable long id, @RequestBody PersonDto personDto) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String actorUid = userDetails.getUsername();
+        boolean isAdmin = authentication.getAuthorities().stream()
+            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+
+        Person actorPerson = repository.findByUid(actorUid);
+        if (actorPerson == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
         Optional<Person> optional = repository.findById(id);
         if (optional.isPresent()) {  // If the person with the given ID exists
             Person existingPerson = optional.get();
 
+            if (!isAdmin && !existingPerson.getId().equals(actorPerson.getId())) {
+                logger.warn("AUDIT profile_update_blocked actor={} target={} reason=non_admin_cross_update", actorUid, existingPerson.getUid());
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+
+            boolean emailChanged = personDto.getEmail() != null && !personDto.getEmail().equals(existingPerson.getEmail());
+            boolean passwordChanged = personDto.getPassword() != null && !personDto.getPassword().isBlank();
+            boolean uidChanged = personDto.getUid() != null && !personDto.getUid().equals(existingPerson.getUid());
+            boolean nameChanged = personDto.getName() != null && !personDto.getName().equals(existingPerson.getName());
+            boolean pfpChanged = personDto.getPfp() != null && !personDto.getPfp().equals(existingPerson.getPfp());
+            boolean kasmChanged = personDto.getKasmServerNeeded() != null && !personDto.getKasmServerNeeded().equals(existingPerson.getKasmServerNeeded());
+            boolean sidChanged = personDto.getSid() != null && !personDto.getSid().equals(existingPerson.getSid());
+
+            if (!isAdmin && uidChanged) {
+                logger.warn("AUDIT profile_update_blocked actor={} target={} reason=uid_change_not_allowed", actorUid, existingPerson.getUid());
+                JSONObject responseObject = new JSONObject();
+                responseObject.put("error", "UID cannot be changed by non-admin users");
+                return new ResponseEntity<>(responseObject.toString(), HttpStatus.FORBIDDEN);
+            }
+
+            if (!isAdmin && (emailChanged || passwordChanged)) {
+                if (personDto.getCurrentPassword() == null
+                    || personDto.getCurrentPassword().isBlank()
+                    || !passwordEncoder.matches(personDto.getCurrentPassword(), existingPerson.getPassword())) {
+                    logger.warn("AUDIT profile_update_blocked actor={} target={} reason=invalid_current_password", actorUid, existingPerson.getUid());
+                    JSONObject responseObject = new JSONObject();
+                    responseObject.put("error", "Current password is required for sensitive updates");
+                    return new ResponseEntity<>(responseObject.toString(), HttpStatus.FORBIDDEN);
+                }
+            }
+
+            StringBuilder changedFields = new StringBuilder();
+
             // Check for duplicate email if email is being changed
-            if (personDto.getEmail() != null && !personDto.getEmail().equals(existingPerson.getEmail())) {
+            if (emailChanged) {
                 Person personWithEmail = repository.findByEmail(personDto.getEmail());
                 if (personWithEmail != null && !personWithEmail.getId().equals(existingPerson.getId())) {
                     JSONObject responseObject = new JSONObject();
@@ -496,7 +593,7 @@ public class PersonApiController {
             }
 
             // Check for duplicate uid if uid is being changed
-            if (personDto.getUid() != null && !personDto.getUid().equals(existingPerson.getUid())) {
+            if (uidChanged) {
                 Person personWithUid = repository.findByUid(personDto.getUid());
                 if (personWithUid != null && !personWithUid.getId().equals(existingPerson.getId())) {
                     JSONObject responseObject = new JSONObject();
@@ -506,29 +603,44 @@ public class PersonApiController {
             }
 
             // Update the existing person's details
-            if (personDto.getEmail() != null) {
+            if (emailChanged) {
                 existingPerson.setEmail(personDto.getEmail());
+                changedFields.append("email,");
             }
-            if (personDto.getPassword() != null) {
-                existingPerson.setPassword(personDto.getPassword());
+            if (passwordChanged) {
+                existingPerson.setPassword(passwordEncoder.encode(personDto.getPassword()));
+                changedFields.append("password,");
             }
-            if (personDto.getName() != null) {
+            if (nameChanged) {
                 existingPerson.setName(personDto.getName());
+                changedFields.append("name,");
             }
-            if (personDto.getUid() != null) {
+            if (isAdmin && uidChanged) {
                 existingPerson.setUid(personDto.getUid());
+                changedFields.append("uid,");
             }
             
             // Optional: Update other fields if they exist in Person
-            if (personDto.getPfp() != null) {
+            if (pfpChanged) {
                 existingPerson.setPfp(personDto.getPfp());
+                changedFields.append("pfp,");
             }
-            if (personDto.getKasmServerNeeded() != null) {
+            if (kasmChanged) {
                 existingPerson.setKasmServerNeeded(personDto.getKasmServerNeeded());
+                changedFields.append("kasmServerNeeded,");
+            }
+            if (sidChanged) {
+                existingPerson.setSid(personDto.getSid());
+                changedFields.append("sid,");
             }
 
             // Save the updated person back to the repository
             repository.save(existingPerson);
+
+            String changed = changedFields.length() == 0
+                ? "none"
+                : changedFields.substring(0, changedFields.length() - 1);
+            logger.info("AUDIT profile_update actor={} target={} fields={} admin={}", actorUid, existingPerson.getUid(), changed, isAdmin);
 
             // Return the updated person entity
             return new ResponseEntity<>(existingPerson, HttpStatus.OK);
