@@ -1,5 +1,8 @@
 package com.open.spring.security;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -77,13 +80,13 @@ public class SecurityConfig {
 
                         // ========== AUTHENTICATION & USER MANAGEMENT ==========
                         // Public endpoint - no authentication required, supports user login
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // Allow CORS preflight requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/**", "/authenticate").permitAll()  // Allow only relevant CORS preflight requests
                         .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/person/create").permitAll()
                         // Admin-only endpoints, beware of DELETE operations and impact to cascading relational data 
                         .requestMatchers(HttpMethod.DELETE, "/api/person/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/person/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/person/uid/**").hasAnyAuthority("ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/person/uid/**").hasAnyAuthority("ROLE_USER", "ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
 
                         // All other /api/person/** and /api/people/** operations handled by default rule
                         // ======================================================
@@ -171,6 +174,20 @@ public class SecurityConfig {
                 .addFilterBefore(rateLimitFilter, JwtRequestFilter.class);
 
         return http.build();
+    }
+
+    @Bean(name = "apiEndpointRolePolicy")
+    public Map<String, String> apiEndpointRolePolicy() {
+        Map<String, String> policy = new LinkedHashMap<>();
+        policy.put("POST /authenticate", "permitAll");
+        policy.put("POST /api/person/create", "permitAll");
+        policy.put("DELETE /api/person/**", "ROLE_ADMIN");
+        policy.put("PUT /api/person/**", "ROLE_ADMIN");
+        policy.put("GET /api/person/uid/**", "ROLE_USER|ROLE_STUDENT|ROLE_TEACHER|ROLE_ADMIN");
+        policy.put("/api/exports/**", "ROLE_ADMIN");
+        policy.put("/api/imports/**", "ROLE_ADMIN");
+        policy.put("/api/**", "ROLE_USER|ROLE_ADMIN|ROLE_TEACHER|ROLE_STUDENT");
+        return Map.copyOf(policy);
     }
 
     @Bean

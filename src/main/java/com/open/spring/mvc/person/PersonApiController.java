@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -116,6 +117,7 @@ public class PersonApiController {
      *         NOT_FOUND status if not found.
      */
     @GetMapping("/person/uid/{uid}")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER','ROLE_STUDENT','ROLE_TEACHER','ROLE_ADMIN')")
     public ResponseEntity<Person> getPersonByUid(@PathVariable String uid) {
         Person person = repository.findByUid(uid);
         if (person != null) {
@@ -132,6 +134,7 @@ public class PersonApiController {
      *         NOT_FOUND status if not found.
      */
     @DeleteMapping("/person/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Person> deletePerson(@PathVariable long id) {
         Optional<Person> optional = repository.findById(id);
         if (optional.isPresent()) { // Good ID
@@ -339,6 +342,7 @@ public class PersonApiController {
      *         NOT_FOUND status if not found.
      */
     @PostMapping(value = "/person/update", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Object> updatePerson(Authentication authentication, @RequestBody final PersonDto personDto) {
         if (authentication == null || authentication.getPrincipal() == null) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -530,6 +534,7 @@ public class PersonApiController {
 
 
     @PutMapping("/person/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Object> updatePerson(Authentication authentication, @PathVariable long id, @RequestBody PersonDto personDto) {
         if (authentication == null || authentication.getPrincipal() == null) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);

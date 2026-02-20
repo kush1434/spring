@@ -389,6 +389,10 @@ public class PersonViewController {
 
     @PostMapping("/reset/start")
     public ResponseEntity<Object> resetPassword(@RequestBody PersonPasswordReset personPasswordReset){
+        if (personPasswordReset == null || personPasswordReset.getUid() == null || personPasswordReset.getUid().isBlank()) {
+            return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+        }
+
         Person personToReset = repository.getByUid(personPasswordReset.getUid());
         
         //person not found
@@ -409,13 +413,23 @@ public class PersonViewController {
             }
         }
 
-        // if there is already an active code emailed to a user, don't send a second one
-        if(ResetCode.getCodeForUid(personToReset.getUid()) != null){
+        // enforce active-token and rolling-window rate limits
+        if(!ResetCode.canIssueResetCode(personToReset.getUid())){
             return new ResponseEntity<Object>(HttpStatus.TOO_MANY_REQUESTS);
         }
 
         //finally send a password reset email to the person
-        Email.sendPasswordResetEmail(personToReset.getEmail(), ResetCode.GenerateResetCode(personToReset.getUid()));
+        String resetToken = ResetCode.GenerateResetCode(personToReset.getUid());
+        if (resetToken == null) {
+            return new ResponseEntity<Object>(HttpStatus.TOO_MANY_REQUESTS);
+        }
+
+        try {
+            Email.sendPasswordResetEmail(personToReset.getEmail(), resetToken);
+        } catch (Exception ex) {
+            ResetCode.removeCodeByUid(personToReset.getUid());
+            logger.warn("AUDIT reset_email_send_failed uid={} reason={}", personToReset.getUid(), ex.getMessage());
+        }
         return new ResponseEntity<Object>(HttpStatus.OK);
     }
 
@@ -427,6 +441,10 @@ public class PersonViewController {
 
     @PostMapping("/reset/check")
     public ResponseEntity<Object> resetPasswordCheck(@RequestBody PersonPasswordResetCode personPasswordResetCode){
+        if (personPasswordResetCode == null || personPasswordResetCode.getUid() == null || personPasswordResetCode.getUid().isBlank()) {
+            return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+        }
+
         Person personToReset = repository.getByUid(personPasswordResetCode.getUid());
 
         //person not found
@@ -439,14 +457,8 @@ public class PersonViewController {
             return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
         }
 
-        if(ResetCode.getCodeForUid(personToReset.getUid()) == null){
-            return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
-        }
-
-        //if there is a code submitted for the given uid, and it matches the code that is expected, then reset the users password
-        if(ResetCode.getCodeForUid(personToReset.getUid()).equals(personPasswordResetCode.getCode())){
-            ResetCode.removeCodeByUid(personToReset.getUid());
-            
+        // single-use + expiration + signature validation handled in ResetCode
+        if(ResetCode.validateAndConsume(personToReset.getUid(), personPasswordResetCode.getCode())){
             final Dotenv dotenv = Dotenv.load();
             final String defaultPassword = dotenv.get("DEFAULT_PASSWORD");
             personToReset.setPassword(defaultPassword);

@@ -1,6 +1,8 @@
 package com.open.spring.security;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +15,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.SecurityFilterChain;
@@ -68,13 +69,17 @@ public class MvcSecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/mvc/person/search/**").authenticated()
-                .requestMatchers("/mvc/person/create/**").permitAll()
-                .requestMatchers("/mvc/person/reset/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/mvc/person/create").permitAll()
+                .requestMatchers(HttpMethod.POST, "/mvc/person/create").permitAll()
+                .requestMatchers(HttpMethod.GET, "/mvc/person/reset").permitAll()
+                .requestMatchers(HttpMethod.GET, "/mvc/person/reset/check").permitAll()
+                .requestMatchers(HttpMethod.POST, "/mvc/person/reset/start").permitAll()
+                .requestMatchers(HttpMethod.POST, "/mvc/person/reset/check").permitAll()
                 .requestMatchers("/mvc/person/read/**").authenticated()
                 .requestMatchers("/mvc/person/cookie-clicker").authenticated()
-                .requestMatchers(HttpMethod.GET,"/mvc/person/update/user").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.GET,"/mvc/person/update/user").authenticated()
                 .requestMatchers(HttpMethod.GET,"/mvc/person/update/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers(HttpMethod.POST,"/mvc/person/update/").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.POST,"/mvc/person/update").authenticated()
                 .requestMatchers(HttpMethod.POST,"/mvc/person/update/role").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.POST,"/mvc/person/update/roles").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/mvc/person/delete/**").hasAuthority("ROLE_ADMIN")
@@ -155,5 +160,22 @@ public class MvcSecurityConfig {
                 }));
 
         return http.build();
+    }
+
+    @Bean(name = "mvcEndpointRolePolicy")
+    public Map<String, String> mvcEndpointRolePolicy() {
+        Map<String, String> policy = new LinkedHashMap<>();
+        policy.put("GET/POST /login", "permitAll");
+        policy.put("GET/POST /mvc/person/create", "permitAll");
+        policy.put("GET /mvc/person/reset", "permitAll");
+        policy.put("GET /mvc/person/reset/check", "permitAll");
+        policy.put("POST /mvc/person/reset/start", "permitAll");
+        policy.put("POST /mvc/person/reset/check", "permitAll");
+        policy.put("GET /mvc/person/update/user", "authenticated");
+        policy.put("POST /mvc/person/update", "authenticated (+ controller ownership checks)");
+        policy.put("POST /mvc/person/update/role", "ROLE_ADMIN");
+        policy.put("POST /mvc/person/update/roles", "ROLE_ADMIN");
+        policy.put("/mvc/person/delete/**", "ROLE_ADMIN");
+        return Map.copyOf(policy);
     }
 }
