@@ -500,4 +500,188 @@ public class CalendarEventController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    // ==================== BREAK-RELATED ENDPOINTS ====================
+
+    /**
+     * POST /api/calendar/breaks/create
+     * Create a new break for a specific date.
+     * When a break is created, all regular events on that day can be moved to the next non-break day.
+     */
+    @PostMapping("/breaks/create")
+    public ResponseEntity<?> createBreak(@RequestBody Map<String, Object> payload) {
+        try {
+            String dateStr = (String) payload.get("date");
+            String name = (String) payload.get("name");
+            String description = (String) payload.get("description");
+            Boolean moveToNextNonBreakDay = (Boolean) payload.getOrDefault("moveToNextNonBreakDay", true);
+
+            // Validate date
+            if (dateStr == null || dateStr.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Date is required"));
+            }
+
+            // Validate name
+            if (name == null || name.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Break name is required"));
+            }
+
+            LocalDate date = LocalDate.parse(dateStr);
+
+            // Handle null description
+            if (description == null) {
+                description = "";
+            }
+
+            CalendarEvent breakEvent = calendarEventService.createBreak(date, name, description, moveToNextNonBreakDay);
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Break created successfully",
+                "break", breakEvent
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Invalid date format. Use YYYY-MM-DD"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Failed to create break: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * GET /api/calendar/breaks
+     * Get all breaks.
+     */
+    @GetMapping("/breaks")
+    public ResponseEntity<?> getAllBreaks() {
+        try {
+            List<CalendarEvent> breaks = calendarEventService.getAllBreaks();
+            return ResponseEntity.ok(breaks);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Failed to retrieve breaks: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * GET /api/calendar/breaks/by-date?date=2026-02-01
+     * Get breaks for a specific date.
+     */
+    @GetMapping("/breaks/by-date")
+    public ResponseEntity<?> getBreaksByDate(
+            @RequestParam("date") String dateStr) {
+        try {
+            LocalDate date = LocalDate.parse(dateStr);
+            List<CalendarEvent> breaks = calendarEventService.getBreaksByDate(date);
+            return ResponseEntity.ok(breaks);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Failed to retrieve breaks: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * GET /api/calendar/breaks/is-break-day?date=2026-02-01
+     * Check if a date is a break day.
+     */
+    @GetMapping("/breaks/is-break-day")
+    public ResponseEntity<?> isBreakDay(
+            @RequestParam("date") String dateStr) {
+        try {
+            LocalDate date = LocalDate.parse(dateStr);
+            boolean isBreak = calendarEventService.isBreakDay(date);
+            return ResponseEntity.ok(Map.of("isBreakDay", isBreak));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Failed to check break day: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * PUT /api/calendar/breaks/{id}
+     * Edit a break's name and description.
+     */
+    @PutMapping("/breaks/{id}")
+    public ResponseEntity<?> editBreak(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        try {
+            String name = (String) payload.get("name");
+            String description = (String) payload.get("description");
+
+            // Validate name if provided
+            if (name != null && name.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Break name cannot be empty"));
+            }
+
+            CalendarEvent updatedBreak = calendarEventService.updateBreak(id, name, description);
+
+            if (updatedBreak == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "error", "Break not found with ID: " + id
+                ));
+            }
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Break updated successfully",
+                "break", updatedBreak
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Failed to update break: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * DELETE /api/calendar/breaks/{id}
+     * Delete a break by its ID.
+     */
+    @DeleteMapping("/breaks/{id}")
+    public ResponseEntity<?> deleteBreak(@PathVariable Long id) {
+        try {
+            boolean deleted = calendarEventService.deleteBreakById(id);
+            if (deleted) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Break deleted successfully"
+                ));
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "error", "Break not found with ID: " + id
+                ));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Failed to delete break: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * GET /api/calendar/breaks/{id}
+     * Get a break by its ID.
+     */
+    @GetMapping("/breaks/{id}")
+    public ResponseEntity<?> getBreakById(@PathVariable Long id) {
+        try {
+            CalendarEvent breakEvent = calendarEventService.getBreakById(id);
+            if (breakEvent != null) {
+                return ResponseEntity.ok(breakEvent);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "error", "Break not found with ID: " + id
+                ));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Failed to retrieve break: " + e.getMessage()
+            ));
+        }
+    }
 }

@@ -18,6 +18,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -33,15 +34,22 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // Built using article: https://docs.spring.io/spring-framework/docs/3.2.x/spring-framework-reference/html/mvc.html
 // or similar: https://asbnotebook.com/2020/04/11/spring-boot-thymeleaf-form-validation-example/
 @Controller
 @RequestMapping("/mvc/person")
 public class PersonViewController {
+    private static final Logger logger = LoggerFactory.getLogger(PersonViewController.class);
+
     // Autowired enables Control to connect HTML and POJO Object to database easily for CRUD
     @Autowired
     private PersonDetailsService repository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     //@Autowired
     //private PersonJpaRepository find;
@@ -129,33 +137,63 @@ public class PersonViewController {
 
 
     @PostMapping("/update")
-    public String personUpdateSave(Authentication authentication, @Valid Person person, BindingResult bindingResult) {
+    public String personUpdateSave(
+        Authentication authentication,
+        @Valid Person person,
+        BindingResult bindingResult,
+        @RequestParam(value = "currentPassword", required = false) String currentPassword
+    ) {
         // Check if the user has admin authority
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         boolean isAdmin = userDetails.getAuthorities().stream()
             .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+        Person actor = repository.getByUid(userDetails.getUsername());
         Person personToUpdate = repository.getByUid(person.getUid());
+
+        if (personToUpdate == null || actor == null) {
+            logger.warn("AUDIT profile_update_failed actor={} target={} reason=not_found", userDetails.getUsername(), person.getUid());
+            return "redirect:/e#Unauthorized";
+        }
+
         // If the user is not an admin, they can only update their own details
-        if (!isAdmin && !personToUpdate.getId().equals(repository.getByUid(userDetails.getUsername()).getId())) {
+        if (!isAdmin && !personToUpdate.getId().equals(actor.getId())) {
+            logger.warn("AUDIT profile_update_blocked actor={} target={} reason=non_admin_cross_update", actor.getUid(), personToUpdate.getUid());
             return "redirect:/e#Unauthorized";  // Redirect if user tries to update another person's details
         }
+
+        boolean emailChanged = person.getEmail() != null && !person.getEmail().isBlank() && !person.getEmail().equals(personToUpdate.getEmail());
+        boolean passwordChanged = person.getPassword() != null && !person.getPassword().isBlank();
+        if (!isAdmin && (emailChanged || passwordChanged)) {
+            if (currentPassword == null || currentPassword.isBlank() || !passwordEncoder.matches(currentPassword, actor.getPassword())) {
+                logger.warn("AUDIT profile_update_blocked actor={} target={} reason=invalid_current_password", actor.getUid(), personToUpdate.getUid());
+                return "redirect:/mvc/person/update/user?error=invalid-current-password";
+            }
+        }
+
         boolean samePassword = true;
+        StringBuilder changedFields = new StringBuilder();
+
         // Update fields if the new values are provided
-        if (person.getPassword() != null && !person.getPassword().isBlank()) {
+        if (passwordChanged) {
             personToUpdate.setPassword(person.getPassword());
             samePassword = false;
+            changedFields.append("password,");
         }
         if (person.getName() != null && !person.getName().isBlank() && !person.getName().equals(personToUpdate.getName())) {
             personToUpdate.setName(person.getName());
+            changedFields.append("name,");
         }
-        if (person.getEmail() != null && !person.getEmail().isBlank() && !person.getEmail().equals(personToUpdate.getEmail())) {
+        if (emailChanged) {
             personToUpdate.setEmail(person.getEmail());
+            changedFields.append("email,");
         }
         if (person.getKasmServerNeeded() != null && !person.getKasmServerNeeded().equals(personToUpdate.getKasmServerNeeded())) {
             personToUpdate.setKasmServerNeeded(person.getKasmServerNeeded());
+            changedFields.append("kasmServerNeeded,");
         }
         if (person.getSid() != null && !person.getSid().equals(personToUpdate.getSid())) {
             personToUpdate.setSid(person.getSid());
+            changedFields.append("sid,");
         }
                 
 
@@ -163,6 +201,12 @@ public class PersonViewController {
         repository.save(personToUpdate, samePassword);
         repository.addRoleToPerson(person.getUid(), "ROLE_USER");
         repository.addRoleToPerson(person.getUid(), "ROLE_STUDENT");
+
+        String changed = changedFields.length() == 0
+            ? "none"
+            : changedFields.substring(0, changedFields.length() - 1);
+        logger.info("AUDIT profile_update actor={} target={} fields={} admin={}", actor.getUid(), personToUpdate.getUid(), changed, isAdmin);
+
         return "redirect:/mvc/person/read";  // Redirect to the read page after updating
     }
 
@@ -181,15 +225,25 @@ public class PersonViewController {
      * @return String indicating success or failure
      */
     @PostMapping("/update/role")
-    public String personRoleUpdateSave(@Valid PersonRoleDto roleDto,@RequestParam("roleName") String roleName) {
+    public String personRoleUpdateSave(Authentication authentication, @Valid PersonRoleDto roleDto,@RequestParam("roleName") String roleName) {
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        boolean isAdmin = userDetails.getAuthorities().stream()
+            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+        if (!isAdmin) {
+            logger.warn("AUDIT role_update_blocked actor={} target={} role={} reason=non_admin", userDetails.getUsername(), roleDto.getUid(), roleName);
+            return "redirect:/e#Unauthorized";
+        }
 
         Person personToUpdate = repository.getByUid(roleDto.getUid());
         if (personToUpdate == null) {
+            logger.warn("AUDIT role_update_failed actor={} target={} role={} reason=target_not_found", userDetails.getUsername(), roleDto.getUid(), roleName);
             return "person/update-roles";  // Return error if person not found
         }
 
         System.out.println(roleName);
         repository.addRoleToPerson(roleDto.getUid(), roleName);  // Add the role to the person
+        logger.info("AUDIT role_update actor={} target={} role={}", userDetails.getUsername(), roleDto.getUid(), roleName);
 
         return "redirect:/mvc/person/read"; // Redirect to the read page after updating
     }
@@ -207,9 +261,18 @@ public class PersonViewController {
      * @return ResponseEntity indicating success or failure
      */
     @PostMapping("/update/roles")
-    public ResponseEntity<Object> personRolesUpdateSave(@RequestBody PersonRolesDto rolesDto) {
+    public ResponseEntity<Object> personRolesUpdateSave(Authentication authentication, @RequestBody PersonRolesDto rolesDto) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        boolean isAdmin = userDetails.getAuthorities().stream()
+            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+        if (!isAdmin) {
+            logger.warn("AUDIT role_bulk_update_blocked actor={} target={} reason=non_admin", userDetails.getUsername(), rolesDto.getUid());
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
         Person personToUpdate = repository.getByUid(rolesDto.getUid());
         if (personToUpdate == null) {
+            logger.warn("AUDIT role_bulk_update_failed actor={} target={} reason=target_not_found", userDetails.getUsername(), rolesDto.getUid());
             return new ResponseEntity<>(personToUpdate, HttpStatus.CONFLICT);  // Return error if person not found
         }
 
@@ -217,6 +280,8 @@ public class PersonViewController {
         for (String roleName : rolesDto.getRoleNames()) { //I will assume that the roleNames is made of
             repository.addRoleToPerson(rolesDto.getUid(), roleName);
         }
+
+        logger.info("AUDIT role_bulk_update actor={} target={} roles={}", userDetails.getUsername(), rolesDto.getUid(), rolesDto.getRoleNames());
 
         return new ResponseEntity<>(personToUpdate, HttpStatus.OK);  // Return success response
     }
@@ -324,6 +389,10 @@ public class PersonViewController {
 
     @PostMapping("/reset/start")
     public ResponseEntity<Object> resetPassword(@RequestBody PersonPasswordReset personPasswordReset){
+        if (personPasswordReset == null || personPasswordReset.getUid() == null || personPasswordReset.getUid().isBlank()) {
+            return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+        }
+
         Person personToReset = repository.getByUid(personPasswordReset.getUid());
         
         //person not found
@@ -344,13 +413,23 @@ public class PersonViewController {
             }
         }
 
-        // if there is already an active code emailed to a user, don't send a second one
-        if(ResetCode.getCodeForUid(personToReset.getUid()) != null){
+        // enforce active-token and rolling-window rate limits
+        if(!ResetCode.canIssueResetCode(personToReset.getUid())){
             return new ResponseEntity<Object>(HttpStatus.TOO_MANY_REQUESTS);
         }
 
         //finally send a password reset email to the person
-        Email.sendPasswordResetEmail(personToReset.getEmail(), ResetCode.GenerateResetCode(personToReset.getUid()));
+        String resetToken = ResetCode.GenerateResetCode(personToReset.getUid());
+        if (resetToken == null) {
+            return new ResponseEntity<Object>(HttpStatus.TOO_MANY_REQUESTS);
+        }
+
+        try {
+            Email.sendPasswordResetEmail(personToReset.getEmail(), resetToken);
+        } catch (Exception ex) {
+            ResetCode.removeCodeByUid(personToReset.getUid());
+            logger.warn("AUDIT reset_email_send_failed uid={} reason={}", personToReset.getUid(), ex.getMessage());
+        }
         return new ResponseEntity<Object>(HttpStatus.OK);
     }
 
@@ -362,6 +441,10 @@ public class PersonViewController {
 
     @PostMapping("/reset/check")
     public ResponseEntity<Object> resetPasswordCheck(@RequestBody PersonPasswordResetCode personPasswordResetCode){
+        if (personPasswordResetCode == null || personPasswordResetCode.getUid() == null || personPasswordResetCode.getUid().isBlank()) {
+            return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+        }
+
         Person personToReset = repository.getByUid(personPasswordResetCode.getUid());
 
         //person not found
@@ -374,14 +457,8 @@ public class PersonViewController {
             return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
         }
 
-        if(ResetCode.getCodeForUid(personToReset.getUid()) == null){
-            return new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
-        }
-
-        //if there is a code submitted for the given uid, and it matches the code that is expected, then reset the users password
-        if(ResetCode.getCodeForUid(personToReset.getUid()).equals(personPasswordResetCode.getCode())){
-            ResetCode.removeCodeByUid(personToReset.getUid());
-            
+        // single-use + expiration + signature validation handled in ResetCode
+        if(ResetCode.validateAndConsume(personToReset.getUid(), personPasswordResetCode.getCode())){
             final Dotenv dotenv = Dotenv.load();
             final String defaultPassword = dotenv.get("DEFAULT_PASSWORD");
             personToReset.setPassword(defaultPassword);

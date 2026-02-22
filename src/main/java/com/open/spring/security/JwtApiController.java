@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonDetailsService;
+import com.open.spring.mvc.person.PersonJpaRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,6 +42,9 @@ public class JwtApiController {
 	@Autowired
 	private PersonDetailsService personDetailsService;
 
+	@Autowired
+	private PersonJpaRepository personJpaRepository;
+
 	@Value("${jwt.cookie.secure:true}")  // Defaults to production setting if property not found
 	private boolean cookieSecure;
 
@@ -50,16 +54,23 @@ public class JwtApiController {
 	@Value("${jwt.cookie.max-age:43200}")  // 12 hours
 	private long cookieMaxAge;
 
+	@Value("${server.servlet.session.cookie.name:sess_java_spring}")
+	private String sessionCookieName;
+
 	@PostMapping("/authenticate")
-	public ResponseEntity<?> createAuthenticationToken(@RequestBody Person authenticationRequest) throws Exception {
+	public ResponseEntity<?> createAuthenticationToken(@RequestBody Person authenticationRequest, HttpServletRequest request) throws Exception {
+		String resolvedUid = resolveUid(authenticationRequest);
+		if (resolvedUid == null) {
+			return new ResponseEntity<>("Authentication failed: INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED);
+		}
 		try {
-			authenticate(authenticationRequest.getUid(), authenticationRequest.getPassword());
+			authenticate(resolvedUid, authenticationRequest.getPassword());
 		} catch (Exception e) {
 			return new ResponseEntity<>("Authentication failed: " + e.getMessage(), HttpStatus.UNAUTHORIZED);
 		}
 		
 		final UserDetails userDetails = personDetailsService
-				.loadUserByUsername(authenticationRequest.getUid());
+				.loadUserByUsername(resolvedUid);
 
 		// Get the roles of the user
 		List<String> roles = userDetails.getAuthorities().stream()
@@ -73,18 +84,40 @@ public class JwtApiController {
 			return new ResponseEntity<>("Token generation failed", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
+		boolean secureFlag = cookieSecure && request.isSecure();
+		String sameSite = secureFlag ? cookieSameSite : "Lax";
 		// Build cookie with development-friendly settings
 		// For localhost: allow HTTP and SameSite=Lax
 		// For production: require HTTPS and SameSite=None; Secure
 		ResponseCookie tokenCookie = ResponseCookie.from("jwt_java_spring", token)
-			.httpOnly(false)
-			.secure(cookieSecure)  // Configured via jwt.cookie.secure in application.properties
-			.path("/")
+			.httpOnly(true)
+			.secure(secureFlag)
+			.path("/api")
 			.maxAge(cookieMaxAge)  // Configured via jwt.cookie.max-age in application.properties
-			.sameSite(cookieSameSite)  // Configured via jwt.cookie.same-site in application.properties
+			.sameSite(sameSite)
 			.build();
 
-		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, tokenCookie.toString()).body(authenticationRequest.getUid() + " was authenticated successfully");
+		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, tokenCookie.toString()).body(resolvedUid + " was authenticated successfully");
+	}
+
+	private String resolveUid(Person authenticationRequest) {
+		if (authenticationRequest == null) {
+			return null;
+		}
+		String uid = authenticationRequest.getUid();
+		if (uid != null && !uid.isBlank()) {
+			if (uid.contains("@")) {
+				Person person = personJpaRepository.findByEmail(uid);
+				return person != null ? person.getUid() : null;
+			}
+			return uid;
+		}
+		String email = authenticationRequest.getEmail();
+		if (email != null && !email.isBlank()) {
+			Person person = personJpaRepository.findByEmail(email);
+			return person != null ? person.getUid() : null;
+		}
+		return null;
 	}
 
 	private void authenticate(String username, String password) throws Exception {
@@ -107,17 +140,30 @@ public class JwtApiController {
 		public String performLogout(Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
 			// Perform logout using SecurityContextLogoutHandler
 			logoutHandler.logout(request, response, authentication);
+
+			boolean secureFlag = cookieSecure && request.isSecure();
+			String sameSite = secureFlag ? cookieSameSite : "Lax";
 	
 			// Expire the JWT token immediately by setting a past expiration date
-		ResponseCookie cookie = ResponseCookie.from("jwt_java_spring", "")
-				.secure(cookieSecure)  // Configured via jwt.cookie.secure in application.properties
-				.path("/")
-				.maxAge(0)  // Set maxAge to 0 to expire the cookie immediately
-				.sameSite(cookieSameSite)  // Configured via jwt.cookie.same-site in application.properties
-				.build();
+			ResponseCookie jwtCookie = ResponseCookie.from("jwt_java_spring", "")
+					.httpOnly(true)
+					.secure(secureFlag)
+					.path("/api")
+					.maxAge(0)  // Set maxAge to 0 to expire the cookie immediately
+					.sameSite(sameSite)
+					.build();
+
+			ResponseCookie sessionCookie = ResponseCookie.from(sessionCookieName, "")
+					.httpOnly(true)
+					.secure(secureFlag)
+					.path("/")
+					.maxAge(0)
+					.sameSite(sameSite)
+					.build();
 	
-			// Set the cookie in the response to effectively "remove" the JWT
-			response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+			// Set the cookies in the response to effectively "remove" them
+			response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+			response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie.toString());
 	
 			// Optional: You can also clear the "Authorization" header if needed
 			response.setHeader("Authorization", null);

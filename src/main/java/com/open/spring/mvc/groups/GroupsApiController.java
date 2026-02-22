@@ -36,6 +36,9 @@ public class GroupsApiController {
     @Autowired
     private PersonJpaRepository personRepository;
 
+    @Autowired
+    private GroupChatService groupChatService;
+
     // ===== DTOs =====
     @Data
     @NoArgsConstructor
@@ -197,6 +200,13 @@ public class GroupsApiController {
                 );
             }
 
+            if (groupsRepository.findByName(dto.getName()).isPresent()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Group with name '" + dto.getName() + "' already exists"),
+                    HttpStatus.CONFLICT
+                );
+            }
+
             Groups group = new Groups();
             group.setName(dto.getName());
             group.setPeriod(dto.getPeriod());
@@ -214,6 +224,9 @@ public class GroupsApiController {
                 }
                 savedGroup = groupsRepository.save(savedGroup);
             }
+
+            // Initialize S3 folder structure for the new group
+            groupChatService.initGroupStorage(savedGroup.getName());
 
             return new ResponseEntity<>(buildGroupResponse(savedGroup), HttpStatus.CREATED);
         } catch (Exception e) {
@@ -245,6 +258,11 @@ public class GroupsApiController {
 
             for (GroupCreateDto groupDto : dto.getGroups()) {
                 try {
+                    if (groupsRepository.findByName(groupDto.getName()).isPresent()) {
+                        errors.add("Group with name '" + groupDto.getName() + "' already exists");
+                        continue;
+                    }
+
                     Groups group = new Groups();
                     group.setName(groupDto.getName());
                     group.setPeriod(groupDto.getPeriod());
@@ -261,6 +279,9 @@ public class GroupsApiController {
                         }
                         savedGroup = groupsRepository.save(savedGroup);
                     }
+
+                    // Initialize S3 folder structure for the new group
+                    groupChatService.initGroupStorage(savedGroup.getName());
 
                     created.add(buildGroupResponse(savedGroup));
                 } catch (Exception e) {
