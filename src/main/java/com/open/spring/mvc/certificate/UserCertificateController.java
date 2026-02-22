@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.open.spring.mvc.grades.Grade;
-import com.open.spring.mvc.grades.GradeRepository;
 import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.person.PersonJpaRepository;
 
@@ -61,9 +61,6 @@ public class UserCertificateController {
 
     @Autowired
     private CertificateRepository certificateRepository;
-
-    @Autowired
-    private GradeRepository gradeRepository;
 
     @GetMapping
     public List<UserCertificate> getAllUserCertificates() {
@@ -172,8 +169,28 @@ public class UserCertificateController {
             return new ResponseEntity<>("At least one assignment is required", HttpStatus.BAD_REQUEST);
         }
 
-        // Fetch grades for the user and specified assignments
-        List<Grade> userGrades = gradeRepository.findByUidAndAssignmentIn(uid, allAssignments);
+        // Fetch grades from the person's JSON field
+        List<Grade> userGrades = new ArrayList<>();
+        List<Map<String, Object>> gradesJson = person.getGradesJson();
+        if (gradesJson != null) {
+            for (Map<String, Object> m : gradesJson) {
+                String assignment = m.get("assignment") == null ? null : String.valueOf(m.get("assignment"));
+                if (allAssignments.contains(assignment)) {
+                    Grade g = new Grade();
+                    g.setUid(uid);
+                    g.setAssignment(assignment);
+                    Object scoreObj = m.get("score");
+                    if (scoreObj != null) {
+                        try {
+                            g.setScore(Double.valueOf(String.valueOf(scoreObj)));
+                        } catch (NumberFormatException e) {
+                            g.setScore(null);
+                        }
+                    }
+                    userGrades.add(g);
+                }
+            }
+        }
 
         // Check if all assignments have been completed
         List<String> completedAssignments = new ArrayList<>();
@@ -181,7 +198,7 @@ public class UserCertificateController {
         
         for (String assignment : allAssignments) {
             boolean found = userGrades.stream()
-                .anyMatch(g -> g.getAssignment().equals(assignment) && g.getScore() != null);
+                .anyMatch(g -> assignment != null && assignment.equals(g.getAssignment()) && g.getScore() != null);
             if (found) {
                 completedAssignments.add(assignment);
             } else {
@@ -230,9 +247,10 @@ public class UserCertificateController {
 
         // Check if user already has this certificate for this sprint
         List<UserCertificate> existingCerts = userCertificateRepository.findByPersonId(person.getId());
+        String requestedSprint = requestBody.sprintName != null ? requestBody.sprintName : "";
         for (UserCertificate existingCert : existingCerts) {
-            if (existingCert.getCertificate().getId().equals(certificate.getId()) 
-                && existingCert.getSprintName().equals(requestBody.sprintName)) {
+            if (existingCert.getCertificate() != null && existingCert.getCertificate().getId().equals(certificate.getId())
+                && Objects.equals(existingCert.getSprintName() != null ? existingCert.getSprintName() : "", requestedSprint)) {
                 
                 // User already has certificate for this sprint - check if upgrade is possible
                 if (existingCert.getCertificateType() == CertificateType.COMPLETION 
@@ -257,7 +275,7 @@ public class UserCertificateController {
                 response.put("status", "ALREADY_EARNED");
                 response.put("message", "You already have this certificate for " + requestBody.sprintName);
                 response.put("existingCertificate", existingCert);
-                response.put("existingType", existingCert.getCertificateType().getDisplayName());
+                response.put("existingType", existingCert.getCertificateType() != null ? existingCert.getCertificateType().getDisplayName() : "Completion");
                 return new ResponseEntity<>(response, HttpStatus.OK);
             }
         }

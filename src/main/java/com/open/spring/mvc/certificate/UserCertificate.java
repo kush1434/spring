@@ -26,13 +26,13 @@ public class UserCertificate {
     private Certificate certificate;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "certificate_type")
     private CertificateType certificateType;
 
-    @Column(nullable = false)
+    @Column(name = "sprint_name")
     private String sprintName;
 
-    @Column(nullable = false)
+    @Column(name = "average_score")
     private Double averageScore;
 
     @Column(nullable = false)
