@@ -1,18 +1,16 @@
 package com.open.spring.mvc.certificate;
 
-import java.util.List;
-
+import com.open.spring.mvc.quests.Quest;
+import com.open.spring.mvc.quests.QuestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
+import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Controller
 @RequestMapping("/mvc/certificates")
@@ -25,21 +23,27 @@ public class CertificateViewController {
     @Autowired
     private UserCertificateRepository userCertificateRepository;
 
+    @Autowired
+    private QuestRepository questRepository;
+
     @GetMapping("")
     public String getCertificates(Model model) {
+        List<Certificate> certificates = certificateRepository.findAllWithQuests();
+        List<Quest> quests = questRepository.findAll();
+        model.addAttribute("certificates", certificates);
+        model.addAttribute("quests", quests);
         return "certificates/certificateManager";
     }
 
     @PostMapping("/create")
-<<<<<<< HEAD
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public String createCertificate(@RequestParam String title) {
-=======
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public String createCertificate(@RequestParam String title, @RequestParam(required = false) Long[] questIds) {
->>>>>>> upstream/master
         Certificate newCertificate = new Certificate();
         newCertificate.setTitle(title);
+        if (questIds != null) {
+            List<Quest> quests = questRepository.findAllById(Arrays.asList(questIds));
+            newCertificate.setCertificateQuests(quests);
+        }
         certificateRepository.save(newCertificate);
         return "redirect:/mvc/certificates";
     }
