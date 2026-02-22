@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,8 +34,6 @@ import com.open.spring.mvc.userStocks.UserStocksRepository;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class provides RESTful API endpoints for managing Person entities.
@@ -208,6 +208,15 @@ public class PersonApiController {
         responseObject.put("response",personDto.getEmail() + " is created successfully");
 
         return new ResponseEntity<>(responseObject.toString(), responseHeaders, HttpStatus.OK);
+    }
+
+    @Autowired
+    private PersonService personService;
+
+    @PostMapping("/grade-frqs")
+    public ResponseEntity<String> gradeFrqs() {
+        personService.gradeAllPending();
+        return ResponseEntity.ok("Grading completed. Check ./volumes/grades.csv for results.");
     }
 
     /**
