@@ -84,17 +84,15 @@ public class JwtApiController {
 			return new ResponseEntity<>("Token generation failed", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		boolean secureFlag = cookieSecure && request.isSecure();
-		String sameSite = secureFlag ? cookieSameSite : "Lax";
 		// Build cookie with development-friendly settings
 		// For localhost: allow HTTP and SameSite=Lax
 		// For production: require HTTPS and SameSite=None; Secure
 		ResponseCookie tokenCookie = ResponseCookie.from("jwt_java_spring", token)
 			.httpOnly(true)
-			.secure(secureFlag)
+			.secure(cookieSecure)
 			.path("/api")
 			.maxAge(cookieMaxAge)  // Configured via jwt.cookie.max-age in application.properties
-			.sameSite(sameSite)
+			.sameSite(cookieSameSite)
 			.build();
 
 		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, tokenCookie.toString()).body(resolvedUid + " was authenticated successfully");
@@ -141,24 +139,21 @@ public class JwtApiController {
 			// Perform logout using SecurityContextLogoutHandler
 			logoutHandler.logout(request, response, authentication);
 
-			boolean secureFlag = cookieSecure && request.isSecure();
-			String sameSite = secureFlag ? cookieSameSite : "Lax";
-	
 			// Expire the JWT token immediately by setting a past expiration date
 			ResponseCookie jwtCookie = ResponseCookie.from("jwt_java_spring", "")
 					.httpOnly(true)
-					.secure(secureFlag)
+					.secure(cookieSecure)
 					.path("/api")
 					.maxAge(0)  // Set maxAge to 0 to expire the cookie immediately
-					.sameSite(sameSite)
+					.sameSite(cookieSameSite)
 					.build();
 
 			ResponseCookie sessionCookie = ResponseCookie.from(sessionCookieName, "")
 					.httpOnly(true)
-					.secure(secureFlag)
+					.secure(cookieSecure)
 					.path("/")
 					.maxAge(0)
-					.sameSite(sameSite)
+					.sameSite(cookieSameSite)
 					.build();
 	
 			// Set the cookies in the response to effectively "remove" them

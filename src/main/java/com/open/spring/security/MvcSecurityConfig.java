@@ -121,14 +121,12 @@ public class MvcSecurityConfig {
                         return;
                     }
 
-                    boolean secureFlag = cookieSecure && request.isSecure();
-                    String sameSite = secureFlag ? cookieSameSite : "Lax";
                     ResponseCookie jwtCookie = ResponseCookie.from("jwt_java_spring", token)
                         .httpOnly(true)
-                        .secure(secureFlag)
+                        .secure(cookieSecure)
                         .path("/api")
                         .maxAge(-1)
-                        .sameSite(sameSite)
+                        .sameSite(cookieSameSite)
                         .build();
 
                     response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
@@ -138,21 +136,19 @@ public class MvcSecurityConfig {
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
                 .logoutSuccessHandler((request, response, authentication) -> {
-                    boolean secureFlag = cookieSecure && request.isSecure();
-                    String sameSite = secureFlag ? cookieSameSite : "Lax";
                     ResponseCookie sessionCookie = ResponseCookie.from(sessionCookieName, "")
                         .httpOnly(true)
-                        .secure(secureFlag)
+                        .secure(cookieSecure)
                         .path("/")
                         .maxAge(0)
-                        .sameSite(sameSite)
+                        .sameSite(cookieSameSite)
                         .build();
                     ResponseCookie jwtCookie = ResponseCookie.from("jwt_java_spring", "")
                         .httpOnly(true)
-                        .secure(secureFlag)
+                        .secure(cookieSecure)
                         .path("/api")
                         .maxAge(0)
-                        .sameSite(sameSite)
+                        .sameSite(cookieSameSite)
                         .build();
                     response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie.toString());
                     response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
