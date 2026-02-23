@@ -43,7 +43,7 @@ public class PersonService {
                     JsonObject obj = e.getAsJsonObject();
 
                     String questionUrl = obj.has("assignment") ? obj.get("assignment").getAsString() : "";
-                    String submissionUrl = obj.has("submission_url") ? obj.get("submission_url").getAsString() : "";
+                    String submissionUrl = obj.has("submission") ? obj.get("submission").getAsString() : "";
 
                     if (!questionUrl.startsWith("http") || !submissionUrl.startsWith("http")) continue;
 
@@ -78,7 +78,7 @@ public class PersonService {
                 Comments: [detailed feedback, point-by-point, bugs, suggestions...]
                 """, questionUrl, submissionUrl);
 
-            GenerateContentResponse resp = client.models.generateContent("gemini-1.5-flash", prompt, null);
+            GenerateContentResponse resp = client.models.generateContent("models/gemini-2.5-flash", prompt, null);
             return resp.text().trim();
         } catch (Exception e) {
             return "Error: " + e.getMessage();
