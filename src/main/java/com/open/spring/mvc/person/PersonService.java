@@ -86,25 +86,37 @@ public class PersonService {
     }
 
     private void appendToCsv(Person p, String assignment, String geminiResponse) {
-        String path = "./volumes/grades.csv";
-        String name = p.getName() != null ? p.getName() : "";
-        String uid = p.getUid();
+    String path = "./volumes/grades.csv";
+    String name = p.getName() != null ? p.getName() : "";
+    String uid = p.getUid();
 
-        String escaped = geminiResponse
-                .replace("\"", "\"\"")
-                .replace("\n", " | ");
+    // Extract score and comments separately
+    String score = "";
+    String comments = geminiResponse;
 
-        String row = String.format("%s,%s,%s,\"%s\"\n", name, uid, assignment, escaped);
-
-        try {
-            java.nio.file.Path csvPath = Paths.get(path);
-            if (!Files.exists(csvPath)) {
-                Files.writeString(csvPath, "Name,UID,Assignment,Response\n");
-            }
-            Files.writeString(csvPath, row, StandardOpenOption.APPEND);
-        } catch (IOException e) {
-            System.err.println("CSV append failed: " + e.getMessage());
+    for (String line : geminiResponse.split("\n")) {
+        if (line.startsWith("Score:")) {
+            score = line.replace("Score:", "").trim();
+        } else if (line.startsWith("Comments:")) {
+            comments = line.replace("Comments:", "").trim();
         }
+    }
+
+    String escapedComments = comments
+            .replace("\"", "\"\"")
+            .replace("\n", " | ");
+
+    String row = String.format("%s,%s,%s,%s,\"%s\"\n", name, uid, assignment, score, escapedComments);
+
+    try {
+        java.nio.file.Path csvPath = Paths.get(path);
+        if (!Files.exists(csvPath)) {
+            Files.writeString(csvPath, "Name,UID,Assignment,Score,Comments\n");
+        }
+        Files.writeString(csvPath, row, StandardOpenOption.APPEND);
+    } catch (IOException e) {
+        System.err.println("CSV append failed: " + e.getMessage());
+    }
     }
 
     // ... keep any existing methods ...
