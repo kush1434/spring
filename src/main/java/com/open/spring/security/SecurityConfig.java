@@ -18,6 +18,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 
 /*
  * THIS FILE IS IMPORTANT
@@ -166,7 +168,14 @@ public class SecurityConfig {
                        
                 )
                 .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write("{\"error\":\"Forbidden\",\"message\":\"You do not have permission to access this resource.\"}");
+                            response.getWriter().flush();
+                        }))
 
 
                 // Session related configuration
