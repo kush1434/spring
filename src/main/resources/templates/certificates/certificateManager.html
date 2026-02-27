@@ -76,11 +76,7 @@
                 <h2>Add New Certificate</h2>
                 <form th:action="@{/mvc/certificates/create}" method="post">
                     <label>Title: <input type="text" name="title" required></label><br>
-                    <label>Quests:
-                        <select name="questIds" class="selectpicker" multiple data-live-search="true">
-                            <option th:each="quest : ${quests}" th:value="${quest.id}" th:text="${quest.name}"></option>
-                        </select>
-                    </label><br>
+
                     <button type="submit" class="btn">Submit</button>
                     <button type="button" class="btn" onclick="closeAddCertificateModal()">Cancel</button>
                 </form>
