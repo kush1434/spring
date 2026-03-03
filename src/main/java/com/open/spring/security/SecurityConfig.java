@@ -88,7 +88,9 @@ public class SecurityConfig {
                         // ========== AUTHENTICATION & USER MANAGEMENT ==========
                         // Public endpoint - no authentication required, supports user login
                         .requestMatchers(HttpMethod.OPTIONS, "/api/**", "/authenticate").permitAll()  // Allow only relevant CORS preflight requests
+                    .requestMatchers("/authenticate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
+                    .requestMatchers("/api/person/create", "/api/person/create/").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/person/create").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/person/create/").permitAll()
                         // Admin-only endpoints, beware of DELETE operations and impact to cascading relational data 
@@ -194,7 +196,10 @@ public class SecurityConfig {
     @Bean(name = "apiEndpointRolePolicy")
     public Map<String, String> apiEndpointRolePolicy() {
         Map<String, String> policy = new LinkedHashMap<>();
+        policy.put("/authenticate", "permitAll");
         policy.put("POST /authenticate", "permitAll");
+        policy.put("/api/person/create", "permitAll");
+        policy.put("/api/person/create/", "permitAll");
         policy.put("POST /api/person/create", "permitAll");
         policy.put("DELETE /api/person/**", "ROLE_ADMIN");
         policy.put("PUT /api/person/**", "ROLE_ADMIN");
