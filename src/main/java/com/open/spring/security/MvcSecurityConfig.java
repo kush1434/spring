@@ -70,7 +70,6 @@ public class MvcSecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/**").permitAll()
                 .requestMatchers("/mvc/person/search/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/mvc/person/create").permitAll()
                 .requestMatchers(HttpMethod.POST, "/mvc/person/create").permitAll()
