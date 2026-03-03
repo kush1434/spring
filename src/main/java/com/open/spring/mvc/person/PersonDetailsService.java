@@ -44,11 +44,19 @@ public class PersonDetailsService implements UserDetailsService {  // "implement
         }
         Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
         person.getRoles().forEach(role -> { //loop through roles
-            authorities.add(new SimpleGrantedAuthority(role.getName())); //create a SimpleGrantedAuthority by passed in role, adding it all to the authorities list, list of roles gets past in for spring security
+            if (role == null || role.getName() == null || role.getName().isBlank()) {
+                return;
+            }
+            authorities.add(new SimpleGrantedAuthority(normalizeRoleName(role.getName()))); //create a SimpleGrantedAuthority by passed in role, adding it all to the authorities list, list of roles gets past in for spring security
         });
         // train spring security to User and Authorities
         User user = new User(person.getUid(), person.getPassword(), authorities);
         return user;
+    }
+
+    private String normalizeRoleName(String roleName) {
+        String normalized = roleName.trim();
+        return normalized.startsWith("ROLE_") ? normalized : "ROLE_" + normalized;
     }
 
     /* Person Section */

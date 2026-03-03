@@ -195,8 +195,22 @@ public class PersonApiController {
             return new ResponseEntity<>(responseObject.toString(), responseHeaders, HttpStatus.CONFLICT);
         }
   
+        // Use canonical Spring Security role naming (ROLE_*) for new accounts.
+        PersonRole defaultRole = personDetailsService.findRole("ROLE_USER");
+        if (defaultRole == null) {
+            // Backward compatibility for deployments that still have legacy role names.
+            defaultRole = personDetailsService.findRole("USER");
+        }
+        if (defaultRole == null) {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.APPLICATION_JSON);
+            JSONObject responseObject = new JSONObject();
+            responseObject.put("error", "Default role ROLE_USER is not configured");
+            return new ResponseEntity<>(responseObject.toString(), responseHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         // A person object WITHOUT ID will create a new record in the database
-        Person person = new Person(personDto.getEmail(), personDto.getUid(),personDto.getPassword(),personDto.getSid(), personDto.getName(), "/images/default.png", true, personDetailsService.findRole("USER"));
+        Person person = new Person(personDto.getEmail(), personDto.getUid(),personDto.getPassword(),personDto.getSid(), personDto.getName(), "/images/default.png", true, defaultRole);
 
         personDetailsService.save(person);
 
