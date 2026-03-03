@@ -87,13 +87,25 @@ public class JwtApiController {
 		// Build cookie with development-friendly settings
 		// For localhost: allow HTTP and SameSite=Lax
 		// For production: require HTTPS and SameSite=None; Secure
-		ResponseCookie tokenCookie = ResponseCookie.from("jwt_java_spring", token)
+		// Domain is set to .opencodingsociety.com to allow sharing across subdomains
+		// (spring.opencodingsociety.com, pages.opencodingsociety.com, etc.)
+		ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from("jwt_java_spring", token)
 			.httpOnly(true)
 			.secure(cookieSecure)
 			.path("/api")
 			.maxAge(cookieMaxAge)  // Configured via jwt.cookie.max-age in application.properties
-			.sameSite(cookieSameSite)
-			.build();
+			.sameSite(cookieSameSite);
+		
+		// Add domain for cross-subdomain sharing (production and localhost)
+		if (cookieSecure) {
+			// Production: use .opencodingsociety.com domain
+			cookieBuilder.domain(".opencodingsociety.com");
+		} else {
+			// Development: use localhost domain
+			cookieBuilder.domain("localhost");
+		}
+		
+		ResponseCookie tokenCookie = cookieBuilder.build();
 
 		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, tokenCookie.toString()).body(resolvedUid + " was authenticated successfully");
 	}
