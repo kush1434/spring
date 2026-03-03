@@ -89,6 +89,8 @@ public class MvcSecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/authenticateForm").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/person/create").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/person/create/").permitAll()
                 .requestMatchers("/mvc/synergy/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/mvc/synergy/gradebook").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN", "ROLE_STUDENT")
                 .requestMatchers(HttpMethod.GET, "/mvc/synergy/view-grade-requests").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
@@ -123,13 +125,24 @@ public class MvcSecurityConfig {
                         return;
                     }
 
-                    ResponseCookie jwtCookie = ResponseCookie.from("jwt_java_spring", token)
+                    // Build JWT cookie with domain support for cross-subdomain requests
+                    ResponseCookie.ResponseCookieBuilder jwtCookieBuilder = ResponseCookie.from("jwt_java_spring", token)
                         .httpOnly(true)
                         .secure(cookieSecure)
                         .path("/api")
                         .maxAge(-1)
-                        .sameSite(cookieSameSite)
-                        .build();
+                        .sameSite(cookieSameSite);
+                    
+                    // Add domain for cross-subdomain sharing (production and localhost)
+                    if (cookieSecure) {
+                        // Production: use .opencodingsociety.com domain
+                        jwtCookieBuilder.domain(".opencodingsociety.com");
+                    } else {
+                        // Development: use localhost domain
+                        jwtCookieBuilder.domain("localhost");
+                    }
+                    
+                    ResponseCookie jwtCookie = jwtCookieBuilder.build();
 
                     response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
                     response.sendRedirect("/mvc/person/read");
