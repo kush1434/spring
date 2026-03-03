@@ -12,6 +12,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -71,7 +73,10 @@ public class SecurityConfig {
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .securityMatcher("/api/**", "/authenticate")
+            .securityMatcher(new OrRequestMatcher(
+                new RegexRequestMatcher("^/api(?:/.*)?$", null),
+                new RegexRequestMatcher("^/authenticate$", null)
+            ))
                 
                 .cors(Customizer.withDefaults())
 
@@ -85,6 +90,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/api/**", "/authenticate").permitAll()  // Allow only relevant CORS preflight requests
                         .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/person/create").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/person/create/").permitAll()
                         // Admin-only endpoints, beware of DELETE operations and impact to cascading relational data 
                         .requestMatchers(HttpMethod.DELETE, "/api/person/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/person/**").hasAuthority("ROLE_ADMIN")

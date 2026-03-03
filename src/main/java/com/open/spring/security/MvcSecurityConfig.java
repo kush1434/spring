@@ -89,6 +89,8 @@ public class MvcSecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/authenticateForm").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/person/create").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/person/create/").permitAll()
                 .requestMatchers("/mvc/synergy/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/mvc/synergy/gradebook").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN", "ROLE_STUDENT")
                 .requestMatchers(HttpMethod.GET, "/mvc/synergy/view-grade-requests").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
