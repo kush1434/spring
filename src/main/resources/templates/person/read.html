@@ -94,6 +94,10 @@
                             <a sec:authorize="hasRole('ROLE_ADMIN')"
                                 th:href="@{/mvc/person/update/roles/{id}(id = ${person.id})}"
                                 class="btn btn-warning btn-sm" name="update">Update Roles</a>
+                            <button sec:authorize="hasRole('ROLE_ADMIN')"
+                                class="btn btn-secondary btn-sm"
+                                th:attr="data-id=${person.id}, data-name=${person.name}"
+                                onclick="openResetModal(this)">Reset Password</button>
                             <a th:href="@{/mvc/person/delete/{id}(id = ${person.id})}"
                                 class="btn btn-danger btn-sm">Delete</a>
                         </td>
@@ -121,6 +125,72 @@
 
 <!-- scripts -->
 <th:block layout:fragment="script" th:remove="tag">
+    <!-- Admin Reset Password Modal -->
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Reset password for <strong id="resetPersonName"></strong> to the default password?</p>
+                    <div id="resetModalMessage" class="alert d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="confirmResetBtn" onclick="confirmReset()">Reset Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let resetPersonId = null;
+
+        function openResetModal(btn) {
+            resetPersonId = btn.getAttribute('data-id');
+            document.getElementById('resetPersonName').textContent = btn.getAttribute('data-name');
+            const msgEl = document.getElementById('resetModalMessage');
+            msgEl.className = 'alert d-none';
+            msgEl.textContent = '';
+            const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+            modal.show();
+        }
+
+        function confirmReset() {
+            if (!resetPersonId) return;
+            const btn = document.getElementById('confirmResetBtn');
+            btn.disabled = true;
+            fetch('/mvc/person/reset/admin/' + resetPersonId, { method: 'POST' })
+                .then(res => {
+                    const msgEl = document.getElementById('resetModalMessage');
+                    msgEl.classList.remove('d-none');
+                    if (res.ok) {
+                        msgEl.className = 'alert alert-success';
+                        msgEl.textContent = 'Password reset to default successfully.';
+                        setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal')).hide(), 1500);
+                    } else if (res.status === 403) {
+                        msgEl.className = 'alert alert-danger';
+                        msgEl.textContent = 'Permission denied.';
+                    } else if (res.status === 404) {
+                        msgEl.className = 'alert alert-danger';
+                        msgEl.textContent = 'User not found.';
+                    } else {
+                        msgEl.className = 'alert alert-danger';
+                        msgEl.textContent = 'Reset failed.';
+                    }
+                    btn.disabled = false;
+                })
+                .catch(() => {
+                    const msgEl = document.getElementById('resetModalMessage');
+                    msgEl.className = 'alert alert-danger';
+                    msgEl.textContent = 'Network error.';
+                    btn.disabled = false;
+                });
+        }
+    </script>
+
     <script>
         function exportRow(btn) {
             const id = btn.getAttribute('data-id');
