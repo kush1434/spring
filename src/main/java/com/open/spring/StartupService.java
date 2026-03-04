@@ -2,10 +2,9 @@ package com.open.spring;
 
 import java.util.List;
 
-import org.springframework.stereotype.Component;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import com.open.spring.mvc.groups.GroupChatService;
 import com.open.spring.mvc.groups.Groups;
