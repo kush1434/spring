@@ -29,6 +29,15 @@ public interface FileHandler {
     boolean deleteFiles(String uid);
 
     /**
+     * Checks if a file exists in the storage system.
+     *
+     * @param uid             User/group ID
+     * @param filename        Filename to check
+     * @return true if the file exists
+     */
+    boolean fileExists(String uid, String filename);
+
+    /**
      * Lists all file keys under a given prefix.
      *
      * @param prefix          The S3 key prefix to list

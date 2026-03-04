@@ -37,6 +37,20 @@ public class GroupChatService {
         s3FileHandler.uploadFile(emptyBase64, SHARED_FILES_PREFIX, groupName);
     }
 
+    public void ensureGroupStorageExists(String groupName) {
+        // Check if messages.jsonl exists, if not, create it
+        if (!s3FileHandler.fileExists(groupName, MESSAGES_FILE)) {
+            String emptyBase64 = Base64.getEncoder().encodeToString(new byte[0]);
+            s3FileHandler.uploadFile(emptyBase64, MESSAGES_FILE, groupName);
+        }
+
+        // Check if shared-files/ folder exists, if not, create it
+        if (!s3FileHandler.fileExists(groupName, SHARED_FILES_PREFIX)) {
+            String emptyBase64 = Base64.getEncoder().encodeToString(new byte[0]);
+            s3FileHandler.uploadFile(emptyBase64, SHARED_FILES_PREFIX, groupName);
+        }
+    }
+
     public List<GroupChatMessage> getMessages(String groupName) {
         String base64Data = s3FileHandler.decodeFile(groupName, MESSAGES_FILE);
         if (base64Data == null || base64Data.isBlank()) {
