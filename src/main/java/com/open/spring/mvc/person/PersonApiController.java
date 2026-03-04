@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.open.spring.mvc.userStocks.UserStocksRepository;
 
@@ -154,6 +155,7 @@ public class PersonApiController {
      * DTO (Data Transfer Object) to support POST request for postPerson method
      * .. represents the data in the request body
      */
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @Getter
     @Setter
     public static class PersonDto {

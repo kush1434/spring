@@ -87,7 +87,7 @@ public class SecurityConfig {
 
                         // ========== AUTHENTICATION & USER MANAGEMENT ==========
                         // Public endpoint - no authentication required, supports user login
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/**", "/authenticate").permitAll()  // Allow only relevant CORS preflight requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/**", "/authenticate", "/run/**").permitAll()  // Allow only relevant CORS preflight requests
                         .requestMatchers("/authenticate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
                         .requestMatchers("/api/person/create", "/api/person/create/").permitAll()
