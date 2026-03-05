@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.open.spring.mvc.person.Person;
+import com.open.spring.mvc.person.PersonJpaRepository;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,10 +31,12 @@ public class GroupChatApiController {
 
     private final GroupChatService groupChatService;
     private final GroupsJpaRepository groupsRepository;
+    private final PersonJpaRepository personRepository;
 
-    public GroupChatApiController(GroupChatService groupChatService, GroupsJpaRepository groupsRepository) {
+    public GroupChatApiController(GroupChatService groupChatService, GroupsJpaRepository groupsRepository, PersonJpaRepository personRepository) {
         this.groupChatService = groupChatService;
         this.groupsRepository = groupsRepository;
+        this.personRepository = personRepository;
     }
 
     @Data
@@ -59,6 +64,23 @@ public class GroupChatApiController {
     //     return group.getGroupMembers().stream()
     //             .anyMatch(member -> uid.equals(member.getUid()));
     // }
+
+    @GetMapping("/analytics/{personId}")
+    public ResponseEntity<?> getUserAnalytics(@PathVariable Long personId) {
+        Optional<Person> personOpt = personRepository.findById(personId);
+        if (personOpt.isEmpty()) {
+            return new ResponseEntity<>("Person not found", HttpStatus.NOT_FOUND);
+        }
+
+        Person person = personOpt.get();
+        List<Groups> groups = groupsRepository.findGroupsByPersonId(personId);
+
+        Map<String, Object> analytics = groupChatService.getUserAnalytics(person.getName(), groups);
+        analytics.put("personId", personId);
+        analytics.put("personName", person.getName());
+
+        return new ResponseEntity<>(analytics, HttpStatus.OK);
+    }
 
     @GetMapping("/{groupId}/messages")
     public ResponseEntity<?> getMessages(@PathVariable Long groupId) {

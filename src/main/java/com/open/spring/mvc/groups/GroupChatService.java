@@ -37,6 +37,20 @@ public class GroupChatService {
         s3FileHandler.uploadFile(emptyBase64, SHARED_FILES_PREFIX, groupName);
     }
 
+    public void ensureGroupStorageExists(String groupName) {
+        // Check if messages.jsonl exists, if not, create it
+        if (!s3FileHandler.fileExists(groupName, MESSAGES_FILE)) {
+            String emptyBase64 = Base64.getEncoder().encodeToString(new byte[0]);
+            s3FileHandler.uploadFile(emptyBase64, MESSAGES_FILE, groupName);
+        }
+
+        // Check if shared-files/ folder exists, if not, create it
+        if (!s3FileHandler.fileExists(groupName, SHARED_FILES_PREFIX)) {
+            String emptyBase64 = Base64.getEncoder().encodeToString(new byte[0]);
+            s3FileHandler.uploadFile(emptyBase64, SHARED_FILES_PREFIX, groupName);
+        }
+    }
+
     public List<GroupChatMessage> getMessages(String groupName) {
         String base64Data = s3FileHandler.decodeFile(groupName, MESSAGES_FILE);
         if (base64Data == null || base64Data.isBlank()) {
@@ -116,6 +130,52 @@ public class GroupChatService {
 
     public String downloadSharedFile(String groupName, String filename) {
         return s3FileHandler.decodeFile(groupName, SHARED_FILES_PREFIX + filename);
+    }
+
+    public Map<String, Object> getUserAnalytics(String personName, List<Groups> groups) {
+        Map<String, Object> analytics = new HashMap<>();
+        List<Map<String, Object>> groupAnalyticsList = new ArrayList<>();
+
+        int totalMessagesSent = 0;
+        int totalMessagesWithImages = 0;
+        int totalSharedFiles = 0;
+
+        for (Groups group : groups) {
+            String groupName = group.getName();
+            List<GroupChatMessage> messages = getMessages(groupName);
+
+            List<GroupChatMessage> userMessages = messages.stream()
+                    .filter(m -> personName.equals(m.getName()))
+                    .collect(Collectors.toList());
+
+            int messagesSent = userMessages.size();
+            int messagesWithImages = (int) userMessages.stream()
+                    .filter(m -> m.getImage() != null && !m.getImage().isBlank())
+                    .count();
+
+            List<Map<String, String>> sharedFiles = listSharedFiles(groupName);
+            int sharedFilesCount = sharedFiles.size();
+
+            Map<String, Object> groupEntry = new HashMap<>();
+            groupEntry.put("groupId", group.getId());
+            groupEntry.put("groupName", groupName);
+            groupEntry.put("messagesSent", messagesSent);
+            groupEntry.put("messagesWithImages", messagesWithImages);
+            groupEntry.put("sharedFilesCount", sharedFilesCount);
+            groupAnalyticsList.add(groupEntry);
+
+            totalMessagesSent += messagesSent;
+            totalMessagesWithImages += messagesWithImages;
+            totalSharedFiles += sharedFilesCount;
+        }
+
+        analytics.put("totalGroups", groups.size());
+        analytics.put("totalMessagesSent", totalMessagesSent);
+        analytics.put("totalMessagesWithImages", totalMessagesWithImages);
+        analytics.put("totalSharedFiles", totalSharedFiles);
+        analytics.put("groupAnalytics", groupAnalyticsList);
+
+        return analytics;
     }
 
     private String toJson(GroupChatMessage message) {
