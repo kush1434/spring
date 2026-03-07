@@ -368,7 +368,13 @@ public class OCSAnalyticsController {
         }
 
         try {
-            // TODO: Add role check to verify user is admin
+            // Verify user is admin
+            Person admin = personRepository.findByUid(userDetails.getUsername());
+            if (admin == null || !admin.hasRoleWithName("ROLE_ADMIN")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Only admins can access this endpoint");
+            }
+            
             Person person = personRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -378,6 +384,288 @@ public class OCSAnalyticsController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error fetching admin analytics: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get summary analytics for a specific user (admin view)
+     * GET /api/ocs-analytics/admin/user/{userId}/summary
+     */
+    @GetMapping("/admin/user/{userId}/summary")
+    public ResponseEntity<?> getAdminUserSummary(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        }
+
+        try {
+            // Verify user is admin
+            Person admin = personRepository.findByUid(userDetails.getUsername());
+            if (admin == null || !admin.hasRoleWithName("ROLE_ADMIN")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Only admins can access this endpoint");
+            }
+            
+            Person person = personRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Map<String, Object> summary = new HashMap<>();
+            summary.put("userId", person.getId());
+            summary.put("userName", person.getName());
+            summary.put("userEmail", person.getEmail());
+            summary.put("userUid", person.getUid());
+            
+            // Total metrics
+            Long totalSeconds = analyticsRepository.getTotalTimeSpentSeconds(person).orElse(0L);
+            summary.put("totalTimeSpentSeconds", totalSeconds);
+            summary.put("totalTimeFormatted", formatSeconds(totalSeconds));
+            
+            Double avgDuration = analyticsRepository.getAverageSessionDuration(person).orElse(0.0);
+            summary.put("averageSessionDurationSeconds", avgDuration);
+            
+            Integer totalLessons = analyticsRepository.getTotalLessonsViewed(person).orElse(0);
+            summary.put("totalLessonsViewed", totalLessons);
+            
+            Integer totalLessonsCompleted = analyticsRepository.getTotalLessonsCompleted(person).orElse(0);
+            summary.put("totalLessonsCompleted", totalLessonsCompleted);
+            
+            Integer totalModules = analyticsRepository.getTotalModulesViewed(person).orElse(0);
+            summary.put("totalModulesViewed", totalModules);
+            
+            Integer totalCopyPaste = analyticsRepository.getTotalCopyPasteAttempts(person).orElse(0);
+            summary.put("totalCopyPasteAttempts", totalCopyPaste);
+            
+            Integer totalCodeExecutions = analyticsRepository.getTotalCodeExecutions(person).orElse(0);
+            summary.put("totalCodeExecutions", totalCodeExecutions);
+            
+            Double avgInteraction = analyticsRepository.getAverageInteractionPercentage(person).orElse(0.0);
+            summary.put("interactionPercentage", avgInteraction);
+            
+            Double avgScrollDepth = analyticsRepository.getAverageScrollDepth(person).orElse(0.0);
+            summary.put("averageScrollDepth", avgScrollDepth);
+            
+            Double avgAccuracy = analyticsRepository.getAverageAccuracy(person).orElse(0.0);
+            summary.put("averageAccuracyPercentage", avgAccuracy);
+            
+            List<String> quests = analyticsRepository.getEngagedQuests(person);
+            summary.put("engagedQuests", quests);
+            
+            // Session count
+            List<OCSAnalytics> allAnalytics = analyticsRepository.findByPersonOrderBySessionStartTimeDesc(person);
+            summary.put("totalSessions", allAnalytics.size());
+            
+            return ResponseEntity.ok(summary);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching user summary: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get all users with their basic analytics summary
+     * GET /api/ocs-analytics/admin/all-users-summary
+     */
+    @GetMapping("/admin/all-users-summary")
+    public ResponseEntity<?> getAllUsersSummary(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        }
+
+        try {
+            // Verify user is admin
+            Person admin = personRepository.findByUid(userDetails.getUsername());
+            if (admin == null || !admin.hasRoleWithName("ROLE_ADMIN")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Only admins can access this endpoint");
+            }
+            
+            List<Person> allUsers = personRepository.findAll();
+            List<Map<String, Object>> userSummaries = new ArrayList<>();
+            
+            for (Person person : allUsers) {
+                Map<String, Object> summary = new HashMap<>();
+                summary.put("id", person.getId());
+                summary.put("name", person.getName());
+                summary.put("email", person.getEmail());
+                summary.put("uid", person.getUid());
+                
+                Long totalSeconds = analyticsRepository.getTotalTimeSpentSeconds(person).orElse(0L);
+                summary.put("totalTimeSpentSeconds", totalSeconds);
+                summary.put("totalTimeFormatted", formatSeconds(totalSeconds));
+                
+                Integer totalLessons = analyticsRepository.getTotalLessonsViewed(person).orElse(0);
+                summary.put("totalLessonsViewed", totalLessons);
+                
+                Integer totalLessonsCompleted = analyticsRepository.getTotalLessonsCompleted(person).orElse(0);
+                summary.put("totalLessonsCompleted", totalLessonsCompleted);
+                
+                Integer totalCodeExecutions = analyticsRepository.getTotalCodeExecutions(person).orElse(0);
+                summary.put("totalCodeExecutions", totalCodeExecutions);
+                
+                Double avgInteraction = analyticsRepository.getAverageInteractionPercentage(person).orElse(0.0);
+                summary.put("interactionPercentage", avgInteraction);
+                
+                List<OCSAnalytics> allAnalytics = analyticsRepository.findByPersonOrderBySessionStartTimeDesc(person);
+                summary.put("totalSessions", allAnalytics.size());
+                
+                Double avgAccuracy = analyticsRepository.getAverageAccuracy(person).orElse(0.0);
+                summary.put("averageAccuracyPercentage", avgAccuracy);
+                
+                userSummaries.add(summary);
+            }
+            
+            return ResponseEntity.ok(userSummaries);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching all users summary: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get aggregated analytics statistics across all users
+     * GET /api/ocs-analytics/admin/global-stats
+     */
+    @GetMapping("/admin/global-stats")
+    public ResponseEntity<?> getGlobalStats(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        }
+
+        try {
+            // Verify user is admin
+            Person admin = personRepository.findByUid(userDetails.getUsername());
+            if (admin == null || !admin.hasRoleWithName("ROLE_ADMIN")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Only admins can access this endpoint");
+            }
+            
+            List<Person> allUsers = personRepository.findAll();
+            List<OCSAnalytics> allAnalytics = analyticsRepository.findAll();
+            
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("totalUsers", allUsers.size());
+            stats.put("totalAnalyticsRecords", allAnalytics.size());
+            
+            Long totalTimeSpent = allAnalytics.stream()
+                    .mapToLong(a -> a.getSessionDurationSeconds() != null ? a.getSessionDurationSeconds() : 0)
+                    .sum();
+            stats.put("globalTotalTimeSpent", formatSeconds(totalTimeSpent));
+            stats.put("globalTotalTimeSpentSeconds", totalTimeSpent);
+            
+            Integer totalLessonsViewed = allAnalytics.stream()
+                    .mapToInt(a -> a.getLessonsViewed() != null ? a.getLessonsViewed() : 0)
+                    .sum();
+            stats.put("globalTotalLessonsViewed", totalLessonsViewed);
+            
+            Integer totalCodeExecutions = allAnalytics.stream()
+                    .mapToInt(a -> a.getCodeExecutions() != null ? a.getCodeExecutions() : 0)
+                    .sum();
+            stats.put("globalTotalCodeExecutions", totalCodeExecutions);
+            
+            Double avgInteraction = allAnalytics.stream()
+                    .mapToDouble(a -> a.getInteractionPercentage() != null ? a.getInteractionPercentage() : 0)
+                    .average()
+                    .orElse(0.0);
+            stats.put("globalAverageInteraction", avgInteraction);
+            
+            Double avgAccuracy = allAnalytics.stream()
+                    .mapToDouble(a -> a.getAccuracyPercentage() != null ? a.getAccuracyPercentage() : 0)
+                    .average()
+                    .orElse(0.0);
+            stats.put("globalAverageAccuracy", avgAccuracy);
+            
+            // Users with analytics data
+            Set<Person> usersWithData = new HashSet<>();
+            for (OCSAnalytics a : allAnalytics) {
+                if (a.getPerson() != null) {
+                    usersWithData.add(a.getPerson());
+                }
+            }
+            stats.put("usersWithAnalytics", usersWithData.size());
+            
+            return ResponseEntity.ok(stats);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching global stats: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get quest-level statistics across all users
+     * GET /api/ocs-analytics/admin/quest-stats
+     */
+    @GetMapping("/admin/quest-stats")
+    public ResponseEntity<?> getQuestStats(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        }
+
+        try {
+            // Verify user is admin
+            Person admin = personRepository.findByUid(userDetails.getUsername());
+            if (admin == null || !admin.hasRoleWithName("ROLE_ADMIN")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Only admins can access this endpoint");
+            }
+            
+            List<OCSAnalytics> allAnalytics = analyticsRepository.findAll();
+            Map<String, Object> questStats = new HashMap<>();
+            
+            // Group by quest name
+            Map<String, List<OCSAnalytics>> byQuest = new HashMap<>();
+            for (OCSAnalytics a : allAnalytics) {
+                if (a.getQuestName() != null && !a.getQuestName().isEmpty()) {
+                    byQuest.computeIfAbsent(a.getQuestName(), k -> new ArrayList<>()).add(a);
+                }
+            }
+            
+            for (Map.Entry<String, List<OCSAnalytics>> entry : byQuest.entrySet()) {
+                String questName = entry.getKey();
+                List<OCSAnalytics> questData = entry.getValue();
+                
+                Map<String, Object> questInfo = new HashMap<>();
+                questInfo.put("questName", questName);
+                questInfo.put("totalSessions", questData.size());
+                questInfo.put("uniqueUsers", questData.stream()
+                        .map(a -> a.getPerson().getId())
+                        .distinct()
+                        .count());
+                
+                Long totalTime = questData.stream()
+                        .mapToLong(a -> a.getSessionDurationSeconds() != null ? a.getSessionDurationSeconds() : 0)
+                        .sum();
+                questInfo.put("totalTimeSpent", formatSeconds(totalTime));
+                questInfo.put("totalTimeSpentSeconds", totalTime);
+                
+                Integer totalLessons = questData.stream()
+                        .mapToInt(a -> a.getLessonsViewed() != null ? a.getLessonsViewed() : 0)
+                        .sum();
+                questInfo.put("totalLessonsViewed", totalLessons);
+                
+                Long completions = questData.stream()
+                        .filter(a -> a.getModuleCompleted() != null && a.getModuleCompleted())
+                        .count();
+                questInfo.put("totalCompletions", completions);
+                
+                questStats.put(questName, questInfo);
+            }
+            
+            return ResponseEntity.ok(questStats);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching quest stats: " + e.getMessage());
         }
     }
 
