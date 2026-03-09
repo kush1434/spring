@@ -360,6 +360,7 @@ public class OCSAnalyticsController {
      * GET /api/ocs-analytics/admin/user/{userId}
      */
     @GetMapping("/admin/user/{userId}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getAdminUserAnalytics(
             @PathVariable Long userId,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -393,6 +394,7 @@ public class OCSAnalyticsController {
      * GET /api/ocs-analytics/admin/user/{userId}/summary
      */
     @GetMapping("/admin/user/{userId}/summary")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getAdminUserSummary(
             @PathVariable Long userId,
             @AuthenticationPrincipal UserDetails userDetails) {
