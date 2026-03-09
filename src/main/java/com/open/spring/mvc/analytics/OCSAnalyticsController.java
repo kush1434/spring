@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import com.open.spring.mvc.person.Person;
@@ -359,6 +360,7 @@ public class OCSAnalyticsController {
      * GET /api/ocs-analytics/admin/user/{userId}
      */
     @GetMapping("/admin/user/{userId}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getAdminUserAnalytics(
             @PathVariable Long userId,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -392,6 +394,7 @@ public class OCSAnalyticsController {
      * GET /api/ocs-analytics/admin/user/{userId}/summary
      */
     @GetMapping("/admin/user/{userId}/summary")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getAdminUserSummary(
             @PathVariable Long userId,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -469,6 +472,7 @@ public class OCSAnalyticsController {
      * GET /api/ocs-analytics/admin/all-users-summary
      */
     @GetMapping("/admin/all-users-summary")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getAllUsersSummary(
             @AuthenticationPrincipal UserDetails userDetails) {
         
@@ -532,6 +536,7 @@ public class OCSAnalyticsController {
      * GET /api/ocs-analytics/admin/global-stats
      */
     @GetMapping("/admin/global-stats")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getGlobalStats(
             @AuthenticationPrincipal UserDetails userDetails) {
         
@@ -604,6 +609,7 @@ public class OCSAnalyticsController {
      * GET /api/ocs-analytics/admin/quest-stats
      */
     @GetMapping("/admin/quest-stats")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getQuestStats(
             @AuthenticationPrincipal UserDetails userDetails) {
         
@@ -638,6 +644,7 @@ public class OCSAnalyticsController {
                 questInfo.put("questName", questName);
                 questInfo.put("totalSessions", questData.size());
                 questInfo.put("uniqueUsers", questData.stream()
+                        .filter(a -> a.getPerson() != null)
                         .map(a -> a.getPerson().getId())
                         .distinct()
                         .count());
