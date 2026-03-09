@@ -588,13 +588,18 @@ public class OCSAnalyticsController {
             stats.put("globalAverageAccuracy", avgAccuracy);
             
             // Users with analytics data
-            Set<Person> usersWithData = new HashSet<>();
+            Set<Long> userIds = new HashSet<>();
             for (OCSAnalytics a : allAnalytics) {
-                if (a.getPerson() != null) {
-                    usersWithData.add(a.getPerson());
+                try {
+                    Person p = a.getPerson();
+                    if (p != null && p.getId() != null) {
+                        userIds.add(p.getId());
+                    }
+                } catch (Exception e) {
+                    // Skip records with missing Person references (deleted users)
                 }
             }
-            stats.put("usersWithAnalytics", usersWithData.size());
+            stats.put("usersWithAnalytics", userIds.size());
             
             return ResponseEntity.ok(stats);
 
