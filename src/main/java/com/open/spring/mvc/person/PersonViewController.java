@@ -480,6 +480,29 @@ public class PersonViewController {
         return "person/resetCheck";
     }
 
+    @PostMapping("/reset/admin/{id}")
+    public ResponseEntity<Object> adminResetPassword(@PathVariable Long id, Authentication authentication) {
+        // Only admins can use this endpoint
+        boolean isAdmin = authentication.getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        Person personToReset = repository.get(id);
+        if (personToReset == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        final Dotenv dotenv = Dotenv.load();
+        final String defaultPassword = dotenv.get("DEFAULT_PASSWORD");
+        personToReset.setPassword(defaultPassword);
+        repository.save(personToReset, false);
+
+        logger.warn("AUDIT admin_password_reset admin={} target_uid={}", authentication.getName(), personToReset.getUid());
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 /// "Cookie-Clicker" Post and Get mappings
 /// 
