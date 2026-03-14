@@ -7,8 +7,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-// import org.springframework.security.core.Authentication;
-// import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,14 +28,22 @@ import lombok.NoArgsConstructor;
 @CrossOrigin
 public class GroupChatApiController {
 
+    private static final String GROUP_TOPIC_PREFIX = "/topic/group/";
+
     private final GroupChatService groupChatService;
     private final GroupsJpaRepository groupsRepository;
     private final PersonJpaRepository personRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public GroupChatApiController(GroupChatService groupChatService, GroupsJpaRepository groupsRepository, PersonJpaRepository personRepository) {
+    public GroupChatApiController(
+            GroupChatService groupChatService,
+            GroupsJpaRepository groupsRepository,
+            PersonJpaRepository personRepository,
+            SimpMessagingTemplate messagingTemplate) {
         this.groupChatService = groupChatService;
         this.groupsRepository = groupsRepository;
         this.personRepository = personRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Data
@@ -125,6 +132,7 @@ public class GroupChatApiController {
 
         String groupName = groupOpt.get().getName();
         List<GroupChatMessage> updated = groupChatService.addMessage(groupName, message);
+        messagingTemplate.convertAndSend(GROUP_TOPIC_PREFIX + groupId, message);
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
@@ -173,6 +181,13 @@ public class GroupChatApiController {
         String result = groupChatService.uploadSharedFile(groupName, request.getFilename(), request.getBase64Data());
 
         if (result != null) {
+            GroupChatMessage uploadedFileMessage = new GroupChatMessage(
+                    null,
+                    request.getFilename(),
+                    null,
+                    request.getBase64Data());
+            messagingTemplate.convertAndSend(GROUP_TOPIC_PREFIX + groupId, uploadedFileMessage);
+
             Map<String, String> response = new HashMap<>();
             response.put("message", "File uploaded successfully");
             response.put("filename", request.getFilename());

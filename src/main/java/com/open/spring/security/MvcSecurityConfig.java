@@ -106,6 +106,7 @@ public class MvcSecurityConfig {
                 .requestMatchers("/mvc/assignments/read").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
                 .requestMatchers("/mvc/bank/read").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/mvc/progress/read").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
+                .requestMatchers("/ws-chat/**").authenticated()
                 .requestMatchers("/run/**").permitAll()  // Java runner endpoints - public access
                 .anyRequest().authenticated()
             )
