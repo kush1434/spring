@@ -8,6 +8,7 @@ volumes/sqlite.db
 volumes/sqlite.db-shm
 volumes/sqlite.db-wal
 uploads
+venv/
 
 ### STS ###
 .apt_generated
