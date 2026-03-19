@@ -32,11 +32,9 @@ public class MvcConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/**")
-            .allowedOrigins(
-                "https://pages.opencodingsociety.com",
+            .allowedOriginPatterns(
+                "https://*.opencodingsociety.com",
                 "https://open-coding-society.github.io",
-                "https://spring.opencodingsociety.com",
-                "https://springstu.opencodingsociety.com",
                 "http://127.0.0.1:4500",
                 "http://127.0.0.1:4599",
                 "http://127.0.0.1:4600",
