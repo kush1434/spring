@@ -220,11 +220,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
+        configuration.addAllowedOriginPattern("https://*.opencodingsociety.com");
+        configuration.addAllowedOriginPattern("https://open-coding-society.github.io");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:4500");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:4599");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:4600");
         configuration.addAllowedOriginPattern("http://localhost:4500");
-        configuration.addAllowedOriginPattern("https://opencodingsociety.com");
-        configuration.addAllowedOriginPattern("http://opencodingsociety.com");
-        configuration.addAllowedOriginPattern("https://pages.opencodingsociety.com");
-        configuration.addAllowedOriginPattern("https://spring.opencodingsociety.com");
+        configuration.addAllowedOriginPattern("http://localhost:4599");
+        configuration.addAllowedOriginPattern("http://localhost:4600");
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

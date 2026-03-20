@@ -42,7 +42,8 @@ public class MvcConfig implements WebMvcConfigurer {
                 "http://localhost:4599",
                 "http://localhost:4600"
             )
-            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .allowCredentials(true);
     }
     
 }
