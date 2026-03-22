@@ -27,6 +27,9 @@ public class BathroomQueue {
     private String peopleQueue;
     private int away;
 
+    @Column(columnDefinition = "int default 1")
+    private int maxOccupancy = 1;
+
     // Custom constructor
 
     /**
@@ -61,14 +64,23 @@ public class BathroomQueue {
      *                    your own name is passed.
      */
     public void removeStudent(String studentName) {
-        if (this.peopleQueue != null) {
-            this.peopleQueue = Arrays.stream(this.peopleQueue.split(","))
+        if (this.peopleQueue != null && !this.peopleQueue.isEmpty()) {
+            String[] studentsBefore = this.peopleQueue.split(",");
+            this.peopleQueue = Arrays.stream(studentsBefore)
                     .filter(s -> !s.equals(studentName))
                     .collect(Collectors.joining(","));
+            String[] studentsAfter = this.peopleQueue.isEmpty() ? new String[0] : this.peopleQueue.split(",");
+
+            // If a student was actually removed, and they were part of the 'active' count
+            // (or simply someone leaving)
+            if (studentsBefore.length > studentsAfter.length) {
+                if (this.away > 0) {
+                    this.away--;
+                }
+            }
         }
     }
 
-    
     /**
      * @return - returns the student who is at the front of the line, removing the
      *         commas and sanitizing the data
@@ -86,19 +98,17 @@ public class BathroomQueue {
      * When they return, they are removed from the queue
      */
     public void approveStudent() {
-       if (this.peopleQueue != null && !this.peopleQueue.isEmpty()) {
-            if (this.away == 0) {
-                // Student is approved to go away
-                this.away = 1;
-            } else {
-                // Student has returned; remove from queue
-                String[] students = this.peopleQueue.split(",");
-                if (students.length > 1) {
-                    this.peopleQueue = String.join(",", Arrays.copyOfRange(students, 1, students.length));
-                } else {
-                    this.peopleQueue = "";
+        if (this.peopleQueue != null && !this.peopleQueue.isEmpty()) {
+            if (this.away < this.maxOccupancy) {
+                // Determine how many people are actually in the queue
+                int totalInQueue = this.peopleQueue.split(",").length;
+                // We can't have more people 'away' than are in the queue
+                if (this.away < totalInQueue) {
+                    this.away++;
                 }
-                this.away = 0;
+            } else {
+                // If already at max occupancy, we don't increment away.
+                // The frontend should handle showing they are in the waiting list.
             }
         } else {
             throw new IllegalStateException("Queue is empty");
