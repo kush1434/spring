@@ -31,7 +31,7 @@ import lombok.Getter;
  * queue operations for classroom management.
  */
 @RestController
-@RequestMapping("/api/queue") // Base URL for all endpoints in this controller
+@RequestMapping("/api/bathroom") // Updated mapping to match frontend
 @CrossOrigin(origins = { "http://localhost:8585", "https://pages.opencodingsociety.com/" })
 public class BathroomQueueApiController {
 
@@ -109,17 +109,34 @@ public class BathroomQueueApiController {
     public ResponseEntity<Object> addToQueue(@RequestBody QueueDto queueDto) {
         // Check if a queue already exists for the given teacher
         Optional<BathroomQueue> existingQueue = repository.findByTeacherEmail(queueDto.getTeacherEmail());
+
         if (existingQueue.isPresent()) {
-            // Add the student to the existing queue
-            existingQueue.get().addStudent(queueDto.getStudentName());
-            repository.save(existingQueue.get()); // Save the updated queue to the database
+            BathroomQueue queue = existingQueue.get();
+            if (queue.containsStudent(queueDto.getStudentName())) {
+                // TOGGLE: Student is already in queue, so remove them (checking back in)
+                queue.removeStudent(queueDto.getStudentName());
+                repository.save(queue);
+                return new ResponseEntity<>(Map.of(
+                        "action", "removed",
+                        "message", queueDto.getStudentName() + " has checked back in."), HttpStatus.OK);
+            } else {
+                // TOGGLE: Student is not in queue, so add them
+                queue.addStudent(queueDto.getStudentName());
+                repository.save(queue);
+                return new ResponseEntity<>(Map.of(
+                        "action", "added",
+                        "message", queueDto.getStudentName() + " was added to the queue."), HttpStatus.CREATED);
+            }
         } else {
             // Create a new queue for the teacher and add the student
             BathroomQueue newQueue = new BathroomQueue(queueDto.getTeacherEmail(), queueDto.getStudentName());
-            repository.save(newQueue); // Save the new queue to the database
+            repository.save(newQueue);
+            return new ResponseEntity<>(Map.of(
+                    "action", "added",
+                    "message",
+                    queueDto.getStudentName() + " was added to a new queue for " + queueDto.getTeacherEmail()),
+                    HttpStatus.CREATED);
         }
-        return new ResponseEntity<>(queueDto.getStudentName() + " was added to " + queueDto.getTeacherEmail(),
-                HttpStatus.CREATED);
     }
 
     /**
@@ -131,7 +148,7 @@ public class BathroomQueueApiController {
      *         or a NOT_FOUND status if queue or student is not found
      */
     @CrossOrigin(origins = { "http://localhost:8585", "https://pages.opencodingsociety.com" })
-    @PostMapping("/remove")
+    @DeleteMapping("/remove")
     public ResponseEntity<Object> removeFromQueue(@RequestBody QueueDto queueDto) {
         Optional<BathroomQueue> queueEntry = repository.findByTeacherEmail(queueDto.getTeacherEmail());
 
@@ -313,5 +330,18 @@ public class BathroomQueueApiController {
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "All bathroom queue records have been cleared"));
+    }
+
+    /**
+     * Retrieves a specific teacher's bathroom queue.
+     * 
+     * @param teacherEmail The teacher's email associated with the queue
+     * @return A ResponseEntity containing the BathroomQueue entity if found
+     */
+    @GetMapping("/queue/{teacherEmail}")
+    public ResponseEntity<BathroomQueue> getQueueByTeacher(@PathVariable String teacherEmail) {
+        return repository.findByTeacherEmail(teacherEmail)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 }

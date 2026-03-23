@@ -2,6 +2,7 @@ package com.open.spring.mvc.bathroom;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.Column;
@@ -58,32 +59,58 @@ public class BathroomQueue {
     }
 
     /**
+     * Helper to check if a student is already in the queue
+     */
+    public boolean containsStudent(String studentName) {
+        if (this.peopleQueue == null || this.peopleQueue.isEmpty())
+            return false;
+        return Arrays.asList(this.peopleQueue.split(",")).contains(studentName);
+    }
+
+    /**
+     * Helper to get the index of a student in the queue
+     */
+    public int getStudentIndex(String studentName) {
+        if (this.peopleQueue == null || this.peopleQueue.isEmpty())
+            return -1;
+        List<String> students = Arrays.asList(this.peopleQueue.split(","));
+        return students.indexOf(studentName);
+    }
+
+    /**
      * Function to remove the student from a queue
      * 
-     * @param studentName - the name you want to remove from the queue. In frontend,
-     *                    your own name is passed.
+     * @param studentName - the name you want to remove from the queue.
      */
     public void removeStudent(String studentName) {
         if (this.peopleQueue != null && !this.peopleQueue.isEmpty()) {
             String[] studentsBefore = this.peopleQueue.split(",");
-            this.peopleQueue = Arrays.stream(studentsBefore)
-                    .filter(s -> !s.equals(studentName))
-                    .collect(Collectors.joining(","));
-            String[] studentsAfter = this.peopleQueue.isEmpty() ? new String[0] : this.peopleQueue.split(",");
+            int studentIndex = -1;
+            for (int i = 0; i < studentsBefore.length; i++) {
+                if (studentsBefore[i].equals(studentName)) {
+                    studentIndex = i;
+                    break;
+                }
+            }
 
-            // If a student was actually removed, and they were part of the 'active' count
-            // (or simply someone leaving)
-            if (studentsBefore.length > studentsAfter.length) {
-                if (this.away > 0) {
-                    this.away--;
+            if (studentIndex != -1) {
+                // Remove the student
+                this.peopleQueue = Arrays.stream(studentsBefore)
+                        .filter(s -> !s.equals(studentName))
+                        .collect(Collectors.joining(","));
+
+                // ONLY decrease away if the student was actually in the "away" portion
+                if (studentIndex < this.away) {
+                    if (this.away > 0) {
+                        this.away--;
+                    }
                 }
             }
         }
     }
 
     /**
-     * @return - returns the student who is at the front of the line, removing the
-     *         commas and sanitizing the data
+     * @return - returns the student who is at the front of the line
      */
     public String getFrontStudent() {
         if (this.peopleQueue != null && !this.peopleQueue.isEmpty()) {
