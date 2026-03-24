@@ -116,7 +116,7 @@
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label for="groupChatSender" class="form-label">Display Name</label>
-                        <input id="groupChatSender" type="text" class="form-control" placeholder="Your name">
+                        <input id="groupChatSender" type="text" class="form-control" th:value="${chatUsername}" readonly>
                         <div class="mt-3">
                             <h6>Participants</h6>
                             <ul id="groupChatParticipants" class="list-group" style="max-height: 180px; overflow-y: auto;"></ul>
@@ -728,14 +728,7 @@
         const chatSender = document.getElementById("groupChatSender");
         const chatInput = document.getElementById("groupChatInput");
 
-        const savedSender = window.localStorage.getItem("group-chat-sender") || "";
-        if (savedSender) {
-            chatSender.value = savedSender;
-        }
-
-        chatSender.addEventListener("change", () => {
-            window.localStorage.setItem("group-chat-sender", chatSender.value.trim());
-        });
+        // Display name is set from the logged-in user by the server
 
         function setChatStatus(text, badgeClass) {
             chatStatus.textContent = text;
