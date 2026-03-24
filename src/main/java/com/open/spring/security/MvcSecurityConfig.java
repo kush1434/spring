@@ -105,9 +105,9 @@ public class MvcSecurityConfig {
                 .requestMatchers("/mvc/grades/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/mvc/assignments/read").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
                 .requestMatchers("/mvc/bank/read").hasAuthority("ROLE_ADMIN")
-                .requestMatchers(HttpMethod.OPTIONS, "/ws-chat/**").authenticated()
+                .requestMatchers(HttpMethod.OPTIONS, "/ws-chat/**").permitAll()
                 .requestMatchers("/mvc/progress/read").hasAnyAuthority("ROLE_ADMIN", "ROLE_TEACHER")
-                .requestMatchers("/ws-chat/**").authenticated()
+                .requestMatchers("/ws-chat/**").permitAll()
                 .requestMatchers("/run/**").permitAll()  // Java runner endpoints - public access
                 .anyRequest().authenticated()
             )
