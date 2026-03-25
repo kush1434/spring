@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,12 +32,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.open.spring.mvc.userStocks.UserStocksRepository;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 /**
  * This class provides RESTful API endpoints for managing Person entities.
@@ -66,6 +66,9 @@ public class PersonApiController {
      */
     @Autowired
     private PersonDetailsService personDetailsService;
+
+    @Autowired
+    private FaceRecognitionService faceRecognitionService;
 
     /**
      * Retrieves a Person entity by current user of JWT token.
@@ -147,9 +150,6 @@ public class PersonApiController {
         // Bad ID
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-
-    @Autowired
-    private UserStocksRepository userStocksRepository;
 
     /*
      * DTO (Data Transfer Object) to support POST request for postPerson method
@@ -354,8 +354,66 @@ public class PersonApiController {
     }
 
     /**
+     * Retrieves all Person entities that have face data registered.
+     * Returns a list of maps containing 'uid' and 'faceData'.
+     * 
+     * @return A ResponseEntity containing a list of maps with uid and faceData.
+     */
+    @GetMapping("/person/faces")
+    // Public for bathroom-pass face matcher (self-service). Security is via token/cookie in other workflows.
+    public ResponseEntity<List<Map<String, String>>> getPersonFaces() {
+        List<Person> people = repository.findByFaceDataIsNotNull();
+        List<Map<String, String>> faces = new ArrayList<>();
+        for (Person person : people) {
+            Map<String, String> face = new HashMap<>();
+            face.put("uid", person.getUid());
+            face.put("faceData", person.getFaceData());
+            faces.add(face);
+        }
+        return new ResponseEntity<>(faces, HttpStatus.OK);
+    }
+
+    /**
+     * Identify a person from the provided camera image using face data stored in Spring.
+     *
+     * This implementation now runs DeepFace through a local Python subprocess rather than proxying to Flask.
+     *
+     * @param body map containing "image" (base64) and optional "threshold"
+     * @return map containing match result or error
+     */
+    @PostMapping("/person/identify")
+    public ResponseEntity<Map<String, Object>> identifyPerson(@RequestBody Map<String, Object> body) {
+        String image = (String) body.get("image");
+        Double thresholdValue = 0.40; // Default threshold
+
+        if (body.containsKey("threshold")) {
+            Object thresholdObj = body.get("threshold");
+            if (thresholdObj instanceof Number) {
+                thresholdValue = ((Number) thresholdObj).doubleValue();
+            } else if (thresholdObj instanceof String) {
+                try {
+                    thresholdValue = Double.parseDouble((String) thresholdObj);
+                } catch (NumberFormatException e) {
+                    // Fall back to default
+                }
+            }
+        }
+
+        if (image == null || image.isEmpty()) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("match", false);
+            error.put("message", "No image provided");
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
+
+        Map<String, Object> result = faceRecognitionService.identify(image, thresholdValue);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    /**
      * Update a Person entity by its ID.
      *
+     * 
      * @param id        The ID of the Person entity to update.
      * @param personDto The updated PersonDto object.
      * @return A ResponseEntity containing the updated Person entity if found, or a
