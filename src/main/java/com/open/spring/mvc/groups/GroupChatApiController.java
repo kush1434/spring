@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,22 +27,20 @@ import lombok.NoArgsConstructor;
 @CrossOrigin
 public class GroupChatApiController {
 
-    private static final String GROUP_TOPIC_PREFIX = "/topic/group/";
-
     private final GroupChatService groupChatService;
+    private final GroupChatRealtimeService realtimeService;
     private final GroupsJpaRepository groupsRepository;
     private final PersonJpaRepository personRepository;
-    private final SimpMessagingTemplate messagingTemplate;
 
     public GroupChatApiController(
             GroupChatService groupChatService,
+            GroupChatRealtimeService realtimeService,
             GroupsJpaRepository groupsRepository,
-            PersonJpaRepository personRepository,
-            SimpMessagingTemplate messagingTemplate) {
+            PersonJpaRepository personRepository) {
         this.groupChatService = groupChatService;
+        this.realtimeService = realtimeService;
         this.groupsRepository = groupsRepository;
         this.personRepository = personRepository;
-        this.messagingTemplate = messagingTemplate;
     }
 
     @Data
@@ -130,9 +127,14 @@ public class GroupChatApiController {
             return new ResponseEntity<>("name and message are required", HttpStatus.BAD_REQUEST);
         }
 
+        try {
+            realtimeService.publishMessage(groupId, message.getName(), message.getMessage(), message.getImage());
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+
         String groupName = groupOpt.get().getName();
-        List<GroupChatMessage> updated = groupChatService.addMessage(groupName, message);
-        messagingTemplate.convertAndSend(GROUP_TOPIC_PREFIX + groupId, message);
+        List<GroupChatMessage> updated = groupChatService.getMessages(groupName);
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
@@ -177,22 +179,13 @@ public class GroupChatApiController {
             return new ResponseEntity<>("filename and base64Data are required", HttpStatus.BAD_REQUEST);
         }
 
-        String groupName = groupOpt.get().getName();
-        String result = groupChatService.uploadSharedFile(groupName, request.getFilename(), request.getBase64Data());
-
-        if (result != null) {
-            GroupChatMessage uploadedFileMessage = new GroupChatMessage(
-                    null,
-                    request.getFilename(),
-                    null,
-                    request.getBase64Data());
-            messagingTemplate.convertAndSend(GROUP_TOPIC_PREFIX + groupId, uploadedFileMessage);
-
+        try {
+            realtimeService.publishFile(groupId, null, request.getFilename(), request.getBase64Data());
             Map<String, String> response = new HashMap<>();
             response.put("message", "File uploaded successfully");
             response.put("filename", request.getFilename());
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
+        } catch (RuntimeException ex) {
             return new ResponseEntity<>("Upload failed", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 """
-db_restore-local2prod.py
+db_local2prod.py
 Uploads local database to production server
 
 Usages:
-    python3 scripts/db_restore-local2prod.py
+    python3 scripts/db_local2prod.py
 """
 
 import requests
@@ -23,6 +23,9 @@ PROD_IMPORT_URL = f"{PROD_URL}/api/imports/manual"
 LOCAL_LOGIN_URL = f"{LOCAL_URL}/login"
 LOCAL_EXPORT_URL = f"{LOCAL_URL}/api/exports/getAll"
 
+
+# --- Credential loading ---
+
 def load_env_credentials():
     """Load credentials from .env file"""
     env_file = Path(__file__).parent.parent / ".env"
@@ -39,12 +42,9 @@ def load_env_credentials():
             line = line.strip()
             for key in required_keys:
                 if line.startswith(f"{key}="):
-                    value = line.split("=", 1)[1].strip()
-                    # Remove quotes if present
-                    value = value.strip('"').strip("'")
+                    value = line.split("=", 1)[1].strip().strip('"').strip("'")
                     credentials[key] = value
 
-    # Check if all required credentials are present
     missing_keys = [key for key in required_keys if key not in credentials]
     if missing_keys:
         print(f" Error: Missing required credentials in .env file: {', '.join(missing_keys)}")
@@ -52,16 +52,65 @@ def load_env_credentials():
 
     return credentials
 
+
+# --- Local server ---
+
 def check_local_server():
-    """Check if local Spring Boot server is running"""
+    """Return True if local Spring Boot server is reachable"""
     try:
         response = requests.get(f"{LOCAL_URL}/api/exports/getAll", timeout=5)
         return response.status_code != 404
     except requests.exceptions.RequestException:
         return False
 
+
+def authenticate_to_local(credentials):
+    """Authenticate to local server via form login; return session with cookies"""
+    session = requests.Session()
+    auth_data = {
+        "username": credentials["LOCAL_ADMIN_UID"],
+        "password": credentials["ADMIN_PASSWORD"],
+    }
+    auth_resp = session.post(LOCAL_LOGIN_URL, data=auth_data, timeout=10, allow_redirects=False)
+
+    if not (auth_resp.status_code == 302 and session.cookies):
+        msg_preview = auth_resp.text[:200] if auth_resp.text else "No response body"
+        print(f" Error: Local authentication failed (HTTP {auth_resp.status_code}).")
+        print("   Ensure the credentials are correct and login form is enabled.")
+        if msg_preview:
+            print(f"   Response preview: {msg_preview}")
+        sys.exit(1)
+
+    return session
+
+
+def fetch_local_export(session):
+    """Fetch export JSON from the authenticated local session"""
+    response = session.get(LOCAL_EXPORT_URL, timeout=30)
+    if response.status_code == 401:
+        print(" Error: Unauthorized (401) when accessing local export endpoint.")
+        print("   This endpoint requires login; authentication may have failed.")
+        sys.exit(1)
+    response.raise_for_status()
+    return response.json()
+
+
+def save_export_to_file(data):
+    """Write export data to a timestamped JSON file; return the Path"""
+    backups_dir = Path(__file__).parent.parent / "volumes" / "backups"
+    backups_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    export_file = backups_dir / f"local_export_{timestamp}.json"
+
+    with open(export_file, "w") as f:
+        json.dump(data, f, indent=2)
+
+    return export_file
+
+
 def export_local_database(credentials):
-    """Export local database to JSON file"""
+    """Orchestrate local export: check server, authenticate, fetch, save"""
     print(" Exporting local database...")
 
     if not check_local_server():
@@ -70,42 +119,9 @@ def export_local_database(credentials):
         sys.exit(1)
 
     try:
-        # Authenticate to local server via form login to obtain session cookies
-        session = requests.Session()
-        auth_data = {
-            "username": credentials["LOCAL_ADMIN_UID"],
-            "password": credentials["ADMIN_PASSWORD"],
-        }
-
-        auth_resp = session.post(LOCAL_LOGIN_URL, data=auth_data, timeout=10, allow_redirects=False)
-
-        if not (auth_resp.status_code == 302 and session.cookies):
-            msg_preview = auth_resp.text[:200] if auth_resp.text else "No response body"
-            print(f" Error: Local authentication failed (HTTP {auth_resp.status_code}).")
-            print("   Ensure the credentials are correct and login form is enabled.")
-            if msg_preview:
-                print(f"   Response preview: {msg_preview}")
-            sys.exit(1)
-
-        # Use authenticated session to access protected export endpoint
-        response = session.get(LOCAL_EXPORT_URL, timeout=30)
-        if response.status_code == 401:
-            print(" Error: Unauthorized (401) when accessing local export endpoint.")
-            print("   This endpoint requires login; authentication may have failed.")
-            sys.exit(1)
-        response.raise_for_status()
-        data = response.json()
-
-        # Create backups directory if it doesn't exist
-        backups_dir = Path(__file__).parent.parent / "volumes" / "backups"
-        backups_dir.mkdir(parents=True, exist_ok=True)
-
-        # Save with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        export_file = backups_dir / f"local_export_{timestamp}.json"
-
-        with open(export_file, "w") as f:
-            json.dump(data, f, indent=2)
+        session = authenticate_to_local(credentials)
+        data = fetch_local_export(session)
+        export_file = save_export_to_file(data)
 
         print(f" Local database exported to: {export_file}")
         print(f"  Tables exported: {len(data)}")
@@ -120,25 +136,24 @@ def export_local_database(credentials):
         print(f" Unexpected error: {e}")
         sys.exit(1)
 
+
+# --- Production server ---
+
 def authenticate_to_production(credentials):
-    """Authenticate to production server using JWT and return authenticated session"""
+    """Authenticate to production via JWT; return authenticated session"""
     print("\n Authenticating to production server...")
 
-    # Use JWT authentication endpoint
     auth_url = f"{PROD_URL}/authenticate"
     auth_data = {
         "uid": credentials["PROD_ADMIN_UID"],
-        "password": credentials["ADMIN_PASSWORD"]
+        "password": credentials["ADMIN_PASSWORD"],
     }
 
     try:
-        # Create a session to handle cookies
         session = requests.Session()
         response = session.post(auth_url, json=auth_data, timeout=10)
 
-        # JWT endpoint returns 200 on success with JWT token in cookie
         if response.status_code == 200:
-            # Check if we got the JWT cookie
             if "jwt_java_spring" in session.cookies:
                 print(f" Authenticated as '{credentials['PROD_ADMIN_UID']}'")
                 return session
@@ -156,15 +171,15 @@ def authenticate_to_production(credentials):
         print(f" Error connecting to production server: {e}")
         sys.exit(1)
 
+
 def upload_to_production(export_file, session):
-    """Upload JSON file to production server"""
+    """POST the export file to the production import endpoint"""
     print(f"\n Uploading database to production...")
     print(f"   File: {export_file.name}")
     print(f"   Target: {PROD_IMPORT_URL}")
 
     try:
-        # CRITICAL: Add X-Origin: client header to trigger JWT authentication
-        # Without this header, the server expects session-based auth instead of JWT
+        # X-Origin: client triggers JWT auth on the server side
         headers = {"X-Origin": "client"}
 
         with open(export_file, "rb") as f:
@@ -173,22 +188,21 @@ def upload_to_production(export_file, session):
                 PROD_IMPORT_URL,
                 files=files,
                 headers=headers,
-                timeout=1200  # 2 minute timeout for large uploads
+                timeout=1200,
             )
             response.raise_for_status()
 
-            print(" Database uploaded successfully!")
-            print(f"   Response status: {response.status_code}")
+        print(" Database uploaded successfully!")
+        print(f"   Response status: {response.status_code}")
 
-            # Try to show response content if it's text
-            if "text/html" in response.headers.get("Content-Type", ""):
-                if "success" in response.text.lower():
-                    print("   Import status: SUCCESS")
-                elif "error" in response.text.lower():
-                    print("   Import status: ERROR (check production logs)")
-                    print(f"   Response preview: {response.text[:200]}")
-            else:
-                print(f"   Response: {response.text[:200]}")
+        if "text/html" in response.headers.get("Content-Type", ""):
+            if "success" in response.text.lower():
+                print("   Import status: SUCCESS")
+            elif "error" in response.text.lower():
+                print("   Import status: ERROR (check production logs)")
+                print(f"   Response preview: {response.text[:200]}")
+        else:
+            print(f"   Response: {response.text[:200]}")
 
     except requests.exceptions.HTTPError as e:
         print(f" Upload failed: HTTP {e.response.status_code}")
@@ -198,22 +212,18 @@ def upload_to_production(export_file, session):
         print(f" Error uploading to production: {e}")
         sys.exit(1)
 
+
+# --- Entry point ---
+
 def main():
     print("=" * 60)
     print("DATABASE RESTORE: Local → Production")
     print("=" * 60)
     print()
 
-    # Step 1: Load credentials from .env
     credentials = load_env_credentials()
-
-    # Step 2: Export local database
-    export_file, data = export_local_database(credentials)
-
-    # Step 3: Authenticate to production
+    export_file, _ = export_local_database(credentials)
     session = authenticate_to_production(credentials)
-
-    # Step 4: Upload to production
     upload_to_production(export_file, session)
 
     print()
@@ -225,6 +235,7 @@ def main():
     print(f"  Production URL: {PROD_URL}")
     print(f"  Backup saved: {export_file}")
     print()
+
 
 if __name__ == "__main__":
     main()
