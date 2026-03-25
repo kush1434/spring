@@ -95,16 +95,48 @@ public class GradeController {
         com.open.spring.mvc.person.Person p = personRepository.findByUid(grade.getUid());
         if (p == null) return null;
         Map<String, Object> m = new HashMap<>();
+
+        Long newId = generateNextGradeId();
+        m.put("id", newId);
+        grade.setId(newId);
+
+        m.put("uid", grade.getUid());
         m.put("assignment", grade.getAssignment());
         m.put("score", grade.getScore());
         m.put("teacherComments", grade.getTeacherComments());
         m.put("submission", grade.getSubmission());
+        m.put("submittedAt", grade.getSubmittedAt());
+
         if (p.getGradesJson() == null) {
             p.setGradesJson(new ArrayList<>());
         }
         p.getGradesJson().add(m);
         personRepository.save(p);
         return grade;
+    }
+
+    @PostMapping("/{id}/submit")
+    public ResponseEntity<Grade> submitGrade(@PathVariable Long id, @RequestBody Grade gradeDetails) {
+        for (com.open.spring.mvc.person.Person p : personRepository.findAll()) {
+            List<Map<String, Object>> gjs = p.getGradesJson();
+            if (gjs == null) continue;
+            for (Map<String, Object> m : gjs) {
+                Object mid = m.get("id");
+                if (mid != null && Long.valueOf(String.valueOf(mid)).equals(id)) {
+                    if (gradeDetails.getUid() != null) m.put("uid", gradeDetails.getUid());
+                    if (gradeDetails.getAssignment() != null) m.put("assignment", gradeDetails.getAssignment());
+                    if (gradeDetails.getScore() != null) m.put("score", gradeDetails.getScore());
+                    if (gradeDetails.getTeacherComments() != null) m.put("teacherComments", gradeDetails.getTeacherComments());
+                    if (gradeDetails.getSubmission() != null) m.put("submission", gradeDetails.getSubmission());
+                    if (gradeDetails.getSubmittedAt() != null) m.put("submittedAt", gradeDetails.getSubmittedAt());
+                    personRepository.save(p);
+                    Grade g = mapToGrade(m);
+                    if (g.getUid() == null) g.setUid(p.getUid());
+                    return ResponseEntity.ok(g);
+                }
+            }
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{id}")
@@ -119,6 +151,7 @@ public class GradeController {
                     m.put("score", gradeDetails.getScore());
                     m.put("teacherComments", gradeDetails.getTeacherComments());
                     m.put("submission", gradeDetails.getSubmission());
+                    m.put("submittedAt", gradeDetails.getSubmittedAt());
                     personRepository.save(p);
                     Grade g = mapToGrade(m);
                     if (g.getUid() == null) g.setUid(p.getUid());
@@ -146,6 +179,24 @@ public class GradeController {
         return ResponseEntity.notFound().build();
     }
 
+    private synchronized Long generateNextGradeId() {
+        Long maxId = 0L;
+        for (com.open.spring.mvc.person.Person p : personRepository.findAll()) {
+            List<Map<String, Object>> gjs = p.getGradesJson();
+            if (gjs == null) continue;
+            for (Map<String, Object> m : gjs) {
+                Object mid = m.get("id");
+                if (mid != null) {
+                    Long id = Long.valueOf(String.valueOf(mid));
+                    if (id > maxId) {
+                        maxId = id;
+                    }
+                }
+            }
+        }
+        return maxId + 1;
+    }
+
     private Grade mapToGrade(Map<String, Object> m) {
         if (m == null) return null;
         Object idObj = m.get("id");
@@ -163,7 +214,8 @@ public class GradeController {
         }
         String teacherComments = m.get("teacherComments") == null ? null : String.valueOf(m.get("teacherComments"));
         String submission = m.get("submission") == null ? null : String.valueOf(m.get("submission"));
-        Grade g = new Grade(uid, assignment, score, teacherComments, submission);
+        String submittedAt = m.get("submittedAt") == null ? null : String.valueOf(m.get("submittedAt"));
+        Grade g = new Grade(uid, assignment, score, teacherComments, submission, submittedAt);
         g.setId(id);
         return g;
     }
