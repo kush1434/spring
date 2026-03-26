@@ -89,7 +89,7 @@ public class SecurityConfig {
                         // Public endpoint - no authentication required, supports user login
                         .requestMatchers(HttpMethod.OPTIONS, "/api/**", "/authenticate", "/run/**").permitAll()  // Allow only relevant CORS preflight requests
                         .requestMatchers("/authenticate").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/authenticate").permitAll() // allow POST on auth
                         .requestMatchers("/api/person/create", "/api/person/create/").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/person/create").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/person/create/").permitAll()
@@ -168,6 +168,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/challenge-submission/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN", "ROLE_TEACHER", "ROLE_STUDENT")
                         // ==========================================
 
+                        // ========== ASSIGNMENT FILE SUBMISSION ==========
+                        // Assignment file uploads require authenticated roles
+                        .requestMatchers(HttpMethod.POST, "/api/assignment-submissions/upload").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN", "ROLE_TEACHER", "ROLE_STUDENT")
+                        // ================================================
+
                         // ========== OCS ANALYTICS ==========
                         // OCS Analytics endpoints - require authentication to associate data with user
                         .requestMatchers("/api/ocs-analytics/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN", "ROLE_TEACHER", "ROLE_STUDENT")
@@ -210,6 +215,7 @@ public class SecurityConfig {
         policy.put("DELETE /api/person/**", "ROLE_ADMIN");
         policy.put("PUT /api/person/**", "ROLE_ADMIN");
         policy.put("GET /api/person/uid/**", "ROLE_USER|ROLE_STUDENT|ROLE_TEACHER|ROLE_ADMIN");
+        policy.put("POST /api/assignment-submissions/upload", "ROLE_USER|ROLE_ADMIN|ROLE_TEACHER|ROLE_STUDENT");
         policy.put("/api/exports/**", "ROLE_ADMIN");
         policy.put("/api/imports/**", "ROLE_ADMIN");
         policy.put("/api/**", "ROLE_USER|ROLE_ADMIN|ROLE_TEACHER|ROLE_STUDENT");
@@ -220,11 +226,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
+        configuration.addAllowedOriginPattern("https://*.opencodingsociety.com");
+        configuration.addAllowedOriginPattern("https://open-coding-society.github.io");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:4500");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:4599");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:4600");
         configuration.addAllowedOriginPattern("http://localhost:4500");
-        configuration.addAllowedOriginPattern("https://opencodingsociety.com");
-        configuration.addAllowedOriginPattern("http://opencodingsociety.com");
-        configuration.addAllowedOriginPattern("https://pages.opencodingsociety.com");
-        configuration.addAllowedOriginPattern("https://spring.opencodingsociety.com");
+        configuration.addAllowedOriginPattern("http://localhost:4599");
+        configuration.addAllowedOriginPattern("http://localhost:4600");
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
