@@ -2,6 +2,7 @@ package com.open.spring.mvc.bathroom;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.Column;
@@ -26,6 +27,9 @@ public class BathroomQueue {
     private String teacherEmail;
     private String peopleQueue;
     private int away;
+
+    @Column(columnDefinition = "int default 1")
+    private int maxOccupancy = 1;
 
     // Custom constructor
 
@@ -55,23 +59,58 @@ public class BathroomQueue {
     }
 
     /**
+     * Helper to check if a student is already in the queue
+     */
+    public boolean containsStudent(String studentName) {
+        if (this.peopleQueue == null || this.peopleQueue.isEmpty())
+            return false;
+        return Arrays.asList(this.peopleQueue.split(",")).contains(studentName);
+    }
+
+    /**
+     * Helper to get the index of a student in the queue
+     */
+    public int getStudentIndex(String studentName) {
+        if (this.peopleQueue == null || this.peopleQueue.isEmpty())
+            return -1;
+        List<String> students = Arrays.asList(this.peopleQueue.split(","));
+        return students.indexOf(studentName);
+    }
+
+    /**
      * Function to remove the student from a queue
      * 
-     * @param studentName - the name you want to remove from the queue. In frontend,
-     *                    your own name is passed.
+     * @param studentName - the name you want to remove from the queue.
      */
     public void removeStudent(String studentName) {
-        if (this.peopleQueue != null) {
-            this.peopleQueue = Arrays.stream(this.peopleQueue.split(","))
-                    .filter(s -> !s.equals(studentName))
-                    .collect(Collectors.joining(","));
+        if (this.peopleQueue != null && !this.peopleQueue.isEmpty()) {
+            String[] studentsBefore = this.peopleQueue.split(",");
+            int studentIndex = -1;
+            for (int i = 0; i < studentsBefore.length; i++) {
+                if (studentsBefore[i].equals(studentName)) {
+                    studentIndex = i;
+                    break;
+                }
+            }
+
+            if (studentIndex != -1) {
+                // Remove the student
+                this.peopleQueue = Arrays.stream(studentsBefore)
+                        .filter(s -> !s.equals(studentName))
+                        .collect(Collectors.joining(","));
+
+                // ONLY decrease away if the student was actually in the "away" portion
+                if (studentIndex < this.away) {
+                    if (this.away > 0) {
+                        this.away--;
+                    }
+                }
+            }
         }
     }
 
-    
     /**
-     * @return - returns the student who is at the front of the line, removing the
-     *         commas and sanitizing the data
+     * @return - returns the student who is at the front of the line
      */
     public String getFrontStudent() {
         if (this.peopleQueue != null && !this.peopleQueue.isEmpty()) {
@@ -86,19 +125,17 @@ public class BathroomQueue {
      * When they return, they are removed from the queue
      */
     public void approveStudent() {
-       if (this.peopleQueue != null && !this.peopleQueue.isEmpty()) {
-            if (this.away == 0) {
-                // Student is approved to go away
-                this.away = 1;
-            } else {
-                // Student has returned; remove from queue
-                String[] students = this.peopleQueue.split(",");
-                if (students.length > 1) {
-                    this.peopleQueue = String.join(",", Arrays.copyOfRange(students, 1, students.length));
-                } else {
-                    this.peopleQueue = "";
+        if (this.peopleQueue != null && !this.peopleQueue.isEmpty()) {
+            if (this.away < this.maxOccupancy) {
+                // Determine how many people are actually in the queue
+                int totalInQueue = this.peopleQueue.split(",").length;
+                // We can't have more people 'away' than are in the queue
+                if (this.away < totalInQueue) {
+                    this.away++;
                 }
-                this.away = 0;
+            } else {
+                // If already at max occupancy, we don't increment away.
+                // The frontend should handle showing they are in the waiting list.
             }
         } else {
             throw new IllegalStateException("Queue is empty");

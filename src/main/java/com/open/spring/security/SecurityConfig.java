@@ -12,10 +12,10 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.util.matcher.OrRequestMatcher;
-import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -93,6 +93,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/person/create", "/api/person/create/").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/person/create").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/person/create/").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/person/faces").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/person/identify").permitAll()
                         // Admin-only endpoints, beware of DELETE operations and impact to cascading relational data 
                         .requestMatchers(HttpMethod.DELETE, "/api/person/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/person/**").hasAuthority("ROLE_ADMIN")
@@ -225,9 +227,11 @@ public class SecurityConfig {
         configuration.addAllowedOriginPattern("http://127.0.0.1:4500");
         configuration.addAllowedOriginPattern("http://127.0.0.1:4599");
         configuration.addAllowedOriginPattern("http://127.0.0.1:4600");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:8585");
         configuration.addAllowedOriginPattern("http://localhost:4500");
         configuration.addAllowedOriginPattern("http://localhost:4599");
         configuration.addAllowedOriginPattern("http://localhost:4600");
+        configuration.addAllowedOriginPattern("http://localhost:8585");
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
