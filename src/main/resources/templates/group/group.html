@@ -62,6 +62,11 @@
                                 onclick="return confirm('Are you sure you want to delete this group?')">
                             Delete
                         </button>
+                        <button class="btn btn-sm btn-success open-group-chat"
+                                th:data-groupid="${group.id}"
+                                th:data-name="${group.name}">
+                            Open Chat
+                        </button>
                     </td>
                 </tr>
 
@@ -98,6 +103,36 @@
 
 
         </table>
+
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Group Chat</strong>
+                    <span id="groupChatSelected" class="ms-2 text-muted">No group selected</span>
+                </div>
+                <span id="groupChatStatus" class="badge bg-secondary">Disconnected</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="groupChatSender" class="form-label">Display Name</label>
+                        <input id="groupChatSender" type="text" class="form-control" th:value="${chatUsername}" readonly>
+                        <div class="mt-3">
+                            <h6>Participants</h6>
+                            <ul id="groupChatParticipants" class="list-group" style="max-height: 180px; overflow-y: auto;"></ul>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div id="groupChatMessages" class="border rounded p-2 mb-2" style="height: 280px; overflow-y: auto;"></div>
+                        <div id="groupChatTyping" class="small text-muted mb-2"></div>
+                        <div class="input-group mb-2">
+                            <input id="groupChatInput" type="text" class="form-control" placeholder="Type a message">
+                            <button id="groupChatSend" class="btn btn-primary" type="button">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <!-- Create Group Button -->
     <div class="d-flex justify-content-center mb-3">
@@ -242,12 +277,25 @@
 
 </th:block>
 <th:block layout:fragment="script" th:remove="tag">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script>
         // setup
-        // Removed javaURI and absolute URL logic; use relative URLs instead
+        // REST APIs stay on the page origin port; websocket chat uses the dedicated socket port.
 
         const javaURL = "/api/groups";
         const personURL = "/api/people"; // Use relative URL for user API endpoint
+        const chatSocketPort = 8589;
+
+        function buildChatSocketEndpoint() {
+            const protocol = window.location.protocol;
+            const hostname = window.location.hostname;
+            // this is temporary, and needs to be replaced with a more permanent websocket implementation on port 8589
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return `${protocol}//${hostname}:${chatSocketPort}/ws-chat`;
+            }
+            return `${protocol}//${hostname}/ws-chat`;
+        }
 
         // get table
         const $tableBody = $("#groupTableBody");
@@ -660,6 +708,297 @@
                 alert("Failed to remove member. See console.");
             });
         });
+
+        // ----- Group chat realtime client -----
+        const groupChatState = {
+            stompClient: null,
+            connected: false,
+            currentGroupId: null,
+            currentGroupName: null,
+            subscription: null,
+            reconnectTimer: null,
+            typingStopTimer: null
+        };
+
+        const chatStatus = document.getElementById("groupChatStatus");
+        const chatSelected = document.getElementById("groupChatSelected");
+        const chatMessages = document.getElementById("groupChatMessages");
+        const chatParticipants = document.getElementById("groupChatParticipants");
+        const chatTyping = document.getElementById("groupChatTyping");
+        const chatSender = document.getElementById("groupChatSender");
+        const chatInput = document.getElementById("groupChatInput");
+
+        // Display name is set from the logged-in user by the server
+
+        function setChatStatus(text, badgeClass) {
+            chatStatus.textContent = text;
+            chatStatus.className = "badge " + badgeClass;
+        }
+
+        function ensureStompConnection() {
+            if (groupChatState.connected || groupChatState.stompClient) {
+                return;
+            }
+
+            setChatStatus("Connecting", "bg-warning text-dark");
+            const socket = new SockJS(buildChatSocketEndpoint());
+            const stomp = Stomp.over(socket);
+            stomp.debug = function () {};
+
+            stomp.connect({}, () => {
+                groupChatState.connected = true;
+                groupChatState.stompClient = stomp;
+                setChatStatus("Connected", "bg-success");
+
+                if (groupChatState.currentGroupId != null) {
+                    subscribeToGroup(groupChatState.currentGroupId, groupChatState.currentGroupName);
+                }
+            }, (error) => {
+                console.error("STOMP connection error:", error);
+                groupChatState.connected = false;
+                groupChatState.stompClient = null;
+                setChatStatus("Disconnected", "bg-secondary");
+                scheduleReconnect();
+            });
+        }
+
+        function scheduleReconnect() {
+            if (groupChatState.reconnectTimer) {
+                return;
+            }
+
+            groupChatState.reconnectTimer = window.setTimeout(() => {
+                groupChatState.reconnectTimer = null;
+                ensureStompConnection();
+            }, 3000);
+        }
+
+        function sendGroupEvent(context, extraPayload = {}) {
+            if (!groupChatState.connected || !groupChatState.stompClient) {
+                alert("Chat socket is not connected yet. Try again in a moment.");
+                return;
+            }
+            if (groupChatState.currentGroupId == null) {
+                alert("Please click Open Chat on a group first.");
+                return;
+            }
+
+            const sender = resolveSenderName();
+            const payload = {
+                context,
+                groupId: groupChatState.currentGroupId,
+                sender,
+                ...extraPayload
+            };
+
+            groupChatState.stompClient.send("/app/groups.chat", {}, JSON.stringify(payload));
+        }
+
+        function resolveSenderName() {
+            const typedName = chatSender.value.trim();
+            if (typedName.length > 0) {
+                return typedName;
+            }
+            return "anonymous";
+        }
+
+        function subscribeToGroup(groupId, groupName) {
+            if (!groupChatState.connected || !groupChatState.stompClient) {
+                groupChatState.currentGroupId = groupId;
+                groupChatState.currentGroupName = groupName;
+                ensureStompConnection();
+                return;
+            }
+
+            const previousGroupId = groupChatState.currentGroupId;
+            if (previousGroupId != null && previousGroupId !== groupId) {
+                sendGroupEvent("leaveGroup");
+            }
+
+            if (groupChatState.subscription) {
+                groupChatState.subscription.unsubscribe();
+            }
+
+            groupChatState.currentGroupId = groupId;
+            groupChatState.currentGroupName = groupName;
+            chatSelected.textContent = `#${groupId} ${groupName || ""}`;
+
+            groupChatState.subscription = groupChatState.stompClient.subscribe(`/topic/group/${groupId}`, (frame) => {
+                try {
+                    const event = JSON.parse(frame.body);
+                    handleGroupChatEvent(event);
+                } catch (error) {
+                    console.error("Failed to parse group chat event", error);
+                }
+            });
+
+            chatMessages.innerHTML = "";
+            chatTyping.textContent = "";
+            chatParticipants.innerHTML = "";
+
+            loadGroupChatHistory(groupId);
+            sendGroupEvent("joinGroup");
+        }
+
+        function loadGroupChatHistory(groupId) {
+            fetch(`/api/groups/chat/${groupId}/messages`)
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Failed to load history");
+                    }
+                    return response.json();
+                })
+                .then((messages) => {
+                    (messages || []).forEach((message) => {
+                        renderMessageLine(
+                            message.name || "unknown",
+                            message.message || "",
+                            message.date,
+                            message.image || null
+                        );
+                    });
+                })
+                .catch((error) => {
+                    console.error("Unable to load chat history:", error);
+                });
+        }
+
+        function handleGroupChatEvent(event) {
+            if (!event || !event.context) {
+                return;
+            }
+
+            switch (event.context) {
+                case "sendMessageServer":
+                    renderMessageLine(event.sender || "unknown", event.message || "", event.date, event.image || null);
+                    break;
+                case "joinGroupServer":
+                case "leaveGroupServer":
+                case "heartbeatServer":
+                    renderPresenceLine(event.context, event.sender || "unknown", event.date);
+                    renderParticipants(event.participants || []);
+                    break;
+                case "typingStartServer":
+                    if ((event.sender || "") !== resolveSenderName()) {
+                        chatTyping.textContent = `${event.sender || "Someone"} is typing...`;
+                    }
+                    break;
+                case "typingStopServer":
+                    chatTyping.textContent = "";
+                    break;
+                case "errorServer":
+                    renderSystemLine(`Error: ${event.error || "Unknown websocket error"}`);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        function renderParticipants(participants) {
+            chatParticipants.innerHTML = "";
+            participants.forEach((participant) => {
+                const li = document.createElement("li");
+                li.className = "list-group-item py-1";
+                li.textContent = participant;
+                chatParticipants.appendChild(li);
+            });
+        }
+
+        function renderMessageLine(sender, text, date, imageBase64) {
+            const line = document.createElement("div");
+            line.className = "mb-2";
+
+            const timestamp = formatTimestamp(date);
+            const header = `<strong>${escapeHtml(sender)}</strong> <span class="text-muted small">${escapeHtml(timestamp)}</span>`;
+            const body = `<div>${escapeHtml(text)}</div>`;
+            line.innerHTML = header + body;
+
+            if (imageBase64 && imageBase64.length > 0) {
+                const img = document.createElement("img");
+                img.src = imageBase64.startsWith("data:") ? imageBase64 : `data:image/*;base64,${imageBase64}`;
+                img.style.maxWidth = "180px";
+                img.className = "img-thumbnail mt-1";
+                line.appendChild(img);
+            }
+
+            chatMessages.appendChild(line);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function renderPresenceLine(context, sender, date) {
+            const text = context === "joinGroupServer" ? `${sender} joined the chat` : `${sender} left the chat`;
+            renderSystemLine(`${text} (${formatTimestamp(date)})`);
+        }
+
+        function renderSystemLine(text) {
+            const line = document.createElement("div");
+            line.className = "mb-2 text-muted fst-italic";
+            line.textContent = text;
+            chatMessages.appendChild(line);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function formatTimestamp(dateText) {
+            if (!dateText) {
+                return new Date().toLocaleTimeString();
+            }
+
+            const parsed = new Date(dateText);
+            if (Number.isNaN(parsed.getTime())) {
+                return dateText;
+            }
+
+            return parsed.toLocaleTimeString();
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        $(document).on("click", ".open-group-chat", function () {
+            const groupId = Number($(this).data("groupid"));
+            const groupName = ($(this).data("name") || "").toString();
+            subscribeToGroup(groupId, groupName);
+        });
+
+        document.getElementById("groupChatSend").addEventListener("click", () => {
+            const message = chatInput.value.trim();
+            if (!message) {
+                return;
+            }
+            sendGroupEvent("sendMessage", { message });
+            chatInput.value = "";
+            sendGroupEvent("typingStop");
+        });
+
+        chatInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                document.getElementById("groupChatSend").click();
+                return;
+            }
+
+            sendGroupEvent("typingStart");
+            if (groupChatState.typingStopTimer) {
+                window.clearTimeout(groupChatState.typingStopTimer);
+            }
+            groupChatState.typingStopTimer = window.setTimeout(() => {
+                sendGroupEvent("typingStop");
+            }, 700);
+        });
+
+        window.addEventListener("beforeunload", () => {
+            if (groupChatState.currentGroupId != null && groupChatState.connected) {
+                sendGroupEvent("leaveGroup");
+            }
+        });
+
+        ensureStompConnection();
     </script>
     <script sec:authorize="hasRole('ROLE_ADMIN')" type="module" src="/static/js/group-extraction.js"
         th:src="@{/js/group-extraction.js}"></script>
