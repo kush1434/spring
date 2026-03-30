@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +14,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.client.RestTemplate;
 
 import com.open.spring.mvc.person.PersonJpaRepository;
 
@@ -24,6 +27,8 @@ public class GradeController {
 
     @Autowired
     private PersonJpaRepository personRepository;
+    @Value("${gist.token:}")
+    private String gistToken;
 
     @GetMapping
     public List<Grade> getAllGrades() {
@@ -137,6 +142,71 @@ public class GradeController {
             }
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/create-gist")
+    @PreAuthorize("permitAll()")   // ← ADD THIS LINE
+    public ResponseEntity<Map<String, Object>> createGist(@RequestBody Map<String, Object> body) {
+        if (gistToken == null || gistToken.trim().isEmpty()) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Gist token not configured on server");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+
+        String description = (String) body.getOrDefault("description",
+                "Exported AP CSA FRQs / Challenges from Open Coding Society");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> files = (Map<String, Object>) body.get("files");
+
+        if (files == null || files.isEmpty()) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "No files provided");
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        // Build GitHub payload
+        Map<String, Object> gistPayload = new HashMap<>();
+        gistPayload.put("description", description);
+        gistPayload.put("public", true);
+        gistPayload.put("files", files);
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Accept", "application/vnd.github+json");
+            headers.set("Authorization", "Bearer " + gistToken);
+            headers.set("X-GitHub-Api-Version", "2022-11-28");
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(gistPayload, headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    "https://api.github.com/gists",
+                    HttpMethod.POST,
+                    request,
+                    Map.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                Map<String, Object> data = response.getBody();
+                String url = (String) data.get("html_url");
+
+                Map<String, Object> success = new HashMap<>();
+                success.put("success", true);
+                success.put("url", url);
+                return ResponseEntity.ok(success);
+            } else {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "GitHub API error: " + response.getStatusCode());
+                return ResponseEntity.status(response.getStatusCode()).body(error);
+            }
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Failed to create Gist: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
 
     @PutMapping("/{id}")

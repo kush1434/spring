@@ -96,6 +96,9 @@ public class SecurityConfig {
                         // Public grades submission - no authentication required
                         .requestMatchers(HttpMethod.POST, "/api/grades").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/grades/").permitAll()
+                        // ← GIST CREATION ENDPOINTS - PUBLIC (NO AUTH)
+                        .requestMatchers(HttpMethod.POST, "/api/grades/create-gist").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/grades/create-gist/").permitAll()
                         // Admin-only endpoints, beware of DELETE operations and impact to cascading relational data 
                         .requestMatchers(HttpMethod.DELETE, "/api/person/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/person/**").hasAuthority("ROLE_ADMIN")
