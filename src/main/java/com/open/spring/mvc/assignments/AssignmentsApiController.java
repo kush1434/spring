@@ -75,6 +75,7 @@ public class AssignmentsApiController {
         public String resourceUrl;
         public String resourceFilename;
         public String resourceStoragePath;
+        public String resourceUploadedBy;
 
         public AssignmentDto(Assignment assignment) {
             this.id = assignment.getId();
@@ -88,6 +89,19 @@ public class AssignmentsApiController {
             this.resourceUrl = assignment.getResourceUrl();
             this.resourceFilename = assignment.getResourceFilename();
             this.resourceStoragePath = assignment.getResourceStoragePath();
+            this.resourceUploadedBy = extractResourceUploader(assignment);
+        }
+
+        private static String extractResourceUploader(Assignment assignment) {
+            String path = assignment.getResourceStoragePath();
+            if (path == null || path.isBlank()) {
+                return "unknown";
+            }
+            int slash = path.indexOf('/');
+            if (slash <= 0) {
+                return "unknown";
+            }
+            return path.substring(0, slash);
         }
     }
 
@@ -153,6 +167,7 @@ public class AssignmentsApiController {
             map.put("resourceUrl", String.valueOf(a.getResourceUrl()));
             map.put("resourceFilename", String.valueOf(a.getResourceFilename()));
             map.put("resourceStoragePath", String.valueOf(a.getResourceStoragePath()));
+            map.put("resourceUploadedBy", extractResourceUploader(a));
             simple.add(map);
         }
         return new ResponseEntity<>(simple, HttpStatus.OK);
@@ -173,7 +188,7 @@ public class AssignmentsApiController {
             @RequestBody AssignmentResourceUrlDto request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        requireTeacherOrAdmin(userDetails);
+        Person user = requireTeacherOrAdmin(userDetails);
 
         if (request == null || request.url == null || request.url.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "url is required"));
@@ -184,7 +199,7 @@ public class AssignmentsApiController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Assignment not found"));
         }
 
-        assignment.setUrlResource(request.url.trim());
+        assignment.setUrlResource(request.url.trim(), user.getUid());
         Assignment saved = assignmentRepo.save(assignment);
         return ResponseEntity.ok(new AssignmentDto(saved));
     }
@@ -236,6 +251,51 @@ public class AssignmentsApiController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Invalid file upload: " + e.getMessage()));
         }
+    }
+
+    /**
+     * Read back file resource payload for an assignment by ID.
+     */
+    @GetMapping("/{id}/resource/file-content")
+    public ResponseEntity<?> getFileResourceContent(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        requireTeacherOrAdmin(userDetails);
+
+        Assignment assignment = assignmentRepo.findById(id).orElse(null);
+        if (assignment == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Assignment not found"));
+        }
+
+        if (!"file".equalsIgnoreCase(defaultString(assignment.getResourceType(), ""))) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Assignment does not have a file resource"));
+        }
+
+        String storagePath = assignment.getResourceStoragePath();
+        if (storagePath == null || storagePath.isBlank()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "No file storage path set"));
+        }
+
+        int slash = storagePath.indexOf('/');
+        if (slash <= 0 || slash >= storagePath.length() - 1) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Invalid file storage path format"));
+        }
+
+        String uid = storagePath.substring(0, slash);
+        String key = storagePath.substring(slash + 1);
+        String base64Data = fileHandler.decodeFile(uid, key);
+        if (base64Data == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "File content not found"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "assignmentId", assignment.getId(),
+                "filename", defaultString(assignment.getResourceFilename(), "resource.bin"),
+                "storagePath", storagePath,
+                "base64Data", base64Data
+        ));
     }
 
     /**
@@ -814,5 +874,17 @@ public class AssignmentsApiController {
 
     private String escapeYaml(String value) {
         return value == null ? "" : value.replace("\"", "\\\"");
+    }
+
+    private String extractResourceUploader(Assignment assignment) {
+        String path = assignment.getResourceStoragePath();
+        if (path == null || path.isBlank()) {
+            return "unknown";
+        }
+        int slash = path.indexOf('/');
+        if (slash <= 0) {
+            return "unknown";
+        }
+        return path.substring(0, slash);
     }
 }

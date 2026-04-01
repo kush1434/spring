@@ -140,6 +140,14 @@ public class Assignment {
         this.resourceStoragePath = null;
     }
 
+    public void setUrlResource(String url, String uploaderUid) {
+        this.resourceType = "url";
+        this.resourceUrl = url;
+        this.resourceFilename = null;
+        this.resourceStoragePath =
+            (uploaderUid == null || uploaderUid.isBlank()) ? null : uploaderUid + "/url-resource";
+    }
+
     public void setFileResource(String originalFilename, String storagePath) {
         this.resourceType = "file";
         this.resourceFilename = originalFilename;
