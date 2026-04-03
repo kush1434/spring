@@ -95,8 +95,15 @@ public class AssignmentSubmissionViewController {
 
         public SubmissionListDTO(AssignmentSubmission submission) {
             this.id = submission.getId();
-            this.assignmentId = submission.getAssignment().getId();
-            this.assignmentName = submission.getAssignment().getName();
+            
+            // Handle null assignment
+            if (submission.getAssignment() != null) {
+                this.assignmentId = submission.getAssignment().getId();
+                this.assignmentName = submission.getAssignment().getName();
+            } else {
+                this.assignmentId = null;
+                this.assignmentName = "Unknown Assignment";
+            }
             
             // Handle both Person and Groups submitters
             if (submission.getSubmitter() != null) {
@@ -118,10 +125,10 @@ public class AssignmentSubmissionViewController {
                 this.isGroup = false;
             }
             
-            this.content = submission.getContent();
-            this.comment = submission.getComment();
+            this.content = submission.getContent() != null ? submission.getContent() : "";
+            this.comment = submission.getComment() != null ? submission.getComment() : "";
             this.grade = submission.getGrade();
-            this.feedback = submission.getFeedback();
+            this.feedback = submission.getFeedback() != null ? submission.getFeedback() : "";
             this.isLate = submission.getIsLate() != null ? submission.getIsLate() : false;
         }
     }
