@@ -1,5 +1,6 @@
 package com.open.spring.mvc.PauseMenu;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,15 +22,24 @@ public class GamerScoreController {
     @Autowired
     private ScorePauseMenuRepo scoreRepository;
 
+    @Autowired
+    private ScoreFrontendGuardService scoreFrontendGuardService;
+
     public static class GamerScoreRequest {
         public String user;
         public Integer score;
         public String gameName;
         public String variableName;
+        public String challengeToken;
     }
 
     @PostMapping("/score")
-    public ResponseEntity<Map<String, Object>> saveGamerScore(@RequestBody GamerScoreRequest payload) {
+    public ResponseEntity<Map<String, Object>> saveGamerScore(HttpServletRequest servletRequest, @RequestBody GamerScoreRequest payload) {
+        String challengeToken = payload != null ? payload.challengeToken : null;
+        if (!scoreFrontendGuardService.validateAndConsume(servletRequest, challengeToken)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("success", false, "message", "Frontend challenge required"));
+        }
         try {
             int score = payload != null && payload.score != null ? payload.score : 0;
             String user = payload != null ? payload.user : null;

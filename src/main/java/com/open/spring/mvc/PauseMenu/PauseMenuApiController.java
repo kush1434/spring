@@ -1,5 +1,6 @@
 package com.open.spring.mvc.PauseMenu;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,9 @@ public class PauseMenuApiController {
     @Autowired
     private ScorePauseMenuRepo scoreRepository;
 
+    @Autowired
+    private ScoreFrontendGuardService scoreFrontendGuardService;
+
     /**
      * DTO for receiving score data from the frontend
      */
@@ -26,6 +30,16 @@ public class PauseMenuApiController {
     public static class ScorePauseMenuRequest {
         private String user;
         private int score;
+        private String challengeToken;
+    }
+
+    @GetMapping("/challenge")
+    public ResponseEntity<Map<String, Object>> issueChallenge(HttpServletRequest request) {
+        Map<String, Object> payload = scoreFrontendGuardService.issueChallenge(request);
+        if (Boolean.TRUE.equals(payload.get("ok"))) {
+            return ResponseEntity.ok(payload);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(payload);
     }
 
     /**
@@ -33,7 +47,11 @@ public class PauseMenuApiController {
      * POST /api/pausemenu/score/save
      */
     @PostMapping("/save")
-    public ResponseEntity<Map<String, Object>> saveScore(@RequestBody ScorePauseMenuRequest request) {
+    public ResponseEntity<Map<String, Object>> saveScore(HttpServletRequest servletRequest, @RequestBody ScorePauseMenuRequest request) {
+        if (!scoreFrontendGuardService.validateAndConsume(servletRequest, request.getChallengeToken())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("success", false, "message", "Frontend challenge required"));
+        }
         try {
             ScoreCounter newScore = new ScoreCounter();
             // default to "guest" when user is missing or blank
@@ -113,7 +131,13 @@ public class PauseMenuApiController {
      * If user is missing, defaults to "guest"
      */
     @PostMapping(path = "/api/gamer/score", consumes = "application/json")
-    public ResponseEntity<Map<String, Object>> saveGamerScore(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<Map<String, Object>> saveGamerScore(HttpServletRequest servletRequest, @RequestBody Map<String, Object> payload) {
+        Object tokenObj = payload.get("challengeToken");
+        String challengeToken = (tokenObj instanceof String) ? (String) tokenObj : null;
+        if (!scoreFrontendGuardService.validateAndConsume(servletRequest, challengeToken)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("success", false, "message", "Frontend challenge required"));
+        }
         try {
             int score = 0;
             Object scoreObj = payload.get("score");
