@@ -7,21 +7,7 @@
 class ScoreManager {
     constructor(backendUrl = "http://localhost:8585") {
         this.backendUrl = backendUrl;
-        this.apiEndpoint = `${this.backendUrl}/api/pausemenu/score`;
-    }
-
-    async getChallengeToken() {
-        const response = await fetch(`${this.apiEndpoint}/challenge`, {
-            method: "GET",
-            credentials: "include"
-        });
-
-        if (!response.ok) {
-            throw new Error(`Challenge request failed: ${response.status}`);
-        }
-
-        const body = await response.json();
-        return body.challengeToken;
+        this.apiEndpoint = `${this.backendUrl}/api/score`;
     }
 
     /**
@@ -34,14 +20,12 @@ class ScoreManager {
         try {
             const response = await fetch(`${this.apiEndpoint}/save`, {
                 method: "POST",
-                credentials: "include",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    user: personName,
-                    score: parseInt(score),
-                    challengeToken: await this.getChallengeToken()
+                    personName: personName,
+                    score: parseInt(score)
                 })
             });
 
