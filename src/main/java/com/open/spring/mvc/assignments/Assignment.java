@@ -3,12 +3,10 @@ package com.open.spring.mvc.assignments;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.open.spring.mvc.person.Person;
 import com.open.spring.mvc.synergy.SynergyGrade;
 
@@ -27,11 +25,11 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Data
-@Entity
+@Entity(name = "AssignmentEntity")
 @Getter
 @Setter
 @NoArgsConstructor
