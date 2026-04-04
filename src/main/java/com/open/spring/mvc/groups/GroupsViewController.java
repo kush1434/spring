@@ -147,6 +147,9 @@ public class GroupsViewController {
                         : repository.listAllWithMembers());
 
         model.addAttribute("groups", list);
+        if (person != null) {
+            model.addAttribute("chatUsername", person.getName());
+        }
         return "group/group";
     }
 }

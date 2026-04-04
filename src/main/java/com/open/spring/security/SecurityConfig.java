@@ -99,10 +99,12 @@ public class SecurityConfig {
                         // ← GIST CREATION ENDPOINTS - PUBLIC (NO AUTH)
                         .requestMatchers(HttpMethod.POST, "/api/grades/create-gist").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/grades/create-gist/").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/person/faces").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/person/identify").permitAll()
                         // Admin-only endpoints, beware of DELETE operations and impact to cascading relational data 
                         .requestMatchers(HttpMethod.DELETE, "/api/person/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/person/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/person/uid/**").hasAnyAuthority("ROLE_USER", "ROLE_STUDENT", "ROLE_TEACHER", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/person/uid/**").permitAll()
 
                         // All other /api/person/** and /api/people/** operations handled by default rule
                         // ======================================================
@@ -171,10 +173,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/challenge-submission/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN", "ROLE_TEACHER", "ROLE_STUDENT")
                         // ==========================================
 
-                        // ========== ASSIGNMENT FILE SUBMISSION ==========
-                        // Assignment file uploads require authenticated roles
-                        .requestMatchers(HttpMethod.POST, "/api/assignment-submissions/upload").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN", "ROLE_TEACHER", "ROLE_STUDENT")
-                        // ================================================
+                        // ========== ASSIGNMENT SUBMISSION ==========
+                        // Assignment text/link submissions - public (student identity passed in payload)
+                        .requestMatchers(HttpMethod.POST, "/api/submissions/**").permitAll()
+                        // Assignment file uploads - public (student identity passed in multipart fields)
+                        .requestMatchers(HttpMethod.POST, "/api/assignment-submissions/upload").permitAll()
+                        // ==========================================
 
                         // ========== OCS ANALYTICS ==========
                         // OCS Analytics endpoints - require authentication to associate data with user
@@ -217,7 +221,7 @@ public class SecurityConfig {
         policy.put("POST /api/grades/", "permitAll");
         policy.put("DELETE /api/person/**", "ROLE_ADMIN");
         policy.put("PUT /api/person/**", "ROLE_ADMIN");
-        policy.put("GET /api/person/uid/**", "ROLE_USER|ROLE_STUDENT|ROLE_TEACHER|ROLE_ADMIN");
+        policy.put("GET /api/person/uid/**", "permitAll");
         policy.put("POST /api/assignment-submissions/upload", "ROLE_USER|ROLE_ADMIN|ROLE_TEACHER|ROLE_STUDENT");
         policy.put("/api/exports/**", "ROLE_ADMIN");
         policy.put("/api/imports/**", "ROLE_ADMIN");
@@ -234,9 +238,11 @@ public class SecurityConfig {
         configuration.addAllowedOriginPattern("http://127.0.0.1:4500");
         configuration.addAllowedOriginPattern("http://127.0.0.1:4599");
         configuration.addAllowedOriginPattern("http://127.0.0.1:4600");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:8585");
         configuration.addAllowedOriginPattern("http://localhost:4500");
         configuration.addAllowedOriginPattern("http://localhost:4599");
         configuration.addAllowedOriginPattern("http://localhost:4600");
+        configuration.addAllowedOriginPattern("http://localhost:8585");
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

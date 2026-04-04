@@ -48,6 +48,8 @@ public interface PersonJpaRepository extends JpaRepository<Person, Long> {
     Person findByUidAndPassword(String uid, String password); // Adjusted to use UID for authentication
 
     boolean existsByUid(String uid); // Check existence by UID
+
+    List<Person> findByFaceDataIsNotNull(); // Find all people with face data
     /**
      * Custom JPA query using the @Query annotation.
      * This allows for more complex queries that can't be expressed through the method name.
