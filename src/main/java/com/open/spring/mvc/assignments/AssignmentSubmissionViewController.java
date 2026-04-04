@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,6 +39,7 @@ public class AssignmentSubmissionViewController {
      * @return List of submissions filtered by user role
      */
     @GetMapping("/list")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getSubmissions() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -110,6 +112,7 @@ public class AssignmentSubmissionViewController {
      * Used to determine if user is admin and should see admin tabs
      */
     @GetMapping("/user-info")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getUserInfo() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
