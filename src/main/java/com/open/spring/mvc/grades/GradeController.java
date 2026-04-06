@@ -283,7 +283,7 @@ public class GradeController {
             }
         }
         String teacherComments = m.get("teacherComments") == null ? null : String.valueOf(m.get("teacherComments"));
-        String submission = m.get("submission") == null ? null : String.valueOf(m.get("submission"));
+        Object submission = m.get("submission");
         String submittedAt = m.get("submittedAt") == null ? null : String.valueOf(m.get("submittedAt"));
         Grade g = new Grade(uid, assignment, score, teacherComments, submission, submittedAt);
         g.setId(id);

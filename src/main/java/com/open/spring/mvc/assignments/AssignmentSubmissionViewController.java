@@ -2,6 +2,7 @@ package com.open.spring.mvc.assignments;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -146,7 +147,7 @@ public class AssignmentSubmissionViewController {
         private String assignmentName;
         private String submitterName;
         private Long submitterId;
-        private String content;
+        private Map<String, Object> content;
         private String comment;
         private Double grade;
         private String feedback;
@@ -205,13 +206,13 @@ public class AssignmentSubmissionViewController {
             }
             
             try {
-                dto.content = submission.getContent() != null ? submission.getContent() : "";
+                dto.content = submission.getContent();
                 dto.comment = submission.getComment() != null ? submission.getComment() : "";
                 dto.grade = submission.getGrade();
                 dto.feedback = submission.getFeedback() != null ? submission.getFeedback() : "";
                 dto.isLate = submission.getIsLate() != null ? submission.getIsLate() : false;
             } catch (Exception e) {
-                dto.content = "";
+                dto.content = null;
                 dto.comment = "";
                 dto.grade = null;
                 dto.feedback = "";
@@ -233,7 +234,7 @@ public class AssignmentSubmissionViewController {
                 dto.submitterName = "Unknown";
                 dto.submitterId = null;
                 dto.isGroup = false;
-                dto.content = "";
+                dto.content = null;
                 dto.comment = "Error processing submission";
                 dto.grade = null;
                 dto.feedback = "";
@@ -250,7 +251,7 @@ public class AssignmentSubmissionViewController {
         public String getAssignmentName() { return assignmentName; }
         public String getSubmitterName() { return submitterName; }
         public Long getSubmitterId() { return submitterId; }
-        public String getContent() { return content; }
+        public Map<String, Object> getContent() { return content; }
         public String getComment() { return comment; }
         public Double getGrade() { return grade; }
         public String getFeedback() { return feedback; }
