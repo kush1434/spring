@@ -205,3 +205,30 @@ Note, steps 1,2,3,5 are on your development (LOCAL) server. You need to update y
 
 5. Push local changes to production: `python scripts/db_local2prod.py`
 (Requires admin password from production in .env)
+
+
+# Testing Grade FRQs API with Postman
+
+## Step 1: Authenticate
+
+**POST** `http://127.0.0.1:8585/authenticate`
+
+**Headers:** `Content-Type: application/json`
+
+**Body:**
+```json
+{
+  "uid": "toby",
+  "password": "123Toby!"
+}
+```
+
+**Action:** Send request → Copy `jwt_java_spring` token from Cookies tab
+
+## Step 2: Grade FRQs
+
+**POST** `http://127.0.0.1:8585/api/grade-frqs`
+
+**Headers:** `Cookie: jwt_java_spring=YOUR_TOKEN_HERE`
+
+**Action:** Send request

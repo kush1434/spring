@@ -247,6 +247,15 @@ public class PersonApiController {
         return new ResponseEntity<>(responseObject.toString(), responseHeaders, HttpStatus.OK);
     }
 
+    @Autowired
+    private PersonService personService;
+
+    @PostMapping("/grade-frqs")
+    public ResponseEntity<String> gradeFrqs() {
+        personService.gradeAllPending();
+        return ResponseEntity.ok("Grading completed. Check ./volumes/grades.csv for results.");
+    }
+
     /**
      * Retrieves all the Person entities in the database, people
      * 
